@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { Info, ChevronDown } from "lucide-react";
+import BankCard from "@/components/BankCard";
 
 /* ═══════════════════════════════════════════
    ANIMATION HOOKS
@@ -281,11 +282,9 @@ export default function Landing() {
             {/* Right — floating cards (desktop) */}
             <div className="hidden lg:flex items-center justify-center">
               <div className="relative w-80 h-64">
-                <img src="/card-gold.jpeg" alt="Gold"
-                  className="card-float-1 absolute w-60 rounded-2xl shadow-2xl"
+                <BankCard variant="gold" className="card-float-1 absolute w-60"
                   style={{ bottom: 0, left: "50%", zIndex: 1 }} />
-                <img src="/card-fosfo.jpeg" alt="Fosfo"
-                  className="card-float-2 absolute w-60 rounded-2xl shadow-2xl"
+                <BankCard variant="fosfo" className="card-float-2 absolute w-60"
                   style={{ bottom: "30px", left: "50%", zIndex: 2 }} />
               </div>
             </div>
@@ -300,11 +299,9 @@ export default function Landing() {
 
           <Reveal dir="zoom" className="w-full flex items-end justify-center pt-16 pb-4 px-6">
             <div className="relative flex items-end justify-center" style={{ height: "230px", width: "300px" }}>
-              <img src="/card-gold.jpeg" alt="Gold"
-                className="card-float-1 absolute w-56 sm:w-64 rounded-2xl shadow-2xl"
+              <BankCard variant="gold" className="card-float-1 absolute w-56 sm:w-64"
                 style={{ bottom: 0, left: "50%", zIndex: 1 }} />
-              <img src="/card-gold.jpeg" alt="Gold 2"
-                className="card-float-2 absolute w-56 sm:w-64 rounded-2xl shadow-2xl"
+              <BankCard variant="gold" className="card-float-2 absolute w-56 sm:w-64"
                 style={{ bottom: "24px", left: "50%", zIndex: 2 }} />
             </div>
           </Reveal>
@@ -423,17 +420,13 @@ export default function Landing() {
               <Reveal dir="left" delay={0} className="text-center group">
                 <p className="font-bold text-gray-800 text-sm sm:text-base mb-1">Fosfo CB Mastercard</p>
                 <p className="text-gray-400 text-xs sm:text-sm mb-4">Jouez la carte de la facilité</p>
-                <div className="rounded-xl sm:rounded-2xl overflow-hidden shadow-md mx-auto w-32 sm:w-44 transition-all duration-400 group-hover:scale-105 group-hover:shadow-xl group-hover:rotate-1">
-                  <img src="/card-fosfo.jpeg" alt="Fosfo" className="w-full object-cover" />
-                </div>
+                <BankCard variant="fosfo" className="mx-auto w-32 sm:w-44 transition-all duration-400 group-hover:scale-105 group-hover:rotate-1" />
                 <p className="text-gray-500 text-xs sm:text-sm mt-3">Sans conditions de revenus</p>
               </Reveal>
               <Reveal dir="right" delay={0} className="text-center group">
                 <p className="font-bold text-gray-800 text-sm sm:text-base mb-1">Gold CB Mastercard</p>
                 <p className="text-gray-400 text-xs sm:text-sm mb-4">Choisissez la carte qui vaut de l'or</p>
-                <div className="rounded-xl sm:rounded-2xl overflow-hidden shadow-md mx-auto w-32 sm:w-44 transition-all duration-400 group-hover:scale-105 group-hover:shadow-xl group-hover:-rotate-1">
-                  <img src="/card-gold.jpeg" alt="Gold" className="w-full object-cover" />
-                </div>
+                <BankCard variant="gold" className="mx-auto w-32 sm:w-44 transition-all duration-400 group-hover:scale-105 group-hover:-rotate-1" />
                 <p className="text-gray-500 text-xs sm:text-sm mt-3">À partir de 2 200 € net/mois</p>
               </Reveal>
             </div>
@@ -556,9 +549,7 @@ export default function Landing() {
                     ? "Ouvrez votre compte avec une carte Gold CB Mastercard"
                     : "Ouvrez votre compte avec une carte Fosfo CB Mastercard"}
                 </p>
-                <img src={activeCard === "gold" ? "/card-gold.jpeg" : "/card-fosfo.jpeg"}
-                  alt={activeCard}
-                  className="w-44 sm:w-52 rounded-2xl mx-auto mb-5 shadow-xl transition-all duration-500" />
+                <BankCard variant={activeCard} className="w-44 sm:w-52 mx-auto mb-5 transition-all duration-500" />
                 <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-white/90">
                   {(activeCard === "gold" ? [
                     "160 € offerts pour 5 paiements en 90 jours",

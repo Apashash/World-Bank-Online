@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, Mail, Phone, Globe, Lock, Tag } from "lucide-react";
+import BankCard from "@/components/BankCard";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Nom complet requis"),
@@ -175,11 +176,9 @@ export default function Register() {
           {/* Right — floating cards (desktop) */}
           <div className="hidden lg:flex flex-1 items-center justify-center mt-8 lg:mt-0">
             <div className="relative w-72 h-52">
-              <img src="/card-gold.jpeg" alt="Gold"
-                className="bob1 absolute w-52 rounded-2xl shadow-2xl"
+              <BankCard variant="gold" className="bob1 absolute w-52"
                 style={{ bottom: 0, left: "30px", zIndex: 1 }} />
-              <img src="/card-fosfo.jpeg" alt="Fosfo"
-                className="bob2 absolute w-52 rounded-2xl shadow-2xl"
+              <BankCard variant="fosfo" className="bob2 absolute w-52"
                 style={{ bottom: "28px", left: "70px", zIndex: 2 }} />
             </div>
           </div>
@@ -301,7 +300,7 @@ export default function Register() {
           <div className="max-w-screen-md mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
             {[
               {
-                img: "/card-gold.jpeg",
+                variant: "gold" as const,
                 name: "Gold CB Mastercard",
                 tag: "160 € offerts",
                 tagColor: "bg-amber-400/20 text-amber-300 border-amber-400/30",
@@ -310,7 +309,7 @@ export default function Register() {
                 gradient: "from-amber-900/60 to-amber-800/40",
               },
               {
-                img: "/card-fosfo.jpeg",
+                variant: "fosfo" as const,
                 name: "Fosfo CB Mastercard",
                 tag: "50 € offerts",
                 tagColor: "bg-[#6DC142]/20 text-[#6DC142] border-[#6DC142]/30",
@@ -328,7 +327,7 @@ export default function Register() {
                   </div>
                   <span className={`text-xs font-bold px-3 py-1 rounded-full border ${card.tagColor}`}>{card.tag}</span>
                 </div>
-                <img src={card.img} alt={card.name} className="w-full rounded-xl shadow-lg mb-4 object-cover" />
+                <BankCard variant={card.variant} className="w-full mb-4" />
                 <ul className="space-y-1.5">
                   {card.perks.map((p, j) => (
                     <li key={j} className="flex items-center gap-2 text-xs text-white/75">

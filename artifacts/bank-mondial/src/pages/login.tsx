@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Lock, Mail, Globe, ShieldCheck, Zap } from "lucide-react";
+import BankCard from "@/components/BankCard";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -155,11 +156,9 @@ export default function Login() {
           {/* Right — floating cards (desktop only) */}
           <div className="hidden lg:flex flex-1 items-center justify-center mt-8 lg:mt-0">
             <div className="relative w-72 h-52">
-              <img src="/card-gold.jpeg" alt="Gold"
-                className="bob1 absolute w-52 rounded-2xl shadow-2xl"
+              <BankCard variant="gold" className="bob1 absolute w-52"
                 style={{ bottom: 0, left: "30px", zIndex: 1 }} />
-              <img src="/card-fosfo.jpeg" alt="Fosfo"
-                className="bob2 absolute w-52 rounded-2xl shadow-2xl"
+              <BankCard variant="fosfo" className="bob2 absolute w-52"
                 style={{ bottom: "28px", left: "70px", zIndex: 2 }} />
             </div>
           </div>
