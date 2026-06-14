@@ -5,10 +5,8 @@ import { Info, ChevronDown } from "lucide-react";
 function FortuneoLogo() {
   return (
     <div className="flex items-center gap-2">
-      <img src="/logo-banque-mondiale.png" alt="Banque Mondiale" className="h-8 w-8 object-contain shrink-0" />
-      <span
-        className="font-black text-[11px] leading-tight tracking-wider uppercase text-[#003087] whitespace-nowrap"
-      >
+      <img src="/logo-banque-mondiale.png" alt="Banque Mondiale" className="h-11 w-11 object-contain shrink-0" />
+      <span className="font-black text-[12px] leading-tight tracking-wider uppercase text-[#003087] whitespace-nowrap">
         BANQUE MONDIALE
       </span>
     </div>
@@ -34,6 +32,7 @@ function OpenAccountBtn({ className = "", dark = false }: { className?: string; 
 export default function Landing() {
   const [activeCard, setActiveCard] = useState<"gold" | "fosfo">("gold");
   const [showConditions, setShowConditions] = useState(false);
+  const [showComparatif, setShowComparatif] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
@@ -252,9 +251,57 @@ export default function Landing() {
               </div>
             </div>
 
-            <button className="w-full border border-gray-300 rounded-full py-3.5 text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors mb-8">
-              <ChevronDown className="w-4 h-4" /> Voir le comparatif <ChevronDown className="w-4 h-4" />
+            <button
+              onClick={() => setShowComparatif(!showComparatif)}
+              className="w-full border border-gray-300 rounded-full py-3.5 text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors mb-6"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${showComparatif ? "rotate-180" : ""}`} />
+              Voir le comparatif
+              <ChevronDown className={`w-4 h-4 transition-transform ${showComparatif ? "rotate-180" : ""}`} />
             </button>
+
+            {showComparatif && (
+              <div className="mb-8 rounded-2xl border border-gray-200 overflow-hidden text-sm">
+                {/* Header row */}
+                <div className="grid grid-cols-3 bg-gray-50 border-b border-gray-200">
+                  <div className="p-3 text-xs text-gray-400 font-medium"></div>
+                  <div className="p-3 text-center border-l border-gray-200">
+                    <p className="font-bold text-gray-800 text-xs">Fosfo CB</p>
+                    <p className="text-[10px] text-gray-500">Mastercard</p>
+                  </div>
+                  <div className="p-3 text-center border-l border-gray-200 bg-amber-50">
+                    <p className="font-bold text-amber-800 text-xs">Gold CB</p>
+                    <p className="text-[10px] text-amber-600">Mastercard</p>
+                  </div>
+                </div>
+
+                {[
+                  { label: "Cotisation mensuelle", fosfo: "0 €", gold: "0 €" },
+                  { label: "Conditions de revenus", fosfo: "Aucune", gold: "2 200 € net/mois" },
+                  { label: "Débit", fosfo: "Immédiat", gold: "Immédiat ou différé" },
+                  { label: "Paiements monde entier", fosfo: "Gratuits ²", gold: "Gratuits ²" },
+                  { label: "Retraits monde entier", fosfo: "Gratuits ²", gold: "Gratuits ²" },
+                  { label: "Plafonds de paiement", fosfo: "Standard", gold: "Étendus" },
+                  { label: "Assurances voyages", fosfo: "Basiques", gold: "Premium ¹" },
+                  { label: "Prime d'ouverture", fosfo: "50 €", gold: "160 €" },
+                  { label: "+ Mobilité bancaire", fosfo: "+ 90 €", gold: "+ 90 €" },
+                  { label: "Total offert", fosfo: "140 €", gold: "250 €", highlight: true },
+                ].map((row, i) => (
+                  <div
+                    key={i}
+                    className={`grid grid-cols-3 border-b border-gray-100 last:border-0 ${row.highlight ? "bg-green-50" : ""}`}
+                  >
+                    <div className="p-3 text-xs text-gray-600 font-medium leading-tight">{row.label}</div>
+                    <div className={`p-3 text-center text-xs border-l border-gray-100 ${row.highlight ? "font-bold text-green-700" : "text-gray-700"}`}>
+                      {row.fosfo}
+                    </div>
+                    <div className={`p-3 text-center text-xs border-l border-gray-100 bg-amber-50/50 ${row.highlight ? "font-bold text-green-700" : "text-gray-700"}`}>
+                      {row.gold}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <OpenAccountBtn className="w-full text-base py-4 font-bold" />
           </div>
