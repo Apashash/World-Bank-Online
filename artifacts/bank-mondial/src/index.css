@@ -56,40 +56,51 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
+  /* Banque Mondiale — bleu marine #003087 = hsl(219 100% 26%) */
+  /* Vert action #6DC142 = hsl(101 44% 51%) */
+
   --background: 0 0% 100%;
-  --foreground: 145 30% 15%;
-  --border: 145 10% 90%;
+  --foreground: 219 40% 15%;
+  --border: 219 15% 88%;
   --card: 0 0% 100%;
-  --card-foreground: 145 30% 15%;
-  --card-border: 145 10% 90%;
-  --sidebar: 145 48% 20%;
+  --card-foreground: 219 40% 15%;
+  --card-border: 219 15% 88%;
+
+  /* Sidebar : bleu marine Banque Mondiale */
+  --sidebar: 219 100% 17%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 145 40% 15%;
-  --sidebar-primary: 46 65% 52%;
-  --sidebar-primary-foreground: 145 48% 20%;
-  --sidebar-accent: 145 40% 25%;
+  --sidebar-border: 219 100% 12%;
+  --sidebar-primary: 101 44% 51%;
+  --sidebar-primary-foreground: 219 100% 17%;
+  --sidebar-accent: 219 100% 22%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 46 65% 52%;
+  --sidebar-ring: 101 44% 51%;
+
   --popover: 0 0% 100%;
-  --popover-foreground: 145 30% 15%;
-  --popover-border: 145 10% 90%;
-  --primary: 145 48% 20%;
+  --popover-foreground: 219 40% 15%;
+  --popover-border: 219 15% 88%;
+
+  /* Primary : bleu marine */
+  --primary: 219 100% 26%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 46 65% 52%;
-  --secondary-foreground: 145 48% 20%;
-  --muted: 145 10% 95%;
-  --muted-foreground: 145 10% 45%;
-  --accent: 145 10% 95%;
-  --accent-foreground: 145 48% 20%;
+
+  /* Secondary : vert action */
+  --secondary: 101 44% 51%;
+  --secondary-foreground: 219 100% 17%;
+
+  --muted: 219 15% 95%;
+  --muted-foreground: 219 15% 45%;
+  --accent: 219 15% 95%;
+  --accent-foreground: 219 100% 26%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --input: 145 10% 85%;
-  --ring: 145 48% 20%;
-  
+  --input: 219 15% 85%;
+  --ring: 219 100% 26%;
+
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
@@ -112,35 +123,35 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 145 40% 5%;
+  --background: 219 40% 7%;
   --foreground: 0 0% 100%;
-  --border: 145 20% 15%;
-  --card: 145 40% 8%;
+  --border: 219 20% 18%;
+  --card: 219 40% 10%;
   --card-foreground: 0 0% 100%;
-  --card-border: 145 20% 15%;
-  --sidebar: 145 40% 5%;
+  --card-border: 219 20% 18%;
+  --sidebar: 219 40% 5%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 145 20% 15%;
-  --sidebar-primary: 46 65% 52%;
-  --sidebar-primary-foreground: 145 48% 20%;
-  --sidebar-accent: 145 40% 15%;
+  --sidebar-border: 219 20% 12%;
+  --sidebar-primary: 101 44% 51%;
+  --sidebar-primary-foreground: 219 100% 17%;
+  --sidebar-accent: 219 40% 15%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 46 65% 52%;
-  --popover: 145 40% 8%;
+  --sidebar-ring: 101 44% 51%;
+  --popover: 219 40% 10%;
   --popover-foreground: 0 0% 100%;
-  --popover-border: 145 20% 15%;
-  --primary: 46 65% 52%;
-  --primary-foreground: 145 48% 20%;
-  --secondary: 145 48% 20%;
+  --popover-border: 219 20% 18%;
+  --primary: 101 44% 51%;
+  --primary-foreground: 219 100% 17%;
+  --secondary: 219 100% 26%;
   --secondary-foreground: 0 0% 100%;
-  --muted: 145 20% 15%;
-  --muted-foreground: 145 10% 65%;
-  --accent: 145 20% 15%;
+  --muted: 219 20% 18%;
+  --muted-foreground: 219 10% 65%;
+  --accent: 219 20% 18%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 100%;
-  --input: 145 20% 15%;
-  --ring: 46 65% 52%;
+  --input: 219 20% 18%;
+  --ring: 101 44% 51%;
 }
 
 @layer base {
