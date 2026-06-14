@@ -5,14 +5,11 @@ import { Info, ChevronDown } from "lucide-react";
 function FortuneoLogo() {
   return (
     <div className="flex items-center gap-2">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16 2L6 10V22L16 30L26 22V10L16 2Z" fill="none"/>
-        <path d="M10 8L16 3L22 8V16L16 21L10 16V8Z" fill="#5BBF3E" opacity="0.15"/>
-        <path d="M16 2L8 14H14L10 26L24 12H18L22 2H16Z" fill="#5BBF3E"/>
-      </svg>
-      <span className="font-bold text-lg tracking-tight text-gray-900" style={{fontFamily: 'Georgia, serif', letterSpacing: '-0.02em'}}>
-        fortuneo
-        <span className="block text-[9px] font-normal tracking-widest uppercase text-gray-500 -mt-1">BANQUE</span>
+      <img src="/logo-banque-mondiale.png" alt="Banque Mondiale" className="h-8 w-8 object-contain shrink-0" />
+      <span
+        className="font-black text-[11px] leading-tight tracking-wider uppercase text-[#003087] whitespace-nowrap"
+      >
+        BANQUE MONDIALE
       </span>
     </div>
   );
@@ -417,8 +414,9 @@ export default function Landing() {
             )}
 
             <div className="mt-8 pt-8 border-t border-gray-100 text-center">
+              <img src="/logo-banque-mondiale.png" alt="Banque Mondiale" className="h-10 w-10 mx-auto mb-3 opacity-60" />
               <p className="text-xs text-gray-400">
-                Fortuneo est une marque commerciale d'Arkéa Direct Bank. Arkéa Direct Bank, Société Anonyme au capital de 89 198 952 euros. RCS Nanterre 384 288 890.
+                Banque Mondiale. Établissement de crédit agréé. Siège social : Paris, France.
               </p>
             </div>
           </div>
