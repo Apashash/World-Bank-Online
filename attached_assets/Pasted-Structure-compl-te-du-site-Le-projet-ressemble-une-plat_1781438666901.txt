@@ -1,0 +1,233 @@
+Structure complète du site
+
+Le projet ressemble à une plateforme bancaire / transfert d’argent avec :
+	•	génération de liens de paiement ou virement,
+	•	création de comptes,
+	•	gestion des sous-comptes,
+	•	système de parrainage,
+	•	accès limité,
+	•	dashboard administrateur,
+	•	gestion des utilisateurs.
+
+⸻
+
+1. PAGE D’ACCUEIL (HOME)
+
+Objectif
+
+Présenter la plateforme et rassurer les utilisateurs.
+
+Sections
+
+Header
+	•	Logo
+	•	Menu navigation
+	•	Bouton Connexion
+	•	Bouton Créer un compte
+
+Bannière principale
+
+Texte exemple :
+
+Envoyez et recevez de l’argent partout dans le monde rapidement et en toute sécurité.
+
+Boutons :
+	•	Commencer
+	•	Générer un lien
+
+Fonctionnalités
+	•	Virement sécurisé
+	•	Génération de lien personnalisé
+	•	Gestion des sous-comptes
+	•	Tableau de bord intelligent
+	•	Accès limité pour clients
+	•	Parrainage
+
+Comment ça marche
+
+Étapes :
+	1.	Créer un compte
+	2.	Générer un transfert
+	3.	Partager le lien
+	4.	Le client ouvre et consulte le message
+
+Footer
+	•	Conditions
+	•	Politique
+	•	Contact
+	•	Réseaux sociaux
+
+⸻
+
+2. PAGE CONNEXION
+
+Champs
+	•	Email / téléphone
+	•	Mot de passe
+	•	Bouton connexion
+
+Fonctions
+	•	Mot de passe oublié
+	•	Double authentification OTP
+	•	Connexion administrateur
+
+⸻
+
+3. PAGE INSCRIPTION
+
+Champs
+	•	Nom complet
+	•	Email
+	•	Téléphone
+	•	Pays
+	•	Mot de passe
+	•	Code parrain (optionnel)
+
+Fonctions
+	•	Vérification email
+	•	Vérification SMS
+	•	Génération automatique d’ID client
+
+Exemple : CLT-948392
+
+4. DASHBOARD UTILISATEUR
+
+Le cœur du système.
+
+Menus
+	•	Tableau de bord
+	•	Créer un virement
+	•	Historique
+	•	Mes liens
+	•	Mes filleuls
+	•	Sous-comptes
+	•	Paramètres
+	•	Déconnexion
+
+⸻
+
+5. PAGE “CRÉER UN VIREMENT”
+
+Champs importants
+	•	Nom du bénéficiaire
+	•	Montant
+	•	Devise
+	•	Message personnalisé
+	•	Date expiration
+	•	Type accès :
+	•	public
+	•	privé
+	•	limité
+
+Fonction spéciale
+
+Le système génère un lien unique.
+
+Exemple : https://mondtransfer.com/tx/8sjd92kd
+
+Quand la personne ouvre :
+	•	elle voit le message,
+	•	les détails du virement,
+	•	le statut,
+	•	éventuellement un bouton confirmer.
+
+⸻
+
+6. PAGE D’AFFICHAGE DU LIEN
+
+C’est la page vue par le client.
+
+Contenu
+	•	Logo banque
+	•	Message personnalisé
+	•	Informations du transfert
+	•	Référence
+	•	Date
+	•	Bouton :
+	•	Télécharger reçu
+	•	Confirmer réception
+
+⸻
+
+7. GESTION DES SOUS-COMPTES
+
+Fonction importante.
+
+Le compte principal peut :
+	•	créer des comptes secondaires,
+	•	donner des permissions limitées.
+
+Exemple :
+	•	Voir uniquement transferts
+	•	Pas accès aux finances
+	•	Pas accès admin
+
+Permissions possibles
+	•	lecture seule
+	•	création de transfert
+	•	gestion clients
+	•	support
+
+⸻
+
+8. SYSTÈME DE PARRAINAGE
+
+Chaque utilisateur possède : REF-ASH892
+
+Lien : https://site.com/register?ref=REF-ASH892
+
+Récompenses possibles
+	•	bonus
+	•	pourcentage
+	•	commissions
+	•	niveaux VIP
+
+⸻
+
+9. PAGE ADMINISTRATEUR
+
+Très importante.
+
+Fonctions admin
+	•	Voir tous les utilisateurs
+	•	Bloquer comptes
+	•	Modifier soldes
+	•	Voir transferts
+	•	Statistiques
+	•	Gérer commissions
+	•	Gérer sous-comptes
+	•	Vérification KYC
+	•	Logs sécurité
+
+⸻
+
+10. SYSTÈME KYC
+
+Pour plateforme sérieuse.
+
+Documents
+	•	Carte identité
+	•	Passeport
+	•	Selfie
+
+Statuts
+	•	En attente
+	•	Vérifié
+	•	Refusé
+
+⸻
+
+11. NOTIFICATIONS
+
+Types
+	•	Email
+	•	SMS
+	•	Push
+
+Exemples
+	•	Nouveau transfert
+	•	Connexion détectée
+	•	Compte créé
+	•	Parrainage confirmé
+
+⸻
