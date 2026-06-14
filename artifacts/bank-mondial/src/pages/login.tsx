@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Lock, Mail } from "lucide-react";
+import { ArrowLeft, Lock, Mail, Globe, ShieldCheck, Zap } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -260,13 +260,15 @@ export default function Login() {
             <p className="text-center text-white/50 text-xs tracking-widest uppercase mb-8">Pourquoi choisir Banque Mondiale</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {[
-                { icon: "🌍", title: "Paiements gratuits partout", desc: "Payez et retirez sans frais dans le monde entier" },
-                { icon: "🛡️", title: "Assurances premium", desc: "Couverture voyage et assistance incluses" },
-                { icon: "⚡", title: "Virement instantané", desc: "Transférez de l'argent en quelques secondes" },
+                { icon: <Globe className="w-6 h-6 text-[#6DC142]" />, bg: "bg-[#6DC142]/15 border-[#6DC142]/20", title: "Paiements gratuits partout", desc: "Payez et retirez sans frais dans le monde entier" },
+                { icon: <ShieldCheck className="w-6 h-6 text-amber-400" />, bg: "bg-amber-400/15 border-amber-400/20", title: "Assurances premium", desc: "Couverture voyage et assistance incluses" },
+                { icon: <Zap className="w-6 h-6 text-blue-400" />, bg: "bg-blue-400/15 border-blue-400/20", title: "Virement instantané", desc: "Transférez de l'argent en quelques secondes" },
               ].map((item, i) => (
                 <FadeUp key={i} delay={i * 100}
                   className="bg-white/8 rounded-2xl p-5 border border-white/10 backdrop-blur-sm text-center hover:bg-white/12 transition-colors">
-                  <div className="text-3xl mb-3">{item.icon}</div>
+                  <div className={`w-12 h-12 rounded-xl ${item.bg} border flex items-center justify-center mx-auto mb-3`}>
+                    {item.icon}
+                  </div>
                   <p className="text-white font-bold text-sm mb-2">{item.title}</p>
                   <p className="text-white/55 text-xs leading-relaxed">{item.desc}</p>
                 </FadeUp>
