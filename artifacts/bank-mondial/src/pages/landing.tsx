@@ -1,304 +1,436 @@
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { CreditCard, ShieldCheck, Smartphone, CheckCircle2, ArrowRight, Zap, Globe, Lock } from "lucide-react";
+import { useState } from "react";
+import { Info, ChevronDown } from "lucide-react";
+
+function FortuneoLogo() {
+  return (
+    <div className="flex items-center gap-2">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 2L6 10V22L16 30L26 22V10L16 2Z" fill="none"/>
+        <path d="M10 8L16 3L22 8V16L16 21L10 16V8Z" fill="#5BBF3E" opacity="0.15"/>
+        <path d="M16 2L8 14H14L10 26L24 12H18L22 2H16Z" fill="#5BBF3E"/>
+      </svg>
+      <span className="font-bold text-lg tracking-tight text-gray-900" style={{fontFamily: 'Georgia, serif', letterSpacing: '-0.02em'}}>
+        fortuneo
+        <span className="block text-[9px] font-normal tracking-widest uppercase text-gray-500 -mt-1">BANQUE</span>
+      </span>
+    </div>
+  );
+}
+
+function OpenAccountBtn({ className = "", dark = false }: { className?: string; dark?: boolean }) {
+  return (
+    <Link href="/register">
+      <button
+        className={`rounded-full font-semibold text-sm px-5 py-2.5 transition-all ${
+          dark
+            ? "bg-[#6DC142] text-[#1a2e10] hover:bg-[#5BAF32]"
+            : "bg-[#6DC142] text-[#1a2e10] hover:bg-[#5BAF32]"
+        } ${className}`}
+      >
+        Ouvrir un compte
+      </button>
+    </Link>
+  );
+}
 
 export default function Landing() {
+  const [activeCard, setActiveCard] = useState<"gold" | "fosfo">("gold");
+  const [showConditions, setShowConditions] = useState(false);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="fixed top-0 w-full z-50 bg-primary/95 backdrop-blur-md border-b border-primary-border">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between text-primary-foreground">
-          <div className="font-bold text-xl tracking-tight flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-secondary" />
-            Bank Mondial
-          </div>
-          <div className="hidden md:flex gap-6 items-center text-sm font-medium">
-            <Link href="#features" className="hover:text-secondary transition-colors">Fonctionnalités</Link>
-            <Link href="#cards" className="hover:text-secondary transition-colors">Cartes</Link>
-            <Link href="#mobility" className="hover:text-secondary transition-colors">Mobilité</Link>
-          </div>
-          <div className="flex gap-4">
-            <Button variant="ghost" className="text-primary-foreground hover:bg-white/10 hidden sm:inline-flex" asChild>
-              <Link href="/login">Espace Client</Link>
-            </Button>
-            <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90" asChild>
-              <Link href="/register">Ouvrir un compte</Link>
-            </Button>
-          </div>
+    <div className="flex flex-col min-h-screen bg-white font-sans">
+      {/* HEADER */}
+      <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100">
+        <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+          <FortuneoLogo />
+          <OpenAccountBtn />
         </div>
       </header>
 
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="pt-32 pb-24 bg-primary text-primary-foreground relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2071&auto=format&fit=crop')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
-          <div className="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
-            <div className="space-y-8">
-              <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tighter">
-                Votre compte est <span className="text-secondary">déjà rentable</span>.
-              </h1>
-              <p className="text-xl text-primary-foreground/80 leading-relaxed max-w-lg">
-                Jusqu'à 250€ offerts pour toute première ouverture de compte bancaire. La banque en ligne premium, sans compromis sur la sécurité.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 text-lg px-8 h-14" asChild>
-                  <Link href="/register">Ouvrir un compte</Link>
-                </Button>
-                <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 h-14" asChild>
-                  <Link href="#features">Découvrir les offres</Link>
-                </Button>
-              </div>
-              <div className="flex items-center gap-4 text-sm font-medium text-primary-foreground/70">
-                <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-secondary" /> Sans engagement</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-secondary" /> 100% digital</span>
-              </div>
-            </div>
-            <div className="relative hidden md:block">
-              <div className="aspect-square bg-gradient-to-br from-secondary/30 to-transparent rounded-full absolute -inset-10 blur-3xl opacity-60"></div>
-              <div className="relative h-[500px] w-full flex items-center justify-center">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-96 bg-card rounded-2xl shadow-2xl border border-border rotate-[-10deg] transform origin-bottom-left transition-transform hover:rotate-0 duration-500 overflow-hidden">
-                  <div className="h-48 bg-primary p-6 flex flex-col justify-between text-primary-foreground">
-                    <div className="flex justify-between items-start">
-                      <CreditCard className="w-8 h-8 opacity-80" />
-                      <span className="font-mono text-xs opacity-70">BANK MONDIAL</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-xl font-bold tracking-widest">**** **** **** 4092</div>
-                      <div className="flex justify-between text-xs opacity-80 uppercase tracking-widest">
-                        <span>JEAN DUPONT</span>
-                        <span>12/28</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-4 bg-muted rounded w-1/2"></div>
-                    <div className="h-4 bg-muted rounded w-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+      <main className="flex-1 pt-14">
 
-        {/* Value Proposition */}
-        <section id="features" className="py-24 bg-background">
-          <div className="container mx-auto px-6">
-            <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground">Une banque pensée pour vous</h2>
-              <p className="text-muted-foreground text-lg">Tout ce dont vous avez besoin pour gérer votre argent au quotidien, directement depuis votre espace client.</p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { icon: Zap, title: "Virements instantanés gratuits", desc: "Envoyez et recevez de l'argent en quelques secondes, sans frais supplémentaires." },
-                { icon: Globe, title: "Paiements internationaux", desc: "0€ de frais sur vos paiements et retraits par carte partout dans le monde." },
-                { icon: Lock, title: "Sécurité maximale", desc: "Double authentification, blocage de carte en 1 clic et limites personnalisables." }
-              ].map((feature, i) => (
-                <div key={i} className="p-8 rounded-2xl bg-card border hover:shadow-lg transition-shadow">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
-                    <feature.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* SECTION 1 — Hero: Votre compte est déjà rentable */}
+        <section
+          className="relative flex flex-col justify-center px-6 py-12 min-h-[540px]"
+          style={{
+            background: "linear-gradient(135deg, #2a2a1e 0%, #3d3520 30%, #4a3f28 55%, #2e2a1a 80%, #1a1a12 100%)",
+          }}
+        >
+          {/* Sheen overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(115deg, rgba(255,220,100,0.08) 0%, rgba(255,255,255,0.04) 40%, transparent 60%)",
+            }}
+          />
+          <div className="relative z-10 text-white max-w-sm mx-auto w-full">
+            <h1 className="text-4xl font-bold leading-tight mb-4" style={{ fontFamily: "'Georgia', serif" }}>
+              Votre compte est déjà rentable.
+            </h1>
 
-        {/* Card Comparison */}
-        <section id="cards" className="py-24 bg-muted/50 border-y">
-          <div className="container mx-auto px-6">
-            <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground">Choisissez la carte qui vous correspond</h2>
-              <p className="text-muted-foreground text-lg">Nos cartes Mastercard sont gratuites sous réserve d'utilisation.</p>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-white/70 mb-1">JUSQU'À</p>
+            <div className="flex items-end gap-1 mb-1">
+              <span
+                className="font-bold leading-none"
+                style={{
+                  fontSize: "7rem",
+                  color: "transparent",
+                  WebkitTextStroke: "1.5px rgba(255,255,255,0.55)",
+                  letterSpacing: "-4px",
+                  lineHeight: 1,
+                }}
+              >
+                250
+              </span>
+              <span className="text-white/70 text-3xl font-light mb-4">€</span>
             </div>
-            
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Card 1 */}
-              <div className="bg-card rounded-2xl border p-8 shadow-sm flex flex-col relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4">
-                  <span className="bg-secondary/20 text-secondary-foreground text-xs font-bold px-3 py-1 rounded-full">SANS CONDITIONS</span>
-                </div>
-                <h3 className="text-2xl font-bold mb-2">Fosfo Mastercard</h3>
-                <div className="text-4xl font-extrabold mb-6">0€<span className="text-sm font-normal text-muted-foreground"> /mois</span></div>
-                <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span>Paiements et retraits gratuits partout dans le monde</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span>Carte à débit immédiat</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span>Assurances et assistances de base</span>
-                  </li>
-                </ul>
-                <Button className="w-full text-lg h-12" asChild>
-                  <Link href="/register">Choisir Fosfo</Link>
-                </Button>
-              </div>
+            <p className="text-3xl font-bold text-white -mt-2 mb-5">offerts</p>
 
-              {/* Card 2 */}
-              <div className="bg-primary text-primary-foreground rounded-2xl border border-primary-border p-8 shadow-xl flex flex-col relative overflow-hidden transform md:-translate-y-4">
-                <div className="absolute top-0 right-0 p-4">
-                  <span className="bg-secondary text-secondary-foreground text-xs font-bold px-3 py-1 rounded-full">PREMIUM</span>
-                </div>
-                <h3 className="text-2xl font-bold mb-2 text-secondary">Gold Mastercard</h3>
-                <div className="text-4xl font-extrabold mb-6">0€<span className="text-sm font-normal text-primary-foreground/70"> /mois</span></div>
-                <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-start gap-3 text-primary-foreground/90">
-                    <CheckCircle2 className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                    <span>Paiements et retraits gratuits partout dans le monde</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-primary-foreground/90">
-                    <CheckCircle2 className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                    <span>Débit immédiat ou différé au choix</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-primary-foreground/90">
-                    <CheckCircle2 className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                    <span>Plafonds de paiement et de retrait plus élevés</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-primary-foreground/90">
-                    <CheckCircle2 className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
-                    <span>Assurances voyages et loisirs étendues</span>
-                  </li>
-                </ul>
-                <Button className="w-full text-lg h-12 bg-secondary text-secondary-foreground hover:bg-secondary/90" asChild>
-                  <Link href="/register">Choisir Gold</Link>
-                </Button>
-                <div className="text-center mt-4 text-xs text-primary-foreground/60">
-                  Sous réserve de 1800€ de revenus nets mensuels
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Mobility Section */}
-        <section id="mobility" className="py-24 bg-background">
-          <div className="container mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
-            <div className="order-2 md:order-1 bg-muted rounded-2xl aspect-square p-8 flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
-              <div className="relative z-10 w-full max-w-sm space-y-4">
-                <div className="bg-card p-4 rounded-lg shadow-sm flex items-center gap-4 border">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm">Prélèvements transférés</div>
-                    <div className="text-xs text-muted-foreground">EDF, Orange, Free...</div>
-                  </div>
-                </div>
-                <div className="bg-card p-4 rounded-lg shadow-sm flex items-center gap-4 border ml-8">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm">Virements récurrents</div>
-                    <div className="text-xs text-muted-foreground">Salaire, CAF, Mutuelle...</div>
-                  </div>
-                </div>
-                <div className="bg-card p-4 rounded-lg shadow-sm flex items-center gap-4 border">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm">Ancien compte clôturé</div>
-                    <div className="text-xs text-muted-foreground">Automatiquement et sans frais</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="order-1 md:order-2 space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold">Changer de banque n'a jamais été aussi simple</h2>
-              <p className="text-xl text-muted-foreground">
-                Avec notre service de mobilité bancaire gratuit NeoChange, nous nous occupons de tout.
-              </p>
-              <ul className="space-y-4">
-                <li className="flex gap-3">
-                  <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">1</span>
-                  <div>
-                    <strong className="block mb-1">Ouvrez votre compte</strong>
-                    <span className="text-muted-foreground">En quelques minutes depuis votre smartphone ou ordinateur.</span>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">2</span>
-                  <div>
-                    <strong className="block mb-1">Signez le mandat de mobilité</strong>
-                    <span className="text-muted-foreground">Une simple signature électronique suffit. Nous contactons votre ancienne banque.</span>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">3</span>
-                  <div>
-                    <strong className="block mb-1">Profitez de Bank Mondial</strong>
-                    <span className="text-muted-foreground">Vos prélèvements et virements sont automatiquement redirigés.</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-24 bg-primary text-primary-foreground text-center px-6">
-          <div className="max-w-3xl mx-auto space-y-8">
-            <h2 className="text-4xl md:text-5xl font-bold">Prêt à reprendre le contrôle ?</h2>
-            <p className="text-xl text-primary-foreground/80">
-              Rejoignez les milliers de clients qui font déjà confiance à Bank Mondial pour la gestion de leur argent.
+            <p className="text-sm text-white/75 leading-relaxed mb-5">
+              pour une 1<sup>re</sup> ouverture de compte avec carte Gold CB Mastercard et 5 paiements en 90 jours (160€), complétée d'une 1<sup>re</sup> mobilité bancaire (+ 90€ offerts)
             </p>
-            <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 text-lg px-10 h-14" asChild>
-              <Link href="/register">Ouvrir un compte en 5 minutes <ArrowRight className="ml-2 w-5 h-5" /></Link>
-            </Button>
+
+            <button className="flex items-center gap-1.5 text-sm text-white/70 mb-8 hover:text-white transition-colors">
+              Voir conditions <Info className="w-4 h-4" />
+            </button>
+
+            <OpenAccountBtn className="w-full text-base py-4 text-center block font-bold" />
+
+            <p className="text-[10px] text-white/40 text-center mt-3">
+              Valable du 18/05/2026 au 30/06/2026
+            </p>
           </div>
         </section>
-      </main>
 
-      <footer className="bg-[#0f1f15] text-white/60 py-16 border-t border-white/10">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-            <div className="col-span-2 md:col-span-1">
-              <div className="font-bold text-xl text-white mb-6 flex items-center gap-2">
-                <ShieldCheck className="w-6 h-6 text-secondary" />
-                Bank Mondial
-              </div>
-              <p className="text-sm">La banque premium qui vous en donne plus. Sans frais cachés, sans compromis.</p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Comptes & Cartes</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="#" className="hover:text-secondary transition-colors">Compte courant</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Fosfo Mastercard</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Gold Mastercard</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Tarifs</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Services</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="#" className="hover:text-secondary transition-colors">Mobilité bancaire</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Parrainage</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Virements instantanés</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Légal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="#" className="hover:text-secondary transition-colors">Mentions légales</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Données personnelles</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Cookies</Link></li>
-                <li><Link href="#" className="hover:text-secondary transition-colors">Sécurité</Link></li>
-              </ul>
+        {/* SECTION 2 — Gold CB Mastercard Hero */}
+        <section
+          className="relative flex flex-col justify-end min-h-[500px] overflow-hidden"
+          style={{
+            background: "linear-gradient(180deg, #c8a84b 0%, #a07830 30%, #7a5c20 60%, #4a3810 100%)",
+          }}
+        >
+          <div className="w-full flex items-center justify-center pt-16 pb-6 px-6">
+            <div className="relative flex items-end justify-center" style={{ height: "200px", width: "280px" }}>
+              <img
+                src="/card-gold.jpeg"
+                alt="Gold CB Mastercard"
+                className="absolute w-52 object-contain drop-shadow-2xl rounded-xl"
+                style={{ bottom: 0, left: "50%", transform: "translateX(-50%) rotate(-15deg) translateX(-30px)", zIndex: 1 }}
+              />
+              <img
+                src="/card-gold.jpeg"
+                alt="Gold CB Mastercard 2"
+                className="absolute w-52 object-contain drop-shadow-2xl rounded-xl"
+                style={{ bottom: "20px", left: "50%", transform: "translateX(-50%) rotate(5deg) translateX(20px)", zIndex: 2 }}
+              />
             </div>
           </div>
-          <div className="pt-8 border-t border-white/10 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} Bank Mondial. Tous droits réservés.</p>
+          <div className="relative z-10 text-white text-center px-6 pb-10">
+            <h2 className="text-4xl font-bold mb-2" style={{ fontFamily: "'Georgia', serif" }}>
+              Gold CB<br />Mastercard
+            </h2>
+            <p className="text-white/80 text-base mb-8">Choisissez la carte qui vaut de l'or</p>
+            <OpenAccountBtn className="w-full text-base py-4 font-bold" />
+          </div>
+        </section>
+
+        {/* SECTION 3 — Gold Card: 0€/mois + features */}
+        <section
+          className="px-6 py-10"
+          style={{
+            background: "linear-gradient(180deg, #4a3810 0%, #6b5530 20%, #8b7040 40%, #a08050 60%, #7a6035 80%, #3a2c18 100%)",
+          }}
+        >
+          <div className="max-w-sm mx-auto text-white">
+            <div className="flex items-end gap-1 mb-0">
+              <span
+                className="font-bold text-[6rem] leading-none"
+                style={{ fontFamily: "'Georgia', serif" }}
+              >
+                0
+              </span>
+              <span className="text-3xl font-light mb-3">€</span>
+            </div>
+            <p className="text-white/80 text-lg -mt-1 mb-1">/mois</p>
+            <button className="flex items-center gap-1.5 text-sm text-white/60 mb-6 hover:text-white transition-colors">
+              Voir conditions <Info className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="bg-white/10 rounded-2xl p-5 mb-6">
+              <p className="font-bold text-base mb-4 text-center">
+                A partir de 2 200 € net de revenus mensuels
+              </p>
+              <ul className="space-y-3 text-sm text-white/90">
+                {[
+                  "Une carte à débit immédiat ou différé (dès 6 mois d'ancienneté)",
+                  "Des assurances et assistances premium pour les voyages et pour le reste ¹",
+                  "Des plafonds de paiement et de retrait étendus",
+                  "Paiements et retraits gratuits partout dans le monde ²",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-[#6DC142] mt-0.5 shrink-0">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <OpenAccountBtn className="w-full text-base py-4 font-bold" />
+          </div>
+        </section>
+
+        {/* SECTION 4 — Fosfo CB Mastercard */}
+        <section
+          className="px-6 py-12"
+          style={{
+            background: "linear-gradient(180deg, #1a3a2e 0%, #1f4535 25%, #234d3c 50%, #1a3a2e 75%, #152e25 100%)",
+          }}
+        >
+          <div className="max-w-sm mx-auto text-white">
+            <h2 className="text-4xl font-bold mb-2 text-center" style={{ fontFamily: "'Georgia', serif" }}>
+              Fosfo CB<br />Mastercard
+            </h2>
+            <p className="text-white/70 text-center mb-8">Jouez la carte de la facilité</p>
+
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-white/60 text-center mb-1">JUSQU'À</p>
+            <div className="flex items-end justify-center gap-1 mb-0">
+              <span
+                className="font-bold leading-none"
+                style={{
+                  fontSize: "7rem",
+                  color: "transparent",
+                  WebkitTextStroke: "1.5px rgba(255,255,255,0.50)",
+                  letterSpacing: "-4px",
+                  lineHeight: 1,
+                }}
+              >
+                140
+              </span>
+              <span className="text-white/60 text-3xl font-light mb-4">€</span>
+            </div>
+            <p className="text-3xl font-bold text-white text-center -mt-2 mb-5">offerts</p>
+
+            <p className="text-sm text-white/70 text-center leading-relaxed mb-5">
+              pour une 1<sup>re</sup> ouverture d'un compte avec une carte Fosfo CB Mastercard et 5 paiements dans les 90 jours (50 € offerts), complétée d'une 1<sup>re</sup> mobilité bancaire (+ 90 € offerts).
+            </p>
+
+            <button className="flex items-center gap-1.5 text-sm text-white/60 mx-auto mb-4 hover:text-white transition-colors">
+              Voir conditions <Info className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="text-center mb-8">
+              <p className="text-sm text-white/60">Avec le code opération : <span className="text-white font-semibold">FTN0626</span></p>
+              <p className="text-sm text-white/60">Valable du 18.05.2026 au 30.06.2026</p>
+            </div>
+
+            <OpenAccountBtn className="w-full text-base py-4 font-bold" />
+          </div>
+        </section>
+
+        {/* SECTION 5 — Comparer les cartes */}
+        <section className="bg-white px-6 py-12">
+          <div className="max-w-sm mx-auto">
+            <div className="text-center mb-8">
+              <p className="text-gray-400 text-2xl font-light">Comparer</p>
+              <h2 className="text-3xl font-bold text-gray-900">les cartes</h2>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="text-center">
+                <p className="font-semibold text-gray-800 text-sm mb-1">Fosfo CB Mastercard</p>
+                <p className="text-gray-400 text-xs mb-3">Jouez la carte de la facilité</p>
+                <div className="rounded-xl overflow-hidden shadow-md mx-auto w-32">
+                  <img src="/card-fosfo.jpeg" alt="Fosfo CB Mastercard" className="w-full object-cover" />
+                </div>
+                <p className="text-gray-600 text-xs mt-3">Sans conditions de revenus</p>
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-gray-800 text-sm mb-1">Gold CB Mastercard</p>
+                <p className="text-gray-400 text-xs mb-3">Choisissez la carte qui vaut de l'or</p>
+                <div className="rounded-xl overflow-hidden shadow-md mx-auto w-32">
+                  <img src="/card-gold.jpeg" alt="Gold CB Mastercard" className="w-full object-cover" />
+                </div>
+                <p className="text-gray-600 text-xs mt-3">A partir de 2 200 € net de revenus mensuels</p>
+              </div>
+            </div>
+
+            <button className="w-full border border-gray-300 rounded-full py-3.5 text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors mb-8">
+              <ChevronDown className="w-4 h-4" /> Voir le comparatif <ChevronDown className="w-4 h-4" />
+            </button>
+
+            <OpenAccountBtn className="w-full text-base py-4 font-bold" />
+          </div>
+        </section>
+
+        {/* SECTION 6 — Mobilité bancaire 90€ */}
+        <section className="bg-gray-50 px-6 py-12">
+          <div className="max-w-sm mx-auto">
+            <div className="rounded-2xl overflow-hidden shadow-lg mb-8">
+              <img src="/mobility-iban.jpeg" alt="Mobilité bancaire" className="w-full object-cover" />
+            </div>
+
+            <div className="text-center mb-6">
+              <div className="flex items-end justify-center gap-1 mb-1">
+                <span className="text-[5rem] font-bold leading-none text-gray-900" style={{ fontFamily: "'Georgia', serif" }}>
+                  90
+                </span>
+                <span className="text-3xl text-gray-500 mb-3">€</span>
+              </div>
+              <p className="text-gray-600 text-base">offerts, directement inclus dans votre prime.</p>
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
+              Demandez votre mobilité bancaire
+            </h2>
+
+            <OpenAccountBtn className="w-full text-base py-4 font-bold" />
+
+            <p className="text-xs text-gray-400 text-center mt-4 leading-relaxed">
+              Pour vos opérations récurrentes (prélèvements loyer, internet, impôts…) et virements récurrents chez Fortuneo.
+            </p>
+          </div>
+        </section>
+
+        {/* SECTION 7 — Sauter le pas */}
+        <section
+          className="px-6 py-12"
+          style={{
+            background: "linear-gradient(180deg, #c8a84b 0%, #b89040 30%, #a07830 60%, #c8a84b 100%)",
+          }}
+        >
+          <div className="max-w-sm mx-auto">
+            <h2 className="text-4xl font-bold text-center mb-4" style={{ fontFamily: "'Georgia', serif" }}>
+              <span className="text-white/60 font-light">Sauter le pas n'a jamais</span>
+              <br />
+              <span className="text-gray-900">été aussi facile.</span>
+            </h2>
+
+            <p className="text-sm text-gray-800/80 text-center leading-relaxed mb-6">
+              Jusqu'à 250 € offerts pour ouverture de compte avec une carte Gold Mastercard.
+              <br />
+              Cumul de 160 € (Carte Gold) + 90 € (Mobilité bancaire).
+            </p>
+
+            {/* Toggle Carte Gold / Carte Fosfo */}
+            <div className="bg-white/20 rounded-full p-1 flex mb-6">
+              <button
+                onClick={() => setActiveCard("gold")}
+                className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition-all ${
+                  activeCard === "gold"
+                    ? "bg-white text-gray-900 shadow"
+                    : "text-gray-800/70"
+                }`}
+              >
+                Carte Gold
+              </button>
+              <button
+                onClick={() => setActiveCard("fosfo")}
+                className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition-all ${
+                  activeCard === "fosfo"
+                    ? "bg-white text-gray-900 shadow"
+                    : "text-gray-800/70"
+                }`}
+              >
+                Carte Fosfo
+              </button>
+            </div>
+
+            {/* Card detail box */}
+            <div
+              className="rounded-2xl p-5 mb-6"
+              style={{
+                background: activeCard === "gold"
+                  ? "rgba(190,150,60,0.7)"
+                  : "rgba(30,70,55,0.85)",
+              }}
+            >
+              {activeCard === "gold" ? (
+                <div className="text-white">
+                  <p className="font-bold text-base text-center mb-3">
+                    Ouvrez votre compte bancaire avec une carte Gold CB Mastercard
+                  </p>
+                  <img src="/card-gold.jpeg" alt="Gold" className="w-40 rounded-xl mx-auto mb-4 shadow-lg" />
+                  <ul className="space-y-2 text-sm text-white/90">
+                    <li className="flex items-start gap-2"><span className="text-[#6DC142]">•</span> 160 € offerts pour 5 paiements en 90 jours</li>
+                    <li className="flex items-start gap-2"><span className="text-[#6DC142]">•</span> + 90 € offerts pour mobilité bancaire</li>
+                    <li className="flex items-start gap-2"><span className="text-[#6DC142]">•</span> À partir de 2 200 € net/mois</li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="text-white">
+                  <p className="font-bold text-base text-center mb-3">
+                    Ouvrez votre compte bancaire avec une carte Fosfo CB Mastercard
+                  </p>
+                  <img src="/card-fosfo.jpeg" alt="Fosfo" className="w-40 rounded-xl mx-auto mb-4 shadow-lg" />
+                  <ul className="space-y-2 text-sm text-white/90">
+                    <li className="flex items-start gap-2"><span className="text-[#6DC142]">•</span> 50 € offerts pour 5 paiements en 90 jours</li>
+                    <li className="flex items-start gap-2"><span className="text-[#6DC142]">•</span> + 90 € offerts pour mobilité bancaire</li>
+                    <li className="flex items-start gap-2"><span className="text-[#6DC142]">•</span> Sans conditions de revenus</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <OpenAccountBtn className="w-full text-base py-4 font-bold" />
+          </div>
+        </section>
+
+        {/* SECTION 8 — Conditions légales */}
+        <section className="bg-white px-6 py-10">
+          <div className="max-w-sm mx-auto">
+            <button
+              onClick={() => setShowConditions(!showConditions)}
+              className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4 hover:text-gray-900 transition-colors"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${showConditions ? "rotate-180" : ""}`} />
+              Conditions de l'offre
+            </button>
+
+            {showConditions && (
+              <div className="space-y-4 text-xs text-gray-500 leading-relaxed">
+                <p><span className="text-[#5BAF32] font-semibold">(1)</span> Voir détails, limites et conditions dans la notice d'information d'assurance et d'assistance.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(2)</span> Hors frais de conversion monétaire et frais éventuels prélevés par l'établissement propriétaire du distributeur.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(3)</span> L'accès à ce service est réservé aux clients titulaires d'un compte bancaire associé à l'une des cartes bancaires visées dans les conditions tarifaires en vigueur.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(4)</span> Sous réserve d'acceptation de la demande et que le compte de dépôt associé soit ouvert depuis plus de 6 mois.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(5)</span> Code secret personnalisable effectif lors d'une souscription sur le site.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(6)</span> Fortuneo se réserve la faculté, pour les clients détenteurs d'une carte bancaire, d'octroyer un découvert autorisé dont le montant est de 200 € maximum.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(7)</span> Dans la limite des plafonds de la carte bancaire et sous réserve de compatibilité du terminal de paiement.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(8)</span> Sous réserve de compatibilité de la banque du destinataire avec le service de virement instantané et dans la limite de vos plafonds de virement.</p>
+                <p><span className="text-[#5BAF32] font-semibold">(9)</span> Sous réserve d'acceptation de la demande.</p>
+                <p>
+                  <span className="text-[#5BAF32] font-semibold">(10)</span> Du 18 Mai 2026 au 30 Juin 2026 inclus, jusqu'à 250 euros offerts par Fortuneo sous réserve de satisfaire aux conditions suivantes :
+                  <br /><br />
+                  - 160 euros offerts pour la première ouverture d'un compte avec une carte Gold CB Mastercard suivie de 5 paiements dans un délai de 90 jours maximum.
+                  <br /><br />
+                  OU
+                  <br /><br />
+                  - 50 euros offerts pour la première ouverture d'un compte avec une carte Fosfo CB Mastercard suivie de 5 paiements dans un délai de 90 jours maximum.
+                  <br /><br />
+                  ET
+                  <br /><br />
+                  - 90 euros offerts pour toute première utilisation du service d'aide à la mobilité bancaire neoChange.
+                  <br /><br />
+                  Offres réservées aux personnes physiques majeures, hors salariés, n'ayant jamais été détentrices de compte chez Fortuneo. Code opération : "FTN0626". Dossier complet à recevoir au plus tard le 14/07/2026.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-8 pt-8 border-t border-gray-100 text-center">
+              <p className="text-xs text-gray-400">
+                Fortuneo est une marque commerciale d'Arkéa Direct Bank. Arkéa Direct Bank, Société Anonyme au capital de 89 198 952 euros. RCS Nanterre 384 288 890.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Sticky bottom CTA */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-3 shadow-lg">
+          <div className="max-w-sm mx-auto">
+            <OpenAccountBtn className="w-full text-base py-4 font-bold" />
           </div>
         </div>
-      </footer>
+      </main>
     </div>
   );
 }
