@@ -109,7 +109,7 @@ function FadeUp({ children, delay = 0, className = "" }: { children: React.React
 
 export default function Landing() {
   const [activeCard, setActiveCard] = useState<"gold" | "fosfo">("gold");
-  const [showConditions, setShowConditions] = useState(false);
+  const [showConditions, setShowConditions] = useState(true);
   const [showComparatif, setShowComparatif] = useState(false);
 
   /* hero counters */
