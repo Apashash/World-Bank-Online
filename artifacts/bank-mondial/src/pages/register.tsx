@@ -305,8 +305,8 @@ function ContactForm({
       <input type="text" placeholder="Code postal et ville d'habitation *" value={data.codePostal}
         onChange={e => onChangeHolder("codePostal", e.target.value)} className={inputCls} autoComplete="postal-code" />
 
-      <label className="flex items-start gap-3 cursor-pointer">
-        <div onClick={() => onChangeHolder("certifie", !data.certifie)}
+      <label className="flex items-start gap-3 cursor-pointer" onClick={() => onChangeHolder("certifie", !data.certifie)}>
+        <div
           className={["w-5 h-5 shrink-0 rounded border-2 flex items-center justify-center transition-all mt-0.5",
             data.certifie ? "bg-[#6DC142] border-[#6DC142]" : "border-gray-300 bg-white"].join(" ")}>
           {data.certifie && (
