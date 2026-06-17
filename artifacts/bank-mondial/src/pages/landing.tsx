@@ -1,7 +1,8 @@
 import { Link } from "wouter";
 import { useState, useEffect, useRef } from "react";
-import { Info, ChevronDown } from "lucide-react";
+import { Info, ChevronDown, X } from "lucide-react";
 import BankCard from "@/components/BankCard";
+import heroImage from "@assets/IMG_3956_1781683455055.jpeg";
 
 /* ═══════════════════════════════════════════
    ANIMATION HOOKS
@@ -124,36 +125,68 @@ function StaggerList({ items, renderItem, className = "", itemClass = "", baseDe
 }
 
 /* ═══════════════════════════════════════════
+   ANNOUNCEMENT BANNER
+═══════════════════════════════════════════ */
+function AnnouncementBanner({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="w-full flex items-center justify-center gap-3 px-4 py-2.5 text-center text-sm"
+      style={{ background: "#1c1c1c", color: "rgba(255,255,255,0.75)" }}>
+      <span>
+        80 € offerts pour votre première ouverture d'un compte de dépôt avec carte Gold CB Mastercard.{" "}
+        <button className="underline underline-offset-2 hover:text-white transition-colors">
+          Voir conditions
+        </button>{" "}
+        <Info className="inline w-3.5 h-3.5 align-middle opacity-60" />
+      </span>
+      <button onClick={onClose} className="ml-2 shrink-0 opacity-50 hover:opacity-100 transition-opacity">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
    HEADER
 ═══════════════════════════════════════════ */
-function Header() {
+function Header({ bannerVisible }: { bannerVisible: boolean }) {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, []);
+  const bannerH = bannerVisible ? "40px" : "0px";
   return (
-    <header className="fixed top-0 w-full z-50 transition-all duration-300" style={{
-      background: scrolled ? "rgba(255,255,255,0.97)" : "rgba(255,255,255,1)",
-      boxShadow: scrolled ? "0 1px 20px rgba(0,0,0,0.08)" : "0 1px 0 rgba(0,0,0,0.06)",
-      backdropFilter: scrolled ? "blur(12px)" : "none",
-    }}>
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
-        <Link href="/">
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <img src="/logo-banque-mondiale.png" alt="Banque Mondiale"
-              className="h-9 w-9 sm:h-11 sm:w-11 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
-            <span className="font-black text-[11px] sm:text-[13px] leading-tight tracking-wider uppercase text-[#003087] whitespace-nowrap">
-              BANQUE MONDIALE
-            </span>
-          </div>
-        </Link>
-        <Link href="/register">
-          <button className="rounded-full font-bold text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-2.5 bg-[#6DC142] text-[#1a2e10] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-            Ouvrir un compte
+    <header className="fixed top-0 w-full z-50 transition-all duration-300" style={{ top: bannerH }}>
+      <div className="w-full transition-all duration-300" style={{
+        background: scrolled ? "rgba(10,10,10,0.97)" : "#0a0a0a",
+        boxShadow: scrolled ? "0 1px 20px rgba(0,0,0,0.4)" : "none",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+      }}>
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+          <Link href="/">
+            <div className="flex items-center gap-2 cursor-pointer group">
+              <img src="/logo-banque-mondiale.png" alt="Banque Mondiale"
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105 brightness-0 invert" />
+              <span className="font-black text-[11px] sm:text-[13px] leading-tight tracking-wider uppercase text-white whitespace-nowrap">
+                BANQUE MONDIALE
+              </span>
+            </div>
+          </Link>
+          <Link href="/register">
+            <button className="rounded-full font-bold text-sm px-5 py-2 bg-[#6DC142] text-[#0a1a04] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200">
+              Ouvrir un compte
+            </button>
+          </Link>
+          <button onClick={() => setMenuOpen(o => !o)} className="ml-3 text-white opacity-70 hover:opacity-100 transition-opacity">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect y="4" width="22" height="2" rx="1" fill="currentColor"/>
+              <rect y="10" width="22" height="2" rx="1" fill="currentColor"/>
+              <rect y="16" width="22" height="2" rx="1" fill="currentColor"/>
+            </svg>
           </button>
-        </Link>
+        </div>
       </div>
     </header>
   );
@@ -176,6 +209,7 @@ export default function Landing() {
   const [activeCard, setActiveCard] = useState<"gold" | "fosfo">("gold");
   const [showConditions, setShowConditions] = useState(true);
   const [showComparatif, setShowComparatif] = useState(true);
+  const [bannerVisible, setBannerVisible] = useState(true);
   const scrollProgress = useScrollProgress();
   const parallaxY = useParallax(0.18);
 
@@ -192,6 +226,8 @@ export default function Landing() {
   const counter250 = useCounter(250, heroVisible, 1600);
   const { ref: mobilityRef, visible: mobilityVisible } = useInView(0.2);
   const counter90 = useCounter(90, mobilityVisible, 1100);
+
+  const topOffset = bannerVisible ? "94px" : "56px";
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans overflow-x-hidden">
@@ -223,70 +259,43 @@ export default function Landing() {
       <div className="fixed top-0 left-0 z-[60] h-[3px] bg-[#6DC142] transition-all duration-100"
         style={{ width: `${scrollProgress * 100}%` }} />
 
-      <Header />
+      {/* ── Fixed announcement banner ── */}
+      {bannerVisible && (
+        <div className="fixed top-0 left-0 w-full z-[55]">
+          <AnnouncementBanner onClose={() => setBannerVisible(false)} />
+        </div>
+      )}
 
-      <main className="flex-1 pt-14 sm:pt-16">
+      <Header bannerVisible={bannerVisible} />
+
+      <main className="flex-1" style={{ paddingTop: topOffset }}>
 
         {/* ══════════════════════════════════════════
-            SECTION 1 — HERO
+            SECTION 1 — HERO PHOTO
         ══════════════════════════════════════════ */}
-        <section ref={heroRef} className="relative flex items-center justify-center min-h-[600px] sm:min-h-[680px] px-6 py-16 overflow-hidden"
-          style={{ background: "linear-gradient(135deg, #2a2a1e 0%, #3d3520 30%, #4a3f28 55%, #2e2a1a 80%, #1a1a12 100%)" }}>
-          {/* Parallax background texture */}
-          <div className="absolute inset-0 pointer-events-none" style={{ transform: `translateY(${parallaxY}px)` }}>
-            <div style={{ background: "linear-gradient(115deg, rgba(255,220,100,0.08) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)", position: "absolute", inset: 0 }} />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] rounded-full"
-              style={{ background: "radial-gradient(ellipse, rgba(200,168,75,0.15) 0%, transparent 70%)" }} />
-            {/* Decorative orbiting ring */}
-            <div className="hidden lg:block absolute right-[12%] top-[15%] w-64 h-64 rounded-full border border-white/5"
-              style={{ animation: "spin-slow 30s linear infinite" }} />
-            <div className="hidden lg:block absolute right-[15%] top-[18%] w-40 h-40 rounded-full border border-white/8"
-              style={{ animation: "spin-slow 20s linear infinite reverse" }} />
+        <section ref={heroRef} className="relative flex items-end overflow-hidden"
+          style={{ minHeight: "calc(100svh - 94px)" }}>
+          {/* Photo background with parallax */}
+          <div className="absolute inset-0">
+            <img
+              src={heroImage}
+              alt="Banque Mondiale"
+              className="w-full h-full object-cover object-top"
+              style={{ transform: `translateY(${parallaxY * 0.5}px)`, transformOrigin: "center top" }}
+            />
+            {/* Gradient overlay — sky stays clear, bottom goes dark */}
+            <div className="absolute inset-0" style={{
+              background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 38%, rgba(0,0,0,0.1) 68%, transparent 100%)"
+            }} />
           </div>
 
-          <div className="relative z-10 text-white w-full max-w-lg mx-auto lg:max-w-5xl lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
-            {/* Left */}
-            <div>
-              <h1 className="anim-title text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
-                style={{ fontFamily: "Georgia, serif" }}>
-                Votre compte est<br />déjà rentable.
-              </h1>
-
-              <div className="anim-sub1">
-                <p className="text-xs font-bold tracking-[0.25em] uppercase text-white/55 mb-1">JUSQU'À</p>
-                <div className="flex items-end gap-2">
-                  <span className="num-pulse font-bold leading-none select-none"
-                    style={{ fontSize: "clamp(5rem,18vw,9rem)", color: "transparent", WebkitTextStroke: "1.5px rgba(255,255,255,0.6)", letterSpacing: "-4px", lineHeight: 1 }}>
-                    {counter250}
-                  </span>
-                  <span className="text-white/55 text-4xl font-light mb-4">€</span>
-                </div>
-                <p className="text-3xl sm:text-4xl font-bold text-white -mt-2 mb-5">offerts</p>
-              </div>
-
-              <div className="anim-sub2">
-                <p className="text-sm sm:text-base text-white/70 leading-relaxed mb-5 max-w-sm">
-                  Pour une 1<sup>re</sup> ouverture avec carte Gold CB Mastercard et 5 paiements en 90 jours (160€), complétée d'une mobilité bancaire (+ 90€).
-                </p>
-                <button className="flex items-center gap-1.5 text-sm text-white/50 mb-8 hover:text-white/90 transition-colors">
-                  Voir conditions <Info className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="anim-sub3">
-                <Cta className="shimmer-btn relative overflow-hidden w-full sm:w-auto text-base px-8 py-4" />
-                <p className="text-[10px] text-white/30 mt-3">Valable du 18/05/2026 au 30/06/2026</p>
-              </div>
-            </div>
-
-            {/* Right — floating cards (desktop) */}
-            <div className="hidden lg:flex items-center justify-center">
-              <div className="relative w-80 h-64">
-                <BankCard variant="gold" className="card-float-1 absolute w-60"
-                  style={{ bottom: 0, left: "50%", zIndex: 1 }} />
-                <BankCard variant="fosfo" className="card-float-2 absolute w-60"
-                  style={{ bottom: "30px", left: "50%", zIndex: 2 }} />
-              </div>
+          {/* Text overlay at bottom */}
+          <div className="relative z-10 w-full px-6 pb-10 sm:pb-14 max-w-xl">
+            <h1 className="anim-title text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] text-white mb-7">
+              La banque en ligne qui va vous faire aimer les chiffres
+            </h1>
+            <div className="anim-sub1">
+              <Cta className="shimmer-btn relative overflow-hidden w-full sm:w-auto text-base px-8 py-4" />
             </div>
           </div>
         </section>
