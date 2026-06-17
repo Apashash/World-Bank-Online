@@ -168,7 +168,7 @@ function Header({ bannerVisible }: { bannerVisible: boolean }) {
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer group">
               <img src="/logo-banque-mondiale.png" alt="Banque Mondiale"
-                className="h-8 w-8 sm:h-10 sm:w-10 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105 brightness-0 invert" />
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
               <span className="font-black text-[11px] sm:text-[13px] leading-tight tracking-wider uppercase text-white whitespace-nowrap">
                 BANQUE MONDIALE
               </span>
