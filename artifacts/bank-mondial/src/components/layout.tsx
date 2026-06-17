@@ -64,6 +64,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { label: "Admin — KYC", href: "/admin/kyc", icon: ShieldCheck },
   ];
 
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation("/login");
+    }
+  }, [isLoading, user, setLocation]);
+
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-gray-50">
@@ -74,12 +80,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      setLocation("/login");
-    }
-  }, [isLoading, user, setLocation]);
 
   if (!user) {
     return null;
