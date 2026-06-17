@@ -22,6 +22,7 @@ import Referrals from "@/pages/referrals";
 import Kyc from "@/pages/kyc";
 import Settings from "@/pages/settings";
 
+import AccountTypeSelect from "@/pages/account-type-select";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminUsers from "@/pages/admin-users";
 import AdminTransfers from "@/pages/admin-transfers";
@@ -44,6 +45,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
+      <Route path="/open-account" component={AccountTypeSelect} />
       <Route path="/register" component={Register} />
       <Route path="/t/:token" component={TransferLink} />
       

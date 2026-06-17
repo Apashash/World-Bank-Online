@@ -174,7 +174,7 @@ function Header({ bannerVisible }: { bannerVisible: boolean }) {
               </span>
             </div>
           </Link>
-          <Link href="/register">
+          <Link href="/open-account">
             <button className="rounded-full font-bold text-sm px-5 py-2 bg-[#6DC142] text-[#0a1a04] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200">
               Ouvrir un compte
             </button>
@@ -194,7 +194,7 @@ function Header({ bannerVisible }: { bannerVisible: boolean }) {
 
 function Cta({ label = "Ouvrir un compte", className = "" }: { label?: string; className?: string }) {
   return (
-    <Link href="/register">
+    <Link href="/open-account">
       <button className={`rounded-full font-bold bg-[#6DC142] text-[#1a2e10] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 cta-pulse ${className}`}>
         {label}
       </button>
