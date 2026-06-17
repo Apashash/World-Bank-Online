@@ -23,6 +23,8 @@ import Kyc from "@/pages/kyc";
 import Settings from "@/pages/settings";
 
 import AccountTypeSelect from "@/pages/account-type-select";
+import OpenAccountOffer from "@/pages/open-account-offer";
+import OpenAccountSteps from "@/pages/open-account-steps";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminUsers from "@/pages/admin-users";
 import AdminTransfers from "@/pages/admin-transfers";
@@ -46,6 +48,8 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/open-account" component={AccountTypeSelect} />
+      <Route path="/open-account/offer" component={OpenAccountOffer} />
+      <Route path="/open-account/steps" component={OpenAccountSteps} />
       <Route path="/register" component={Register} />
       <Route path="/t/:token" component={TransferLink} />
       

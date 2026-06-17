@@ -53,7 +53,7 @@ export default function AccountTypeSelect() {
 
   const handleNext = () => {
     if (!selected) return;
-    setLocation(`/register?type=${selected}`);
+    setLocation(`/open-account/offer?type=${selected}`);
   };
 
   return (
