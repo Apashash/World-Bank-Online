@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useRegister } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, Eye, EyeOff } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Search } from "lucide-react";
+import { COUNTRIES } from "@/data/countries";
 
 /* ─── Types ─── */
 interface HolderData {
@@ -30,18 +31,6 @@ const EMPTY_HOLDER: HolderData = {
   indicatif: "+33", phone: "", codePostal: "", certifie: false,
 };
 
-const INDICATIFS = [
-  { code: "+33", label: "🇫🇷 +33" },
-  { code: "+32", label: "🇧🇪 +32" },
-  { code: "+41", label: "🇨🇭 +41" },
-  { code: "+352", label: "🇱🇺 +352" },
-  { code: "+212", label: "🇲🇦 +212" },
-  { code: "+216", label: "🇹🇳 +216" },
-  { code: "+213", label: "🇩🇿 +213" },
-  { code: "+225", label: "🇨🇮 +225" },
-  { code: "+221", label: "🇸🇳 +221" },
-  { code: "+1", label: "🇺🇸 +1" },
-];
 
 /* ─── Screen sequences ─── */
 type ScreenName =
@@ -220,6 +209,34 @@ function ContactForm({
   showEmail: boolean;
 }) {
   const [showIndicatif, setShowIndicatif] = useState(false);
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (showIndicatif) setTimeout(() => searchRef.current?.focus(), 50);
+  }, [showIndicatif]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowIndicatif(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = search.trim()
+    ? COUNTRIES.filter(c =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.dial.includes(search)
+      )
+    : COUNTRIES;
+
+  const selectedCountry = COUNTRIES.find(c => c.dial === data.indicatif);
+
   return (
     <FieldBlock>
       {showEmail && (
@@ -234,23 +251,46 @@ function ContactForm({
 
       <div>
         <div className="flex gap-2">
-          <div className="relative shrink-0">
-            <button type="button" onClick={() => setShowIndicatif(o => !o)}
-              className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-3.5 text-sm text-gray-700 hover:border-gray-300 transition-all min-w-[88px]">
-              <span className="text-xs font-medium">Indicatif</span>
-              <span className="text-xs text-gray-500">{data.indicatif}</span>
+          <div className="relative shrink-0" ref={dropdownRef}>
+            <button type="button" onClick={() => { setShowIndicatif(o => !o); setSearch(""); }}
+              className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-3.5 text-sm text-gray-700 hover:border-gray-300 transition-all min-w-[96px]">
+              <span className="text-base leading-none">{selectedCountry?.flag ?? "🌍"}</span>
+              <span className="text-xs text-gray-600 font-medium">{data.indicatif}</span>
               <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             </button>
+
             {showIndicatif && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden min-w-[140px]">
-                {INDICATIFS.map(ind => (
-                  <button key={ind.code} type="button"
-                    onClick={() => { onChangeHolder("indicatif", ind.code); setShowIndicatif(false); }}
-                    className={["w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors",
-                      data.indicatif === ind.code ? "text-[#003087] font-semibold" : "text-gray-700"].join(" ")}>
-                    {ind.label}
-                  </button>
-                ))}
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-72"
+                style={{ maxHeight: 320, display: "flex", flexDirection: "column" }}>
+                {/* Search bar */}
+                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
+                  <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    placeholder="Rechercher un pays ou indicatif…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="flex-1 text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+                  />
+                </div>
+                {/* List */}
+                <div className="overflow-y-auto" style={{ maxHeight: 260 }}>
+                  {filtered.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-6">Aucun résultat</p>
+                  ) : filtered.map(c => (
+                    <button key={c.code} type="button"
+                      onClick={() => { onChangeHolder("indicatif", c.dial); setShowIndicatif(false); setSearch(""); }}
+                      className={["w-full text-left flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors",
+                        data.indicatif === c.dial ? "bg-[#003087]/5" : ""].join(" ")}>
+                      <span className="text-lg leading-none shrink-0">{c.flag}</span>
+                      <span className={["text-sm flex-1 truncate", data.indicatif === c.dial ? "text-[#003087] font-semibold" : "text-gray-800"].join(" ")}>
+                        {c.name}
+                      </span>
+                      <span className="text-xs text-gray-400 shrink-0 font-mono">{c.dial}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
