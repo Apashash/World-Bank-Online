@@ -330,6 +330,8 @@ export default function Register() {
   const [screenIdx, setScreenIdx] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [formData, setFormData] = useState<FormData>({
     email: "",
     holder1: { ...EMPTY_HOLDER },
@@ -352,7 +354,10 @@ export default function Register() {
   const { toast } = useToast();
   const registerMutation = useRegister();
 
-  const setEmail = (v: string) => setFormData(p => ({ ...p, email: v }));
+  const setEmail = (v: string) => {
+    setFormData(p => ({ ...p, email: v }));
+    if (emailError) setEmailError("");
+  };
   const setHolder1 = (key: keyof HolderData, val: string | boolean) =>
     setFormData(p => ({ ...p, holder1: { ...p.holder1, [key]: val } }));
   const setHolder2 = (key: keyof HolderData, val: string | boolean) =>
@@ -370,6 +375,7 @@ export default function Register() {
   };
 
   const handleSubmit = () => {
+    setSubmitError("");
     const h = formData.holder1;
     const fullName = [h.civilite, h.prenom, h.nomNaissance].filter(Boolean).join(" ");
     registerMutation.mutate(
@@ -389,7 +395,15 @@ export default function Register() {
           setLocation("/dashboard");
         },
         onError: (err: any) => {
-          toast({ title: "Erreur d'inscription", description: err.message || "Une erreur est survenue", variant: "destructive" });
+          const msg: string = err?.response?.data?.error ?? err?.message ?? "Une erreur est survenue";
+          const isEmailTaken = msg.toLowerCase().includes("email") || msg.toLowerCase().includes("already");
+          if (isEmailTaken) {
+            setEmailError("Cette adresse email est déjà utilisée. Veuillez en choisir une autre.");
+            setScreenIdx(0);
+          } else {
+            setSubmitError(msg);
+            toast({ title: "Erreur d'inscription", description: msg, variant: "destructive" });
+          }
         },
       }
     );
@@ -403,12 +417,27 @@ export default function Register() {
         <main className="flex-1 px-4 pt-7 pb-36 space-y-4">
           <h2 className="text-xl font-bold text-gray-900 px-1">Saisissez votre adresse email</h2>
           <FieldBlock>
-            <input type="email" placeholder="Votre adresse e-mail *" value={formData.email}
-              onChange={e => setEmail(e.target.value)} className={inputCls} autoComplete="email" />
-            <p className="text-xs text-gray-400 px-1">Votre email sera utilisé exclusivement pour le suivi de votre dossier</p>
+            <input
+              type="email"
+              placeholder="Votre adresse e-mail *"
+              value={formData.email}
+              onChange={e => setEmail(e.target.value)}
+              className={[inputCls, emailError ? "border-red-400 focus:border-red-400 focus:ring-red-100" : ""].join(" ")}
+              autoComplete="email"
+            />
+            {emailError ? (
+              <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-3 py-2.5">
+                <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <p className="text-xs text-red-600 leading-relaxed">{emailError}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 px-1">Votre email sera utilisé exclusivement pour le suivi de votre dossier</p>
+            )}
           </FieldBlock>
         </main>
-        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!formData.email.includes("@")} />
+        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!formData.email.includes("@") || !!emailError} />
       </div>
     );
   }
@@ -660,6 +689,15 @@ export default function Register() {
             onChange={e => set("referralCode", e.target.value)} className={inputCls} />
           <p className="text-xs text-gray-400 px-1">Si vous avez reçu un code de parrainage, saisissez-le ici.</p>
         </div>
+
+        {submitError && (
+          <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+            <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm text-red-600 leading-relaxed">{submitError}</p>
+          </div>
+        )}
 
         <p className="text-xs text-gray-400 text-center px-4 leading-relaxed">
           Vos données sont protégées conformément à la réglementation en vigueur.<br />
