@@ -7,8 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Lock, Mail, Globe, ShieldCheck, Zap } from "lucide-react";
-import BankCard from "@/components/BankCard";
+import { ArrowLeft, Mail, Globe, ShieldCheck, Zap } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -83,20 +82,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans overflow-x-hidden">
-      <style>{`
-        @keyframes slide-left { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
-        @keyframes slide-up   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes num-glow   { 0%,100% { opacity:.55; } 50% { opacity:.9; } }
-        @keyframes card-bob   { 0%,100% { transform:translateY(0) rotate(-8deg); } 50% { transform:translateY(-10px) rotate(-8deg); } }
-        @keyframes card-bob2  { 0%,100% { transform:translateY(0) rotate(6deg); } 50% { transform:translateY(-14px) rotate(6deg); } }
-        .anim-left  { animation: slide-left 0.75s ease both; }
-        .anim-up    { animation: slide-up  0.65s ease both; }
-        .anim-up-2  { animation: slide-up  0.65s ease 0.15s both; }
-        .anim-up-3  { animation: slide-up  0.65s ease 0.3s both; }
-        .num-glow   { animation: num-glow 3s ease-in-out infinite; }
-        .bob1 { animation: card-bob  4s ease-in-out infinite; }
-        .bob2 { animation: card-bob2 4s ease-in-out infinite 0.7s; }
-      `}</style>
 
       {/* ── Header ── */}
       <header className="fixed top-0 w-full z-50 transition-all duration-300"
@@ -124,45 +109,6 @@ export default function Login() {
       </header>
 
       <main className="flex-1 pt-14 sm:pt-16">
-
-        {/* ── Hero section — dark golden ── */}
-        <section className="relative flex flex-col lg:flex-row items-center justify-center min-h-[420px] sm:min-h-[480px] px-6 py-16 overflow-hidden"
-          style={{ background: "linear-gradient(135deg, #2a2a1e 0%, #3d3520 30%, #4a3f28 55%, #2e2a1a 80%, #1a1a12 100%)" }}>
-          {/* Sheen */}
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: "linear-gradient(115deg, rgba(255,220,100,0.07) 0%, rgba(255,255,255,0.03) 40%, transparent 60%)" }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(ellipse, rgba(200,168,75,0.1) 0%, transparent 70%)" }} />
-
-          {/* Left — text */}
-          <div className="relative z-10 text-white text-center lg:text-left max-w-lg lg:max-w-2xl lg:flex-1">
-            <div className="anim-left">
-              <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 mb-6 text-xs sm:text-sm text-white/70 font-medium backdrop-blur-sm border border-white/10">
-                <Lock className="w-3.5 h-3.5" />
-                Espace client sécurisé
-              </div>
-            </div>
-            <img src="/logo-banque-mondiale.png" alt="Banque Mondiale"
-              className="anim-up h-16 w-16 sm:h-20 sm:w-20 object-contain mb-4 mx-auto lg:mx-0" />
-            <h1 className="anim-up-2 text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 leading-tight"
-              style={{ fontFamily: "Georgia, serif" }}>
-              Connectez-vous à<br />votre espace client
-            </h1>
-            <p className="anim-up-3 text-white/60 text-sm sm:text-base max-w-sm mx-auto lg:mx-0">
-              Accédez à vos comptes, cartes et services bancaires en toute sécurité.
-            </p>
-          </div>
-
-          {/* Right — floating cards (desktop only) */}
-          <div className="hidden lg:flex flex-1 items-center justify-center mt-8 lg:mt-0">
-            <div className="relative w-72 h-52">
-              <BankCard variant="gold" className="bob1 absolute w-52"
-                style={{ bottom: 0, left: "30px", zIndex: 1 }} />
-              <BankCard variant="fosfo" className="bob2 absolute w-52"
-                style={{ bottom: "28px", left: "70px", zIndex: 2 }} />
-            </div>
-          </div>
-        </section>
 
         {/* ── Promo band ── */}
         <section className="px-6 py-6 sm:py-8"
