@@ -14,12 +14,16 @@ function useInView(threshold = 0.12) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
+    if (typeof IntersectionObserver === "undefined") { setVisible(true); return; }
+    let obs: IntersectionObserver;
+    try {
+      obs = new IntersectionObserver(
+        ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+        { threshold }
+      );
+      obs.observe(el);
+    } catch { setVisible(true); return; }
+    return () => obs?.disconnect();
   }, [threshold]);
   return { ref, visible };
 }
@@ -269,9 +273,13 @@ export default function Landing() {
   useEffect(() => {
     const el = heroRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setHeroVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
-    obs.observe(el);
-    return () => obs.disconnect();
+    if (typeof IntersectionObserver === "undefined") { setHeroVisible(true); return; }
+    let obs: IntersectionObserver;
+    try {
+      obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setHeroVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
+      obs.observe(el);
+    } catch { setHeroVisible(true); return; }
+    return () => obs?.disconnect();
   }, []);
 
   const counter250 = useCounter(250, heroVisible, 1600);

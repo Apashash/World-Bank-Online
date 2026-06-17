@@ -30,12 +30,16 @@ function useInView(threshold = 0.15) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
+    if (typeof IntersectionObserver === "undefined") { setVisible(true); return; }
+    let obs: IntersectionObserver;
+    try {
+      obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+        { threshold }
+      );
+      obs.observe(el);
+    } catch { setVisible(true); return; }
+    return () => obs?.disconnect();
   }, [threshold]);
   return { ref, visible };
 }
