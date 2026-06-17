@@ -2,29 +2,32 @@ import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-const STEPS = [
-  {
-    num: "Étape 1",
-    title: "Vérification de votre identité",
-    description:
-      "Préparez votre pièce d'identité en cours de validité (carte d'identité/passeport zone euro, permis de conduire ou titre de séjour français).\nNous la vérifions à distance.",
-  },
-  {
-    num: "Étape 2",
-    title: "Vos informations personnelles",
-    description: null,
-  },
-  {
-    num: "Étape 3",
-    title: "Vos options et services",
-    description: null,
-  },
-  {
-    num: "Étape 4",
-    title: "Signature de votre contrat",
-    description: null,
-  },
-];
+function getSteps(isJoint: boolean) {
+  return [
+    {
+      num: "Étape 1",
+      title: "Vérification de votre identité",
+      description: isJoint
+        ? "Préparez votre pièce d'identité et celle de votre co-titulaire en cours de validité (carte d'identité/passeport zone euro, permis de conduire ou titre de séjour français).\nNous les vérifions à distance."
+        : "Préparez votre pièce d'identité en cours de validité (carte d'identité/passeport zone euro, permis de conduire ou titre de séjour français).\nNous la vérifions à distance.",
+    },
+    {
+      num: "Étape 2",
+      title: "Vos informations personnelles",
+      description: null,
+    },
+    {
+      num: "Étape 3",
+      title: "Vos options et services",
+      description: null,
+    },
+    {
+      num: "Étape 4",
+      title: "Signature de votre contrat",
+      description: null,
+    },
+  ];
+}
 
 export default function OpenAccountSteps() {
   const [expanded, setExpanded] = useState<number | null>(0);
@@ -33,6 +36,9 @@ export default function OpenAccountSteps() {
   const params = new URLSearchParams(search);
   const type = params.get("type") ?? "individual";
   const card = params.get("card") ?? "fosfo";
+
+  const isJoint = type === "joint";
+  const steps = getSteps(isJoint);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
@@ -43,20 +49,17 @@ export default function OpenAccountSteps() {
       </header>
 
       <main className="flex-1 flex flex-col px-4 pt-7 pb-36">
-        {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900 mb-6 px-1">Votre compte en 4 étapes</h1>
 
-        {/* Steps */}
         <div className="space-y-3">
-          {STEPS.map((step, idx) => (
+          {steps.map((step, idx) => (
             <button
               key={idx}
-              onClick={() => setExpanded(expanded === idx ? null : idx)}
+              onClick={() => step.description ? setExpanded(expanded === idx ? null : idx) : undefined}
               className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-5 text-left transition-all duration-200 hover:shadow-md"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  {/* Badge */}
                   <span className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-2"
                     style={{ background: "rgba(109,193,66,0.18)", color: "#3d8020" }}>
                     {step.num}
@@ -69,8 +72,6 @@ export default function OpenAccountSteps() {
                     : <ChevronDown className="w-5 h-5 text-gray-400 shrink-0 ml-3" />
                 )}
               </div>
-
-              {/* Expanded description */}
               {step.description && expanded === idx && (
                 <p className="text-sm text-gray-500 mt-3 leading-relaxed whitespace-pre-line">
                   {step.description}

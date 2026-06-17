@@ -5,8 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, Eye, EyeOff } from "lucide-react";
 
 /* ─── Types ─── */
-interface FormData {
-  email: string;
+interface HolderData {
   civilite: "Madame" | "Monsieur" | "";
   prenom: string;
   nomNaissance: string;
@@ -15,10 +14,21 @@ interface FormData {
   phone: string;
   codePostal: string;
   certifie: boolean;
+}
+
+interface FormData {
+  email: string;
+  holder1: HolderData;
+  holder2: HolderData;
   password: string;
   confirmPassword: string;
   referralCode: string;
 }
+
+const EMPTY_HOLDER: HolderData = {
+  civilite: "", prenom: "", nomNaissance: "", nomUsage: "",
+  indicatif: "+33", phone: "", codePostal: "", certifie: false,
+};
 
 const INDICATIFS = [
   { code: "+33", label: "🇫🇷 +33" },
@@ -33,23 +43,50 @@ const INDICATIFS = [
   { code: "+1", label: "🇺🇸 +1" },
 ];
 
-/* ─── Step meta ─── */
-const ETAPES = [
-  { etape: 1, total: 5, label: "Votre identité" },      // screens 0,1,2
-  { etape: 2, total: 5, label: "Votre identité" },      // screen 1
-  { etape: 2, total: 5, label: "Vos coordonnées" },     // screen 2
-  { etape: 3, total: 5, label: "Mot de passe" },        // screen 3
-  { etape: 4, total: 5, label: "Code opération" },      // screen 4
-];
+/* ─── Screen sequences ─── */
+type ScreenName =
+  | "email"
+  | "joint-intro"
+  | "identity-1"
+  | "contact-1"
+  | "joint-holder-intro"
+  | "identity-2"
+  | "contact-2"
+  | "password"
+  | "summary";
+
+function getScreens(isJoint: boolean): ScreenName[] {
+  if (isJoint) {
+    return ["email", "joint-intro", "identity-1", "contact-1", "joint-holder-intro", "identity-2", "contact-2", "password", "summary"];
+  }
+  return ["email", "identity-1", "contact-1", "password", "summary"];
+}
+
+/* ─── Étape meta ─── */
+function getEtapeMeta(screen: ScreenName, isJoint: boolean) {
+  const map: Record<ScreenName, { etape: number; label: string }> = {
+    "email":              { etape: 1, label: "Votre identité" },
+    "joint-intro":        { etape: 1, label: "Votre identité" },
+    "identity-1":         { etape: 1, label: "Votre identité" },
+    "contact-1":          { etape: 2, label: isJoint ? "Vos coordonnées (1er titulaire)" : "Vos coordonnées" },
+    "joint-holder-intro": { etape: 3, label: "Second titulaire" },
+    "identity-2":         { etape: 3, label: "Votre co-titulaire" },
+    "contact-2":          { etape: 3, label: "Coordonnées co-titulaire" },
+    "password":           { etape: isJoint ? 4 : 3, label: "Mot de passe" },
+    "summary":            { etape: 5, label: "Finaliser" },
+  };
+  return map[screen] ?? { etape: 1, label: "Votre identité" };
+}
 
 /* ─── Shared field styles ─── */
 const inputCls =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/10 transition-all";
 
-/* ─── Reusable components ─── */
-function StepHeader({ screen }: { screen: number }) {
-  const meta = ETAPES[Math.min(screen, ETAPES.length - 1)];
-  const progress = ((meta.etape - 1) / meta.total) * 100 + (screen % 3) * (100 / meta.total / 3);
+/* ─── Step header ─── */
+function StepHeader({ screen, isJoint }: { screen: ScreenName; isJoint: boolean }) {
+  const meta = getEtapeMeta(screen, isJoint);
+  const total = isJoint ? 5 : 5;
+  const pct = ((meta.etape - 1) / total) * 100 + 8;
   return (
     <div className="bg-white border-b border-gray-100 px-5 pt-4 pb-0">
       <div className="flex items-center gap-3 mb-3">
@@ -57,15 +94,35 @@ function StepHeader({ screen }: { screen: number }) {
         <span className="font-black text-[13px] tracking-wider uppercase text-[#003087]">BANQUE MONDIALE</span>
       </div>
       <p className="text-xs text-gray-500 mb-2">
-        Étape {meta.etape}/{meta.total} – <strong className="text-gray-800">{meta.label}</strong>
+        Étape {meta.etape}/{total} – <strong className="text-gray-800">{meta.label}</strong>
       </p>
-      {/* Progress bar */}
       <div className="h-0.5 w-full bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${Math.max(8, progress)}%`, background: "#6DC142" }}
-        />
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: "#6DC142" }} />
       </div>
+    </div>
+  );
+}
+
+/* ─── Titulaire indicator (joint only) ─── */
+function TitulaireBar({ which }: { which: 1 | 2 }) {
+  return (
+    <div className="flex items-center gap-3 px-5 py-2.5 bg-gray-50 border-b border-gray-100">
+      {[1, 2].map(n => (
+        <div key={n} className="flex items-center gap-1.5">
+          <div className={[
+            "w-6 h-6 rounded-full flex items-center justify-center",
+            n === which ? "bg-[#6DC142]/20" : "bg-gray-100",
+          ].join(" ")}>
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
+              <circle cx="12" cy="7" r="4" fill={n === which ? "#003087" : "#bbb"} />
+              <ellipse cx="12" cy="17" rx="7" ry="4" fill={n === which ? "#6DC142" : "#ccc"} />
+            </svg>
+          </div>
+          {n === which && <span className="text-xs font-semibold text-gray-700">
+            {n === 1 ? "Titulaire principal" : "Co-titulaire"}
+          </span>}
+        </div>
+      ))}
     </div>
   );
 }
@@ -73,19 +130,17 @@ function StepHeader({ screen }: { screen: number }) {
 function FieldBlock({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-      <p className="text-xs text-gray-400">
-        <span className="text-red-500">*</span> : informations obligatoires
-      </p>
+      <p className="text-xs text-gray-400"><span className="text-red-500">*</span> : informations obligatoires</p>
       {children}
     </div>
   );
 }
 
 function NavButtons({
-  onNext, onBack, nextLabel = "Suivant", nextDisabled = false, loading = false,
+  onNext, onBack, nextLabel = "Suivant", nextDisabled = false, loading = false, hideBack = false,
 }: {
   onNext: () => void; onBack: () => void; nextLabel?: string;
-  nextDisabled?: boolean; loading?: boolean;
+  nextDisabled?: boolean; loading?: boolean; hideBack?: boolean;
 }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#f5f5f0] px-5 py-4 space-y-3 border-t border-gray-200">
@@ -101,13 +156,130 @@ function NavButtons({
       >
         {loading ? "Création en cours…" : nextLabel}
       </button>
-      <button
-        onClick={onBack}
-        className="w-full rounded-full font-bold text-base py-4 border-2 border-gray-200 text-gray-700 hover:border-[#003087] hover:text-[#003087] active:scale-[0.98] transition-all duration-200 bg-white"
-      >
-        Retour
-      </button>
+      {!hideBack && (
+        <button
+          onClick={onBack}
+          className="w-full rounded-full font-bold text-base py-4 border-2 border-gray-200 text-gray-700 hover:border-[#003087] hover:text-[#003087] active:scale-[0.98] transition-all duration-200 bg-white"
+        >
+          Retour
+        </button>
+      )}
     </div>
+  );
+}
+
+/* ─── Identity form (reused for holder 1 and 2) ─── */
+function IdentityForm({
+  data, onChange,
+}: {
+  data: HolderData;
+  onChange: (key: keyof HolderData, val: string | boolean) => void;
+}) {
+  return (
+    <FieldBlock>
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-2">Civilité <span className="text-red-500">*</span></p>
+        <div className="grid grid-cols-2 gap-3">
+          {(["Madame", "Monsieur"] as const).map(c => (
+            <button key={c} onClick={() => onChange("civilite", c)}
+              className={["flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium transition-all duration-150",
+                data.civilite === c
+                  ? "border-[#003087] bg-[#003087]/5 text-[#003087]"
+                  : "border-gray-200 text-gray-700 hover:border-gray-300",
+              ].join(" ")}>
+              <div className={["w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                data.civilite === c ? "border-[#003087]" : "border-gray-300"].join(" ")}>
+                {data.civilite === c && <div className="w-2 h-2 rounded-full bg-[#003087]" />}
+              </div>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+      <input type="text" placeholder="Prénom *" value={data.prenom}
+        onChange={e => onChange("prenom", e.target.value)} className={inputCls} autoComplete="given-name" />
+      <div>
+        <input type="text" placeholder="Nom de naissance *" value={data.nomNaissance}
+          onChange={e => onChange("nomNaissance", e.target.value)} className={inputCls} autoComplete="family-name" />
+        <p className="text-xs text-gray-400 mt-1.5 px-1">Nom indiqué sur votre pièce d'identité.</p>
+      </div>
+      <input type="text" placeholder="Nom marital ou d'usage" value={data.nomUsage}
+        onChange={e => onChange("nomUsage", e.target.value)} className={inputCls} autoComplete="additional-name" />
+    </FieldBlock>
+  );
+}
+
+/* ─── Contact form (reused for holder 1 and 2) ─── */
+function ContactForm({
+  data, email, onChangeHolder, onChangeEmail, showEmail,
+}: {
+  data: HolderData;
+  email: string;
+  onChangeHolder: (key: keyof HolderData, val: string | boolean) => void;
+  onChangeEmail: (val: string) => void;
+  showEmail: boolean;
+}) {
+  const [showIndicatif, setShowIndicatif] = useState(false);
+  return (
+    <FieldBlock>
+      {showEmail && (
+        <div>
+          <input type="email" placeholder="E-mail *" value={email}
+            onChange={e => onChangeEmail(e.target.value)} className={inputCls} autoComplete="email" />
+          <p className="text-xs text-gray-400 mt-1.5 px-1">
+            Cet email vous servira pour le suivi de votre demande et la gestion de votre compte.
+          </p>
+        </div>
+      )}
+
+      <div>
+        <div className="flex gap-2">
+          <div className="relative shrink-0">
+            <button type="button" onClick={() => setShowIndicatif(o => !o)}
+              className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-3.5 text-sm text-gray-700 hover:border-gray-300 transition-all min-w-[88px]">
+              <span className="text-xs font-medium">Indicatif</span>
+              <span className="text-xs text-gray-500">{data.indicatif}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            </button>
+            {showIndicatif && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden min-w-[140px]">
+                {INDICATIFS.map(ind => (
+                  <button key={ind.code} type="button"
+                    onClick={() => { onChangeHolder("indicatif", ind.code); setShowIndicatif(false); }}
+                    className={["w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors",
+                      data.indicatif === ind.code ? "text-[#003087] font-semibold" : "text-gray-700"].join(" ")}>
+                    {ind.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <input type="tel" placeholder="Téléphone portable" value={data.phone}
+            onChange={e => onChangeHolder("phone", e.target.value)} className={`${inputCls} flex-1`} autoComplete="tel" />
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5 px-1">
+          Ce numéro vous permettra de signer électroniquement votre contrat et de sécuriser certaines opérations sensibles.
+        </p>
+      </div>
+
+      <input type="text" placeholder="Code postal et ville d'habitation *" value={data.codePostal}
+        onChange={e => onChangeHolder("codePostal", e.target.value)} className={inputCls} autoComplete="postal-code" />
+
+      <label className="flex items-start gap-3 cursor-pointer">
+        <div onClick={() => onChangeHolder("certifie", !data.certifie)}
+          className={["w-5 h-5 shrink-0 rounded border-2 flex items-center justify-center transition-all mt-0.5",
+            data.certifie ? "bg-[#6DC142] border-[#6DC142]" : "border-gray-300 bg-white"].join(" ")}>
+          {data.certifie && (
+            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+        <span className="text-sm text-gray-700 leading-snug">
+          Je certifie avoir vérifié mon adresse email et confirme qu'elle est bien valide.<span className="text-red-500"> *</span>
+        </span>
+      </label>
+    </FieldBlock>
   );
 }
 
@@ -115,20 +287,13 @@ function NavButtons({
    MAIN COMPONENT
 ══════════════════════════════════════════ */
 export default function Register() {
-  const [screen, setScreen] = useState(0);
+  const [screenIdx, setScreenIdx] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showIndicatif, setShowIndicatif] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: "",
-    civilite: "",
-    prenom: "",
-    nomNaissance: "",
-    nomUsage: "",
-    indicatif: "+33",
-    phone: "",
-    codePostal: "",
-    certifie: false,
+    holder1: { ...EMPTY_HOLDER },
+    holder2: { ...EMPTY_HOLDER },
     password: "",
     confirmPassword: "",
     referralCode: "",
@@ -139,36 +304,41 @@ export default function Register() {
   const params = new URLSearchParams(search);
   const type = params.get("type") ?? "individual";
   const card = params.get("card") ?? "fosfo";
+  const isJoint = type === "joint";
+
+  const screens = getScreens(isJoint);
+  const currentScreen = screens[screenIdx];
 
   const { toast } = useToast();
   const registerMutation = useRegister();
 
-  const set = (key: keyof FormData, value: string | boolean) =>
-    setFormData(prev => ({ ...prev, [key]: value }));
+  const setEmail = (v: string) => setFormData(p => ({ ...p, email: v }));
+  const setHolder1 = (key: keyof HolderData, val: string | boolean) =>
+    setFormData(p => ({ ...p, holder1: { ...p.holder1, [key]: val } }));
+  const setHolder2 = (key: keyof HolderData, val: string | boolean) =>
+    setFormData(p => ({ ...p, holder2: { ...p.holder2, [key]: val } }));
+  const set = (key: keyof Omit<FormData, "holder1" | "holder2">, val: string) =>
+    setFormData(p => ({ ...p, [key]: val }));
 
+  const goNext = () => setScreenIdx(i => Math.min(screens.length - 1, i + 1));
   const goBack = () => {
-    if (screen === 0) {
+    if (screenIdx === 0) {
       setLocation(`/open-account/steps?type=${type}&card=${card}`);
     } else {
-      setScreen(s => s - 1);
+      setScreenIdx(i => i - 1);
     }
   };
 
-  /* ── SUBMIT ── */
   const handleSubmit = () => {
-    const fullName = [
-      formData.civilite,
-      formData.prenom,
-      formData.nomNaissance,
-    ].filter(Boolean).join(" ");
-
+    const h = formData.holder1;
+    const fullName = [h.civilite, h.prenom, h.nomNaissance].filter(Boolean).join(" ");
     registerMutation.mutate(
       {
         data: {
           fullName,
           email: formData.email,
-          phone: formData.indicatif + formData.phone,
-          country: formData.codePostal.startsWith("97") ? "DOM" : "FR",
+          phone: h.indicatif + h.phone,
+          country: h.codePostal.startsWith("97") ? "DOM" : "FR",
           password: formData.password,
           referralCode: formData.referralCode || undefined,
         },
@@ -179,278 +349,216 @@ export default function Register() {
           setLocation("/dashboard");
         },
         onError: (err: any) => {
-          toast({
-            title: "Erreur d'inscription",
-            description: err.message || "Une erreur est survenue",
-            variant: "destructive",
-          });
+          toast({ title: "Erreur d'inscription", description: err.message || "Une erreur est survenue", variant: "destructive" });
         },
       }
     );
   };
 
-  /* ─────────────────────────
-     SCREEN 0 — Email
-  ───────────────────────── */
-  if (screen === 0) {
+  /* ─── SCREEN: email ─── */
+  if (currentScreen === "email") {
     return (
       <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
-        <StepHeader screen={0} />
+        <StepHeader screen="email" isJoint={isJoint} />
         <main className="flex-1 px-4 pt-7 pb-36 space-y-4">
           <h2 className="text-xl font-bold text-gray-900 px-1">Saisissez votre adresse email</h2>
           <FieldBlock>
-            <input
-              type="email"
-              placeholder="Votre adresse e-mail *"
-              value={formData.email}
-              onChange={e => set("email", e.target.value)}
-              className={inputCls}
-              autoComplete="email"
-            />
-            <p className="text-xs text-gray-400 px-1">
-              Votre email sera utilisé exclusivement pour le suivi de votre dossier
-            </p>
+            <input type="email" placeholder="Votre adresse e-mail *" value={formData.email}
+              onChange={e => setEmail(e.target.value)} className={inputCls} autoComplete="email" />
+            <p className="text-xs text-gray-400 px-1">Votre email sera utilisé exclusivement pour le suivi de votre dossier</p>
           </FieldBlock>
         </main>
-        <NavButtons
-          onNext={() => setScreen(1)}
-          onBack={goBack}
-          nextDisabled={!formData.email.includes("@")}
-        />
+        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!formData.email.includes("@")} />
       </div>
     );
   }
 
-  /* ─────────────────────────
-     SCREEN 1 — Identité
-  ───────────────────────── */
-  if (screen === 1) {
+  /* ─── SCREEN: joint-intro ─── */
+  if (currentScreen === "joint-intro") {
+    return (
+      <div className="min-h-screen flex flex-col bg-white font-sans">
+        {/* Simple logo header */}
+        <header className="px-5 pt-5 pb-3 flex items-center gap-3">
+          <img src="/logo-banque-mondiale.png" alt="Banque Mondiale" className="h-8 w-8 object-contain" />
+          <span className="font-black text-[13px] tracking-wider uppercase text-[#003087]">BANQUE MONDIALE</span>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-8 pb-36 text-center">
+          {/* Two person icons */}
+          <div className="flex items-end gap-4 mb-10">
+            {/* First holder (active, green bg) */}
+            <div className="w-24 h-24 rounded-2xl flex items-center justify-center" style={{ background: "rgba(109,193,66,0.18)" }}>
+              <svg viewBox="0 0 48 48" fill="none" className="w-14 h-14">
+                <circle cx="24" cy="16" r="10" fill="#1a1a1a" />
+                <ellipse cx="24" cy="38" rx="16" ry="10" fill="#1a1a1a" />
+              </svg>
+            </div>
+            {/* Second holder (inactive, gray) */}
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-1" style={{ background: "#f0f0f0" }}>
+              <svg viewBox="0 0 48 48" fill="none" className="w-10 h-10">
+                <circle cx="24" cy="16" r="10" fill="#bbb" />
+                <ellipse cx="24" cy="38" rx="16" ry="10" fill="#bbb" />
+              </svg>
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-gray-900 leading-snug">
+            Commençons par les informations<br />du premier titulaire.
+          </h2>
+        </main>
+
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 border-t border-gray-100">
+          <button onClick={goNext}
+            className="w-full rounded-full font-bold text-base py-4 bg-[#6DC142] text-[#1a2e10] hover:bg-[#5BAF32] active:scale-[0.98] transition-all duration-200">
+            Suivant
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── SCREEN: identity-1 ─── */
+  if (currentScreen === "identity-1") {
+    const ok = !!formData.holder1.civilite && !!formData.holder1.prenom && !!formData.holder1.nomNaissance;
     return (
       <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
-        <StepHeader screen={1} />
-        <main className="flex-1 px-4 pt-7 pb-36 space-y-4">
+        <StepHeader screen="identity-1" isJoint={isJoint} />
+        {isJoint && <TitulaireBar which={1} />}
+        <main className="flex-1 px-4 pt-6 pb-36 space-y-4">
           <h2 className="text-xl font-bold text-gray-900 px-1">Votre identité</h2>
-          <FieldBlock>
-            {/* Civilité */}
-            <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">
-                Civilité <span className="text-red-500">*</span>
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {(["Madame", "Monsieur"] as const).map(c => (
-                  <button
-                    key={c}
-                    onClick={() => set("civilite", c)}
-                    className={[
-                      "flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium transition-all duration-150",
-                      formData.civilite === c
-                        ? "border-[#003087] bg-[#003087]/5 text-[#003087]"
-                        : "border-gray-200 text-gray-700 hover:border-gray-300",
-                    ].join(" ")}
-                  >
-                    <div className={[
-                      "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                      formData.civilite === c ? "border-[#003087]" : "border-gray-300",
-                    ].join(" ")}>
-                      {formData.civilite === c && <div className="w-2 h-2 rounded-full bg-[#003087]" />}
-                    </div>
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Prénom */}
-            <input
-              type="text"
-              placeholder="Prénom *"
-              value={formData.prenom}
-              onChange={e => set("prenom", e.target.value)}
-              className={inputCls}
-              autoComplete="given-name"
-            />
-
-            {/* Nom de naissance */}
-            <div>
-              <input
-                type="text"
-                placeholder="Nom de naissance *"
-                value={formData.nomNaissance}
-                onChange={e => set("nomNaissance", e.target.value)}
-                className={inputCls}
-                autoComplete="family-name"
-              />
-              <p className="text-xs text-gray-400 mt-1.5 px-1">Nom indiqué sur votre pièce d'identité.</p>
-            </div>
-
-            {/* Nom marital */}
-            <input
-              type="text"
-              placeholder="Nom marital ou d'usage"
-              value={formData.nomUsage}
-              onChange={e => set("nomUsage", e.target.value)}
-              className={inputCls}
-              autoComplete="additional-name"
-            />
-          </FieldBlock>
+          <IdentityForm data={formData.holder1} onChange={setHolder1} />
         </main>
-        <NavButtons
-          onNext={() => setScreen(2)}
-          onBack={goBack}
-          nextDisabled={!formData.civilite || !formData.prenom || !formData.nomNaissance}
-        />
+        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!ok} />
       </div>
     );
   }
 
-  /* ─────────────────────────
-     SCREEN 2 — Contact
-  ───────────────────────── */
-  if (screen === 2) {
+  /* ─── SCREEN: contact-1 ─── */
+  if (currentScreen === "contact-1") {
+    const h = formData.holder1;
+    const ok = !!formData.email && !!h.phone && !!h.codePostal && h.certifie;
     return (
       <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
-        <StepHeader screen={2} />
-        <main className="flex-1 px-4 pt-7 pb-36 space-y-4">
+        <StepHeader screen="contact-1" isJoint={isJoint} />
+        {isJoint && <TitulaireBar which={1} />}
+        <main className="flex-1 px-4 pt-6 pb-36 space-y-4">
           <h2 className="text-xl font-bold text-gray-900 px-1">Vos modes de contact</h2>
-          <FieldBlock>
-            {/* Email (prefilled) */}
-            <div>
-              <input
-                type="email"
-                placeholder="E-mail *"
-                value={formData.email}
-                onChange={e => set("email", e.target.value)}
-                className={inputCls}
-                autoComplete="email"
-              />
-              <p className="text-xs text-gray-400 mt-1.5 px-1">
-                Cet email vous servira pour le suivi de votre demande et la gestion de votre compte.
-              </p>
-            </div>
-
-            {/* Phone with indicatif */}
-            <div>
-              <div className="flex gap-2">
-                {/* Indicatif dropdown */}
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setShowIndicatif(o => !o)}
-                    className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-3.5 text-sm text-gray-700 hover:border-gray-300 transition-all min-w-[88px]"
-                  >
-                    <span className="text-xs font-medium">Indicatif</span>
-                    <span className="text-xs text-gray-500">{formData.indicatif}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  </button>
-                  {showIndicatif && (
-                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden min-w-[140px]">
-                      {INDICATIFS.map(ind => (
-                        <button
-                          key={ind.code}
-                          type="button"
-                          onClick={() => { set("indicatif", ind.code); setShowIndicatif(false); }}
-                          className={[
-                            "w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors",
-                            formData.indicatif === ind.code ? "text-[#003087] font-semibold" : "text-gray-700",
-                          ].join(" ")}
-                        >
-                          {ind.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="tel"
-                  placeholder="Téléphone portable"
-                  value={formData.phone}
-                  onChange={e => set("phone", e.target.value)}
-                  className={`${inputCls} flex-1`}
-                  autoComplete="tel"
-                />
-              </div>
-              <p className="text-xs text-gray-400 mt-1.5 px-1">
-                Ce numéro vous permettra de signer électroniquement votre contrat et de sécuriser certaines opérations sensibles.
-              </p>
-            </div>
-
-            {/* Code postal */}
-            <input
-              type="text"
-              placeholder="Code postal et ville d'habitation *"
-              value={formData.codePostal}
-              onChange={e => set("codePostal", e.target.value)}
-              className={inputCls}
-              autoComplete="postal-code"
-            />
-
-            {/* Certification checkbox */}
-            <label className="flex items-start gap-3 cursor-pointer">
-              <div
-                onClick={() => set("certifie", !formData.certifie)}
-                className={[
-                  "w-5 h-5 shrink-0 rounded border-2 flex items-center justify-center transition-all mt-0.5",
-                  formData.certifie ? "bg-[#6DC142] border-[#6DC142]" : "border-gray-300 bg-white",
-                ].join(" ")}
-              >
-                {formData.certifie && (
-                  <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </div>
-              <span className="text-sm text-gray-700 leading-snug">
-                Je certifie avoir vérifié mon adresse email et confirme qu'elle est bien valide.
-                <span className="text-red-500"> *</span>
-              </span>
-            </label>
-          </FieldBlock>
+          <ContactForm
+            data={h} email={formData.email}
+            onChangeHolder={setHolder1} onChangeEmail={setEmail} showEmail={true}
+          />
         </main>
-        <NavButtons
-          onNext={() => setScreen(3)}
-          onBack={goBack}
-          nextDisabled={!formData.email || !formData.phone || !formData.codePostal || !formData.certifie}
-        />
+        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!ok} />
       </div>
     );
   }
 
-  /* ─────────────────────────
-     SCREEN 3 — Mot de passe
-  ───────────────────────── */
-  if (screen === 3) {
+  /* ─── SCREEN: joint-holder-intro ─── */
+  if (currentScreen === "joint-holder-intro") {
+    return (
+      <div className="min-h-screen flex flex-col bg-white font-sans">
+        <header className="px-5 pt-5 pb-3 flex items-center gap-3">
+          <img src="/logo-banque-mondiale.png" alt="Banque Mondiale" className="h-8 w-8 object-contain" />
+          <span className="font-black text-[13px] tracking-wider uppercase text-[#003087]">BANQUE MONDIALE</span>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-8 pb-36 text-center">
+          <div className="flex items-end gap-4 mb-10">
+            {/* First holder (done, smaller) */}
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-1" style={{ background: "#f0f0f0" }}>
+              <svg viewBox="0 0 48 48" fill="none" className="w-10 h-10">
+                <circle cx="24" cy="16" r="10" fill="#bbb" />
+                <ellipse cx="24" cy="38" rx="16" ry="10" fill="#bbb" />
+              </svg>
+            </div>
+            {/* Second holder (active, green bg) */}
+            <div className="w-24 h-24 rounded-2xl flex items-center justify-center" style={{ background: "rgba(109,193,66,0.18)" }}>
+              <svg viewBox="0 0 48 48" fill="none" className="w-14 h-14">
+                <circle cx="24" cy="16" r="10" fill="#1a1a1a" />
+                <ellipse cx="24" cy="38" rx="16" ry="10" fill="#1a1a1a" />
+              </svg>
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-gray-900 leading-snug">
+            Continuons avec les informations<br />du second titulaire.
+          </h2>
+        </main>
+
+        <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 border-t border-gray-100 space-y-3">
+          <button onClick={goNext}
+            className="w-full rounded-full font-bold text-base py-4 bg-[#6DC142] text-[#1a2e10] hover:bg-[#5BAF32] active:scale-[0.98] transition-all duration-200">
+            Suivant
+          </button>
+          <button onClick={goBack}
+            className="w-full rounded-full font-bold text-base py-4 border-2 border-gray-200 text-gray-700 hover:border-[#003087] hover:text-[#003087] active:scale-[0.98] transition-all duration-200">
+            Retour
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── SCREEN: identity-2 ─── */
+  if (currentScreen === "identity-2") {
+    const ok = !!formData.holder2.civilite && !!formData.holder2.prenom && !!formData.holder2.nomNaissance;
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
+        <StepHeader screen="identity-2" isJoint={isJoint} />
+        <TitulaireBar which={2} />
+        <main className="flex-1 px-4 pt-6 pb-36 space-y-4">
+          <h2 className="text-xl font-bold text-gray-900 px-1">Identité du co-titulaire</h2>
+          <IdentityForm data={formData.holder2} onChange={setHolder2} />
+        </main>
+        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!ok} />
+      </div>
+    );
+  }
+
+  /* ─── SCREEN: contact-2 ─── */
+  if (currentScreen === "contact-2") {
+    const h = formData.holder2;
+    const ok = !!h.phone && !!h.codePostal && h.certifie;
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
+        <StepHeader screen="contact-2" isJoint={isJoint} />
+        <TitulaireBar which={2} />
+        <main className="flex-1 px-4 pt-6 pb-36 space-y-4">
+          <h2 className="text-xl font-bold text-gray-900 px-1">Coordonnées du co-titulaire</h2>
+          <ContactForm
+            data={h} email=""
+            onChangeHolder={setHolder2} onChangeEmail={() => {}} showEmail={false}
+          />
+        </main>
+        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!ok} />
+      </div>
+    );
+  }
+
+  /* ─── SCREEN: password ─── */
+  if (currentScreen === "password") {
     const pwOk = formData.password.length >= 6;
     const confirmOk = formData.password === formData.confirmPassword;
     return (
       <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
-        <StepHeader screen={3} />
+        <StepHeader screen="password" isJoint={isJoint} />
         <main className="flex-1 px-4 pt-7 pb-36 space-y-4">
           <h2 className="text-xl font-bold text-gray-900 px-1">Créez votre mot de passe</h2>
           <FieldBlock>
             <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Mot de passe * (min. 6 caractères)"
-                value={formData.password}
-                onChange={e => set("password", e.target.value)}
-                className={`${inputCls} pr-12`}
-                autoComplete="new-password"
-              />
+              <input type={showPassword ? "text" : "password"} placeholder="Mot de passe * (min. 6 caractères)"
+                value={formData.password} onChange={e => set("password", e.target.value)}
+                className={`${inputCls} pr-12`} autoComplete="new-password" />
               <button type="button" onClick={() => setShowPassword(o => !o)}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-
             <div className="relative">
-              <input
-                type={showConfirm ? "text" : "password"}
-                placeholder="Confirmer le mot de passe *"
-                value={formData.confirmPassword}
-                onChange={e => set("confirmPassword", e.target.value)}
-                className={[inputCls, "pr-12", !confirmOk && formData.confirmPassword ? "border-red-300 focus:border-red-400" : ""].join(" ")}
-                autoComplete="new-password"
-              />
+              <input type={showConfirm ? "text" : "password"} placeholder="Confirmer le mot de passe *"
+                value={formData.confirmPassword} onChange={e => set("confirmPassword", e.target.value)}
+                className={[inputCls, "pr-12", !confirmOk && formData.confirmPassword ? "border-red-300" : ""].join(" ")}
+                autoComplete="new-password" />
               <button type="button" onClick={() => setShowConfirm(o => !o)}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -459,44 +567,32 @@ export default function Register() {
             {!confirmOk && formData.confirmPassword && (
               <p className="text-xs text-red-500 px-1">Les mots de passe ne correspondent pas.</p>
             )}
-
-            {/* Strength indicator */}
             {formData.password && (
               <div className="space-y-1">
                 <div className="flex gap-1">
                   {[1, 2, 3, 4].map(i => (
                     <div key={i} className="flex-1 h-1 rounded-full transition-colors duration-300"
-                      style={{
-                        background: formData.password.length >= i * 3
-                          ? i <= 2 ? "#f59e0b" : "#6DC142"
-                          : "#e5e7eb",
-                      }} />
+                      style={{ background: formData.password.length >= i * 3 ? (i <= 2 ? "#f59e0b" : "#6DC142") : "#e5e7eb" }} />
                   ))}
                 </div>
                 <p className="text-xs text-gray-400">
-                  {formData.password.length < 6 ? "Trop court" :
-                   formData.password.length < 9 ? "Acceptable" :
-                   formData.password.length < 12 ? "Bon" : "Excellent"}
+                  {formData.password.length < 6 ? "Trop court" : formData.password.length < 9 ? "Acceptable" : formData.password.length < 12 ? "Bon" : "Excellent"}
                 </p>
               </div>
             )}
           </FieldBlock>
         </main>
-        <NavButtons
-          onNext={() => setScreen(4)}
-          onBack={goBack}
-          nextDisabled={!pwOk || !confirmOk || !formData.confirmPassword}
-        />
+        <NavButtons onNext={goNext} onBack={goBack} nextDisabled={!pwOk || !confirmOk || !formData.confirmPassword} />
       </div>
     );
   }
 
-  /* ─────────────────────────
-     SCREEN 4 — Code promo + submit
-  ───────────────────────── */
+  /* ─── SCREEN: summary ─── */
+  const h1 = formData.holder1;
+  const h2 = formData.holder2;
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f5f0] font-sans">
-      <StepHeader screen={4} />
+      <StepHeader screen="summary" isJoint={isJoint} />
       <main className="flex-1 px-4 pt-7 pb-36 space-y-4">
         <h2 className="text-xl font-bold text-gray-900 px-1">Finaliser votre inscription</h2>
 
@@ -505,8 +601,9 @@ export default function Register() {
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Récapitulatif</p>
           {[
             { label: "Email", value: formData.email },
-            { label: "Nom", value: [formData.civilite, formData.prenom, formData.nomNaissance].filter(Boolean).join(" ") || "—" },
-            { label: "Téléphone", value: formData.indicatif + " " + (formData.phone || "—") },
+            { label: isJoint ? "Titulaire principal" : "Nom", value: [h1.civilite, h1.prenom, h1.nomNaissance].filter(Boolean).join(" ") || "—" },
+            ...(isJoint ? [{ label: "Co-titulaire", value: [h2.civilite, h2.prenom, h2.nomNaissance].filter(Boolean).join(" ") || "—" }] : []),
+            { label: "Téléphone", value: h1.indicatif + " " + (h1.phone || "—") },
             { label: "Carte choisie", value: card === "gold" ? "Gold CB Mastercard" : "Fosfo CB Mastercard" },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-start justify-between gap-4 py-1 border-b border-gray-50 last:border-0">
@@ -517,28 +614,19 @@ export default function Register() {
         </div>
 
         {/* Code opération */}
-        <FieldBlock>
-          <input
-            type="text"
-            placeholder="Code opération (optionnel)"
-            value={formData.referralCode}
-            onChange={e => set("referralCode", e.target.value)}
-            className={inputCls}
-          />
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+          <p className="text-xs text-gray-400"><span className="text-red-500">*</span> : informations obligatoires</p>
+          <input type="text" placeholder="Code opération (optionnel)" value={formData.referralCode}
+            onChange={e => set("referralCode", e.target.value)} className={inputCls} />
           <p className="text-xs text-gray-400 px-1">Si vous avez reçu un code de parrainage, saisissez-le ici.</p>
-        </FieldBlock>
+        </div>
 
         <p className="text-xs text-gray-400 text-center px-4 leading-relaxed">
-          Vos données sont protégées conformément à la réglementation en vigueur.
+          Vos données sont protégées conformément à la réglementation en vigueur.<br />
           Banque Mondiale — Établissement de crédit agréé.
         </p>
       </main>
-      <NavButtons
-        onNext={handleSubmit}
-        onBack={goBack}
-        nextLabel="Créer mon compte"
-        loading={registerMutation.isPending}
-      />
+      <NavButtons onNext={handleSubmit} onBack={goBack} nextLabel="Créer mon compte" loading={registerMutation.isPending} />
     </div>
   );
 }
