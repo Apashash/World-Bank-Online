@@ -157,9 +157,25 @@ router.patch("/transfers/:id", requireAuth, async (req, res) => {
   const existing = await db.select().from(transfersTable).where(and(eq(transfersTable.id, id), eq(transfersTable.userId, userId))).limit(1);
   if (existing.length === 0) { res.status(404).json({ error: "Not found" }); return; }
 
+  const transfer = existing[0];
   const updates: Record<string, any> = {};
   if (parsed.data.status) updates.status = parsed.data.status;
   if (parsed.data.message !== undefined) updates.message = parsed.data.message;
+
+  // Refund balance if cancelling a pending transfer
+  const isCancelling = parsed.data.status === "cancelled" && transfer.status === "pending";
+  if (isCancelling) {
+    await db.update(usersTable)
+      .set({ balance: sql`${usersTable.balance} + ${transfer.amount}` })
+      .where(eq(usersTable.id, userId));
+    await db.insert(activityTable).values({
+      userId,
+      type: "transfer_sent",
+      description: `Remboursement annulation virement pour ${transfer.beneficiaryName}`,
+      amount: transfer.amount,
+      currency: transfer.currency,
+    });
+  }
 
   const [updated] = await db.update(transfersTable).set(updates).where(eq(transfersTable.id, id)).returning();
   res.json(formatTransfer(updated));
@@ -171,6 +187,22 @@ router.delete("/transfers/:id", requireAuth, async (req, res) => {
 
   const existing = await db.select().from(transfersTable).where(and(eq(transfersTable.id, id), eq(transfersTable.userId, userId))).limit(1);
   if (existing.length === 0) { res.status(404).json({ error: "Not found" }); return; }
+
+  const transfer = existing[0];
+
+  // Refund balance if deleting a pending transfer
+  if (transfer.status === "pending") {
+    await db.update(usersTable)
+      .set({ balance: sql`${usersTable.balance} + ${transfer.amount}` })
+      .where(eq(usersTable.id, userId));
+    await db.insert(activityTable).values({
+      userId,
+      type: "transfer_sent",
+      description: `Remboursement suppression virement pour ${transfer.beneficiaryName}`,
+      amount: transfer.amount,
+      currency: transfer.currency,
+    });
+  }
 
   await db.delete(transfersTable).where(eq(transfersTable.id, id));
   res.json({ message: "Transfer deleted" });
