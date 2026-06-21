@@ -37,6 +37,7 @@ import Retrait from "@/pages/retrait";
 import PayerFactures from "@/pages/payer-factures";
 import Echanger from "@/pages/echanger";
 import Plus from "@/pages/plus";
+import Notifications from "@/pages/notifications";
 
 // Setup auth token for all API requests
 setAuthTokenGetter(() => localStorage.getItem("auth_token"));
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/payer-factures"><AppLayout><PayerFactures /></AppLayout></Route>
       <Route path="/echanger"><AppLayout><Echanger /></AppLayout></Route>
       <Route path="/plus"><AppLayout><Plus /></AppLayout></Route>
+      <Route path="/notifications"><AppLayout><Notifications /></AppLayout></Route>
 
       {/* Admin Routes */}
       <Route path="/admin"><AppLayout><AdminDashboard /></AppLayout></Route>

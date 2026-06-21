@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiPost } from "@/lib/api";
+import { useLocation } from "wouter";
 
 const POLL_INTERVAL = 30_000;
 
@@ -22,8 +21,7 @@ async function fetchUnreadCount(): Promise<number> {
 
 export function NotificationBell() {
   const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const refresh = useCallback(async () => {
     const n = await fetchUnreadCount();
@@ -36,26 +34,11 @@ export function NotificationBell() {
     return () => clearInterval(timer);
   }, [refresh]);
 
-  const handleClick = async () => {
-    if (count === 0) return;
-    setLoading(true);
-    try {
-      await apiPost("/api/notifications/mark-read", {});
-      setCount(0);
-      toast({ title: "Notifications lues", description: "Toutes les notifications ont été marquées comme lues." });
-    } catch {
-      toast({ title: "Erreur", description: "Impossible de marquer les notifications.", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <button
-      onClick={handleClick}
-      disabled={loading}
-      title={count > 0 ? `${count} notification${count > 1 ? "s" : ""} non lue${count > 1 ? "s" : ""}` : "Aucune nouvelle notification"}
-      className="relative flex items-center justify-center h-8 w-8 rounded-full hover:bg-white/10 transition-colors disabled:opacity-60"
+      onClick={() => setLocation("/notifications")}
+      title={count > 0 ? `${count} notification${count > 1 ? "s" : ""} non lue${count > 1 ? "s" : ""}` : "Notifications"}
+      className="relative flex items-center justify-center h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
     >
       <Bell className="h-4 w-4 text-white/70" />
       {count > 0 && (
