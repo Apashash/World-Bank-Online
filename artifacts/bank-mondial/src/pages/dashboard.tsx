@@ -1,6 +1,6 @@
 import { useGetDashboardSummary, useGetRecentActivity, useGetReferralStats, useListTransfers } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownRight, ArrowUpRight, Users, Euro, Bell, Search, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Users, Euro, Bell, Search, TrendingUp, TrendingDown, Wallet, Send, Download, QrCode, Landmark, Receipt, ArrowLeftRight, LayoutGrid } from "lucide-react";
 import { format, subWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -111,6 +111,34 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card className="border shadow-sm">
+        <CardContent className="pt-5 pb-5">
+          <div className="grid grid-cols-4 gap-4">
+            {[
+              { icon: Wallet, label: "Dépôt" },
+              { icon: Send, label: "Envoyer" },
+              { icon: Download, label: "Recevoir" },
+              { icon: QrCode, label: "Scanner QR" },
+              { icon: Landmark, label: "Retrait" },
+              { icon: Receipt, label: "Payer factures" },
+              { icon: ArrowLeftRight, label: "Échanger" },
+              { icon: LayoutGrid, label: "Plus" },
+            ].map(({ icon: Icon, label }) => (
+              <button
+                key={label}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <Icon className="h-6 w-6 text-[#003087]" strokeWidth={1.5} />
+                </div>
+                <span className="text-xs text-gray-600 font-medium text-center leading-tight">{label}</span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Chart + Activity */}
       <div className="grid gap-6 lg:grid-cols-3">
