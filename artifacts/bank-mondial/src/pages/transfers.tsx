@@ -64,7 +64,7 @@ export default function Transfers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data?.transfers.length === 0 ? (
+                {!data?.transfers?.length ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       Aucun virement trouvé.

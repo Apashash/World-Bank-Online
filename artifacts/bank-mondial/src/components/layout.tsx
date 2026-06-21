@@ -152,7 +152,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="border-t border-white/10 p-4">
           <div className="flex items-center gap-3 px-2 py-2 mb-1">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#6DC142] text-[#003087] font-bold text-sm">
-              {user.fullName.charAt(0).toUpperCase()}
+              {user.fullName?.charAt(0)?.toUpperCase() ?? "?"}
             </div>
             <div className="flex flex-col overflow-hidden">
               <span className="text-sm font-semibold text-white truncate">{user.fullName}</span>
@@ -214,7 +214,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="border-t border-white/10 p-4">
               <div className="flex items-center gap-3 px-2 py-2 mb-2">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#6DC142] text-[#003087] font-bold">
-                  {user.fullName.charAt(0).toUpperCase()}
+                  {user.fullName?.charAt(0)?.toUpperCase() ?? "?"}
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-white">{user.fullName}</p>

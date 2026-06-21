@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, transfersTable, activityTable } from "@workspace/db";
-import { eq, and, desc } from "drizzle-orm";
+import { db, transfersTable, activityTable, usersTable } from "@workspace/db";
+import { eq, and, desc, gte } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { CreateTransferBody, UpdateTransferBody } from "@workspace/api-zod";
 
@@ -14,7 +14,7 @@ function generateToken(): string {
 }
 
 function generateReference(): string {
-  return "BM-" + Date.now().toString(36).toUpperCase() + "-" + Math.floor(1000 + Math.random() * 9000);
+  return "TRX" + Date.now().toString(36).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
 }
 
 function formatTransfer(t: typeof transfersTable.$inferSelect) {
@@ -40,7 +40,6 @@ router.get("/transfers", requireAuth, async (req, res) => {
   const { userId } = (req as any).user;
   const { status, page = "1", limit = "20" } = req.query as Record<string, string>;
 
-  let query = db.select().from(transfersTable).$dynamic();
   const conditions = [eq(transfersTable.userId, userId)];
   if (status) conditions.push(eq(transfersTable.status, status as any));
 
@@ -88,7 +87,40 @@ router.get("/transfers/link/:token", async (req, res) => {
   const token = req.params["token"] as string;
   const transfers = await db.select().from(transfersTable).where(eq(transfersTable.token, token)).limit(1);
   if (transfers.length === 0) { res.status(404).json({ error: "Transfer not found" }); return; }
-  res.json(formatTransfer(transfers[0]));
+
+  const transfer = transfers[0];
+
+  const users = await db.select({ fullName: usersTable.fullName }).from(usersTable).where(eq(usersTable.id, transfer.userId)).limit(1);
+  const senderName = users[0]?.fullName ?? null;
+
+  res.json({ ...formatTransfer(transfer), senderName });
+});
+
+router.post("/transfers/link/:token/confirm", async (req, res) => {
+  const token = req.params["token"] as string;
+  const transfers = await db.select().from(transfersTable).where(eq(transfersTable.token, token)).limit(1);
+  if (transfers.length === 0) { res.status(404).json({ error: "Transfer not found" }); return; }
+
+  const transfer = transfers[0];
+  if (transfer.status !== "pending") {
+    res.status(400).json({ error: "Transfer is not pending" });
+    return;
+  }
+
+  const [updated] = await db.update(transfersTable)
+    .set({ status: "completed", confirmedAt: new Date() })
+    .where(eq(transfersTable.token, token))
+    .returning();
+
+  await db.insert(activityTable).values({
+    userId: transfer.userId,
+    type: "transfer_confirmed",
+    description: `Virement confirmé par ${transfer.beneficiaryName}`,
+    amount: transfer.amount,
+    currency: transfer.currency,
+  });
+
+  res.json(formatTransfer(updated));
 });
 
 router.get("/transfers/:id", requireAuth, async (req, res) => {

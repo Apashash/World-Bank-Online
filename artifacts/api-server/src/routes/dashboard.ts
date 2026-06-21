@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, usersTable, transfersTable, subAccountsTable, activityTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { db, usersTable, transfersTable, subAccountsTable, activityTable, referralsTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
@@ -14,23 +14,29 @@ router.get("/dashboard/summary", requireAuth, async (req, res) => {
 
   const allTransfers = await db.select().from(transfersTable).where(eq(transfersTable.userId, userId));
   const sentTransfers = allTransfers;
+  const completedTransfers = allTransfers.filter(t => t.status === "completed");
   const totalAmountSent = sentTransfers.reduce((s, t) => s + Number(t.amount), 0);
+  const totalAmountReceived = completedTransfers.reduce((s, t) => s + Number(t.amount), 0);
   const pendingTransfers = sentTransfers.filter(t => t.status === "pending").length;
 
   const subAccounts = await db.select().from(subAccountsTable).where(eq(subAccountsTable.parentUserId, userId));
   const activeSubAccounts = subAccounts.filter(s => s.status === "active").length;
 
+  const referrals = await db.select().from(referralsTable).where(eq(referralsTable.referrerId, userId));
+  const referralsCount = referrals.length;
+
   res.json({
     balance: Number(user.balance),
     currency: user.currency,
     totalTransfersSent: sentTransfers.length,
-    totalTransfersReceived: 0,
+    totalTransfersReceived: completedTransfers.length,
     totalAmountSent,
-    totalAmountReceived: 0,
+    totalAmountReceived,
     pendingTransfers,
     activeSubAccounts,
     kycStatus: user.kycStatus,
     iban: user.iban ?? null,
+    referralsCount,
   });
 });
 
@@ -39,7 +45,7 @@ router.get("/dashboard/activity", requireAuth, async (req, res) => {
 
   const activities = await db.select().from(activityTable)
     .where(eq(activityTable.userId, userId))
-    .orderBy(activityTable.createdAt)
+    .orderBy(desc(activityTable.createdAt))
     .limit(20);
 
   res.json(activities.map(a => ({
@@ -49,7 +55,7 @@ router.get("/dashboard/activity", requireAuth, async (req, res) => {
     amount: a.amount ? Number(a.amount) : null,
     currency: a.currency ?? null,
     createdAt: a.createdAt.toISOString(),
-  })).reverse());
+  })));
 });
 
 export default router;
