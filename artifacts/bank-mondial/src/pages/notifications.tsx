@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bell, CheckCheck, ArrowUpRight, ArrowDownLeft, CircleCheck, UserPlus, ShieldCheck, LogIn, Users, Wallet, Landmark, Receipt, RefreshCw } from "lucide-react";
+import {
+  Bell, CheckCheck, ArrowUpRight, ArrowDownLeft, CircleCheck,
+  UserPlus, ShieldCheck, LogIn, Users, Wallet, Landmark,
+  Receipt, RefreshCw, Send, CreditCard,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -16,10 +20,21 @@ interface Notification {
   isRead: boolean;
 }
 
-async function fetchNotifications(offset = 0): Promise<Notification[]> {
+const FILTERS = [
+  { key: "all",      label: "Toutes",    types: [] },
+  { key: "transfers",label: "Virements", types: ["transfer_sent", "transfer_received", "transfer_confirmed"] },
+  { key: "money",    label: "Dépôts & Retraits", types: ["deposit", "withdrawal"] },
+  { key: "bills",    label: "Factures",  types: ["bill_payment"] },
+  { key: "system",   label: "Système",   types: ["login", "kyc_updated", "sub_account_created", "referral_joined"] },
+] as const;
+
+type FilterKey = (typeof FILTERS)[number]["key"];
+
+async function fetchNotifications(types: string[]): Promise<Notification[]> {
   const token = localStorage.getItem("auth_token");
   if (!token) return [];
-  const res = await fetch(`/api/notifications?limit=50&offset=${offset}`, {
+  const params = types.length > 0 ? `?types=${types.join(",")}&limit=50` : "?limit=50";
+  const res = await fetch(`/api/notifications${params}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) return [];
@@ -28,17 +43,17 @@ async function fetchNotifications(offset = 0): Promise<Notification[]> {
 
 function typeIcon(type: string) {
   switch (type) {
-    case "transfer_sent":     return <ArrowUpRight className="h-4 w-4 text-red-500" />;
-    case "transfer_received": return <ArrowDownLeft className="h-4 w-4 text-green-500" />;
-    case "transfer_confirmed":return <CircleCheck className="h-4 w-4 text-blue-500" />;
+    case "transfer_sent":       return <ArrowUpRight className="h-4 w-4 text-red-500" />;
+    case "transfer_received":   return <ArrowDownLeft className="h-4 w-4 text-green-500" />;
+    case "transfer_confirmed":  return <CircleCheck className="h-4 w-4 text-blue-500" />;
     case "sub_account_created": return <Users className="h-4 w-4 text-purple-500" />;
-    case "kyc_updated":       return <ShieldCheck className="h-4 w-4 text-orange-500" />;
-    case "login":             return <LogIn className="h-4 w-4 text-gray-500" />;
-    case "referral_joined":   return <UserPlus className="h-4 w-4 text-indigo-500" />;
-    case "deposit":           return <Wallet className="h-4 w-4 text-green-600" />;
-    case "withdrawal":        return <Landmark className="h-4 w-4 text-amber-600" />;
-    case "bill_payment":      return <Receipt className="h-4 w-4 text-rose-500" />;
-    default:                  return <Bell className="h-4 w-4 text-gray-400" />;
+    case "kyc_updated":         return <ShieldCheck className="h-4 w-4 text-orange-500" />;
+    case "login":               return <LogIn className="h-4 w-4 text-gray-500" />;
+    case "referral_joined":     return <UserPlus className="h-4 w-4 text-indigo-500" />;
+    case "deposit":             return <Wallet className="h-4 w-4 text-green-600" />;
+    case "withdrawal":          return <Landmark className="h-4 w-4 text-amber-600" />;
+    case "bill_payment":        return <Receipt className="h-4 w-4 text-rose-500" />;
+    default:                    return <Bell className="h-4 w-4 text-gray-400" />;
   }
 }
 
@@ -62,16 +77,21 @@ export default function Notifications() {
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingRead, setMarkingRead] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const { toast } = useToast();
 
-  const load = useCallback(async () => {
+  const currentTypes = FILTERS.find((f) => f.key === activeFilter)?.types ?? [];
+
+  const load = useCallback(async (types: string[]) => {
     setLoading(true);
-    const data = await fetchNotifications();
+    const data = await fetchNotifications(types);
     setItems(data);
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load([...currentTypes]);
+  }, [activeFilter]);
 
   const unreadCount = items.filter((n) => !n.isRead).length;
 
@@ -90,7 +110,7 @@ export default function Notifications() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-5 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -107,7 +127,12 @@ export default function Notifications() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={load} title="Rafraîchir">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => load([...currentTypes])}
+            title="Rafraîchir"
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
           {unreadCount > 0 && (
@@ -125,10 +150,27 @@ export default function Notifications() {
         </div>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setActiveFilter(f.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
+              activeFilter === f.key
+                ? "bg-[#003087] text-white border-[#003087]"
+                : "bg-white text-gray-600 border-gray-200 hover:border-[#003087]/40 hover:text-[#003087]"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {/* List */}
       {loading ? (
         <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4 rounded-xl border bg-white animate-pulse">
               <div className="h-9 w-9 rounded-full bg-gray-100 shrink-0" />
               <div className="flex-1 space-y-2">
@@ -145,8 +187,17 @@ export default function Notifications() {
           </div>
           <div>
             <p className="font-semibold text-gray-700">Aucune notification</p>
-            <p className="text-sm text-muted-foreground mt-1">Vos activités apparaîtront ici.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {activeFilter === "all"
+                ? "Vos activités apparaîtront ici."
+                : "Aucune notification dans cette catégorie."}
+            </p>
           </div>
+          {activeFilter !== "all" && (
+            <Button variant="outline" size="sm" onClick={() => setActiveFilter("all")}>
+              Voir toutes les notifications
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
@@ -176,11 +227,19 @@ export default function Notifications() {
                 </div>
                 <div className="flex items-center gap-3 mt-1.5">
                   {notif.amount && notif.currency && (
-                    <span className="text-xs font-semibold text-[#003087]">
+                    <span className={`text-xs font-semibold ${
+                      ["transfer_received", "deposit"].includes(notif.type)
+                        ? "text-green-600"
+                        : "text-[#003087]"
+                    }`}>
+                      {["transfer_sent", "withdrawal", "bill_payment"].includes(notif.type) ? "−" : "+"}
                       {Number(notif.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {notif.currency}
                     </span>
                   )}
-                  <span className="text-xs text-muted-foreground" title={format(new Date(notif.createdAt), "dd MMM yyyy HH:mm", { locale: fr })}>
+                  <span
+                    className="text-xs text-muted-foreground"
+                    title={format(new Date(notif.createdAt), "dd MMM yyyy HH:mm", { locale: fr })}
+                  >
                     {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: fr })}
                   </span>
                 </div>
