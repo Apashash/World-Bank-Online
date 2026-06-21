@@ -44,20 +44,18 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-end">
-        <div className="flex items-center gap-3">
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <Bell className="h-5 w-5 text-gray-500" />
-          </button>
-          <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
-            <div className="h-8 w-8 rounded-full bg-[#6DC142] flex items-center justify-center text-white font-bold text-sm">
-              {user?.fullName?.charAt(0)?.toUpperCase()}
-            </div>
-            <span className="text-sm font-medium text-gray-700">
-              Bonjour, {user?.fullName?.split(" ")[0]}
-            </span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-full bg-[#6DC142] flex items-center justify-center text-white font-bold text-sm">
+            {user?.fullName?.charAt(0)?.toUpperCase()}
           </div>
+          <span className="text-sm font-medium text-gray-700">
+            Bonjour, {user?.fullName?.split(" ")[0]}
+          </span>
         </div>
+        <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <Bell className="h-5 w-5 text-gray-500" />
+        </button>
       </div>
 
       {/* Stat Cards */}
