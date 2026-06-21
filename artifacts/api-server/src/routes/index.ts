@@ -9,6 +9,7 @@ import kycRouter from "./kyc";
 import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
 import walletRouter from "./wallet";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(kycRouter);
 router.use(dashboardRouter);
 router.use(adminRouter);
 router.use(walletRouter);
+router.use(notificationsRouter);
 
 export default router;

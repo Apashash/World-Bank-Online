@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -23,6 +23,7 @@ export const activityTable = pgTable("activity", {
   amount: numeric("amount", { precision: 15, scale: 2 }),
   currency: text("currency"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  isRead: boolean("is_read").notNull().default(false),
 });
 
 export const insertActivitySchema = createInsertSchema(activityTable).omit({ id: true, createdAt: true });

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NotificationBell } from "./notification-bell";
 
 function BanqueMondialeLogo({ size = "sm" }: { size?: "sm" | "lg" }) {
   const imgClass = size === "lg" ? "h-10 w-10" : "h-8 w-8";
@@ -113,10 +114,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* Logo */}
-        <div className="flex h-16 shrink-0 items-center px-5 border-b border-white/10">
+        <div className="flex h-16 shrink-0 items-center justify-between px-5 border-b border-white/10">
           <Link href="/dashboard">
             <BanqueMondialeLogo size="sm" />
           </Link>
+          <NotificationBell />
         </div>
 
         {/* Nav */}
@@ -227,12 +229,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/dashboard">
             <BanqueMondialeLogo size="sm" />
           </Link>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </header>
 
         {/* Mobile Menu overlay */}
