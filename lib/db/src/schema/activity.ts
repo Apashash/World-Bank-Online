@@ -10,6 +10,9 @@ export const activityTypeEnum = pgEnum("activity_type", [
   "kyc_updated",
   "login",
   "referral_joined",
+  "deposit",
+  "withdrawal",
+  "bill_payment",
 ]);
 
 export const activityTable = pgTable("activity", {

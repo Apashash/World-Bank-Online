@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Landmark, CheckCircle2, MapPin, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useGetDashboardSummary } from "@workspace/api-client-react";
+import { useGetDashboardSummary, getDashboardSummaryQueryKey } from "@workspace/api-client-react";
+import { apiPost } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 const QUICK_AMOUNTS = [20, 50, 100, 200, 500];
 
@@ -16,11 +17,13 @@ const METHODS = [
 
 export default function Retrait() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: summary } = useGetDashboardSummary();
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("atm");
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [newBalance, setNewBalance] = useState<number | null>(null);
   const [withdrawCode] = useState(() => Math.random().toString(36).substring(2, 8).toUpperCase());
 
   const balance = summary?.balance ?? 0;
@@ -32,14 +35,28 @@ export default function Retrait() {
       toast({ title: "Montant invalide", variant: "destructive" });
       return;
     }
-    if (num > balance) {
-      toast({ title: "Solde insuffisant", description: `Votre solde est de ${balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR.`, variant: "destructive" });
-      return;
-    }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    setDone(true);
+    try {
+      const res = await apiPost<{ balance: number; withdrawn: number }>("/api/wallet/retrait", {
+        amount: num,
+        method,
+      });
+      setNewBalance(res.balance);
+      queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+      setDone(true);
+    } catch (err: any) {
+      if (err.message === "Solde insuffisant") {
+        toast({
+          title: "Solde insuffisant",
+          description: `Votre solde est de ${balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (done) {
@@ -52,6 +69,9 @@ export default function Retrait() {
             <p className="text-gray-500">Utilisez ce code à un DAB Banque Mondiale dans les 30 minutes.</p>
           ) : (
             <p className="text-gray-500">Présentez-vous en agence avec votre pièce d'identité.</p>
+          )}
+          {newBalance !== null && (
+            <p className="text-sm text-gray-400">Nouveau solde : <span className="font-semibold text-gray-700">{newBalance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span></p>
           )}
         </div>
         {method === "atm" && (
@@ -100,6 +120,11 @@ export default function Retrait() {
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-gray-400">EUR</span>
             </div>
+            {amount && parseFloat(amount) > balance && (
+              <p className="text-xs text-red-500 font-medium flex items-center gap-1">
+                ⚠ Solde insuffisant — disponible : {balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR
+              </p>
+            )}
             <div className="flex gap-2 flex-wrap">
               {QUICK_AMOUNTS.map((a) => (
                 <button
@@ -153,7 +178,7 @@ export default function Retrait() {
         <Button
           type="submit"
           className="w-full h-12 bg-[#003087] hover:bg-[#002060] text-base font-semibold"
-          disabled={loading || !amount}
+          disabled={loading || !amount || parseFloat(amount) > balance}
         >
           {loading ? "Traitement..." : `Retirer ${amount ? `${parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR` : ""}`}
         </Button>

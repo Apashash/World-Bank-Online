@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wallet, ChevronRight, CheckCircle2, CreditCard, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiPost } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { getDashboardSummaryQueryKey } from "@workspace/api-client-react";
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000];
 
@@ -15,11 +18,13 @@ const METHODS = [
 
 export default function Depot() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("card");
   const [description, setDescription] = useState("");
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [newBalance, setNewBalance] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +34,19 @@ export default function Depot() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    setDone(true);
+    try {
+      const res = await apiPost<{ balance: number; deposited: number }>("/api/wallet/depot", {
+        amount: num,
+        description: description || undefined,
+      });
+      setNewBalance(res.balance);
+      queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+      setDone(true);
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (done) {
@@ -40,10 +55,13 @@ export default function Depot() {
         <div className="flex justify-center">
           <CheckCircle2 className="h-16 w-16 text-[#6DC142]" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">Dépôt initié !</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Dépôt effectué !</h2>
         <p className="text-gray-500">
-          Votre dépôt de <span className="font-bold text-[#003087]">{parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span> est en cours de traitement. Il sera disponible sous 24h.
+          <span className="font-bold text-[#003087]">{parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span> ont été ajoutés à votre compte.
         </p>
+        {newBalance !== null && (
+          <p className="text-sm text-gray-400">Nouveau solde : <span className="font-semibold text-gray-700">{newBalance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span></p>
+        )}
         <Button className="bg-[#003087] hover:bg-[#002060] mt-4" onClick={() => { setDone(false); setAmount(""); setDescription(""); }}>
           Nouveau dépôt
         </Button>

@@ -8,6 +8,7 @@ import referralsRouter from "./referrals";
 import kycRouter from "./kyc";
 import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
+import walletRouter from "./wallet";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(referralsRouter);
 router.use(kycRouter);
 router.use(dashboardRouter);
 router.use(adminRouter);
+router.use(walletRouter);
 
 export default router;

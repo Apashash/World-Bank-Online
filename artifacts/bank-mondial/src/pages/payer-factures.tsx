@@ -5,36 +5,63 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Receipt, CheckCircle2, Zap, Phone, Wifi, Droplets, Flame, Tv } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiPost } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { getDashboardSummaryQueryKey, useGetDashboardSummary } from "@workspace/api-client-react";
 
 const BILLERS = [
-  { id: "edf", label: "EDF", category: "Électricité", icon: Zap, color: "bg-yellow-50 text-yellow-600" },
-  { id: "engie", label: "ENGIE", category: "Gaz & Électricité", icon: Flame, color: "bg-orange-50 text-orange-600" },
-  { id: "orange", label: "Orange", category: "Téléphonie", icon: Phone, color: "bg-orange-50 text-orange-600" },
-  { id: "free", label: "Free", category: "Internet", icon: Wifi, color: "bg-red-50 text-red-600" },
-  { id: "eau", label: "Eau de Paris", category: "Eau", icon: Droplets, color: "bg-blue-50 text-blue-600" },
-  { id: "canal", label: "Canal+", category: "TV & Streaming", icon: Tv, color: "bg-gray-50 text-gray-600" },
+  { id: "EDF", label: "EDF", category: "Électricité", icon: Zap, color: "bg-yellow-50 text-yellow-600" },
+  { id: "ENGIE", label: "ENGIE", category: "Gaz & Électricité", icon: Flame, color: "bg-orange-50 text-orange-600" },
+  { id: "Orange", label: "Orange", category: "Téléphonie", icon: Phone, color: "bg-orange-50 text-orange-600" },
+  { id: "Free", label: "Free", category: "Internet", icon: Wifi, color: "bg-red-50 text-red-600" },
+  { id: "Eau de Paris", label: "Eau de Paris", category: "Eau", icon: Droplets, color: "bg-blue-50 text-blue-600" },
+  { id: "Canal+", label: "Canal+", category: "TV & Streaming", icon: Tv, color: "bg-gray-50 text-gray-600" },
 ];
 
 export default function PayerFactures() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: summary } = useGetDashboardSummary();
   const [biller, setBiller] = useState<string | null>(null);
   const [reference, setReference] = useState("");
   const [amount, setAmount] = useState("");
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [newBalance, setNewBalance] = useState<number | null>(null);
 
+  const balance = summary?.balance ?? 0;
   const selectedBiller = BILLERS.find((b) => b.id === biller);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!biller || !reference || !amount) {
+    const num = parseFloat(amount);
+    if (!biller || !reference || !num || num <= 0) {
       toast({ title: "Champs manquants", description: "Remplissez tous les champs.", variant: "destructive" });
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    setDone(true);
+    try {
+      const res = await apiPost<{ balance: number; paid: number }>("/api/wallet/payer-factures", {
+        amount: num,
+        biller,
+        reference,
+      });
+      setNewBalance(res.balance);
+      queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+      setDone(true);
+    } catch (err: any) {
+      if (err.message === "Solde insuffisant") {
+        toast({
+          title: "Solde insuffisant",
+          description: `Votre solde est de ${balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (done) {
@@ -43,8 +70,11 @@ export default function PayerFactures() {
         <CheckCircle2 className="h-16 w-16 text-[#6DC142] mx-auto" />
         <h2 className="text-2xl font-bold text-gray-900">Facture payée !</h2>
         <p className="text-gray-500">
-          Votre paiement de <span className="font-bold text-[#003087]">{parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span> à <span className="font-bold">{selectedBiller?.label}</span> a été effectué.
+          Paiement de <span className="font-bold text-[#003087]">{parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span> à <span className="font-bold">{selectedBiller?.label}</span> effectué.
         </p>
+        {newBalance !== null && (
+          <p className="text-sm text-gray-400">Nouveau solde : <span className="font-semibold text-gray-700">{newBalance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span></p>
+        )}
         <p className="text-xs text-gray-400">Réf. : {reference}</p>
         <Button className="bg-[#003087] hover:bg-[#002060]" onClick={() => { setDone(false); setBiller(null); setReference(""); setAmount(""); }}>
           Payer une autre facture
@@ -61,7 +91,7 @@ export default function PayerFactures() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Payer factures</h1>
-          <p className="text-sm text-gray-500">Réglez vos factures en quelques secondes</p>
+          <p className="text-sm text-gray-500">Solde disponible : <span className="font-semibold text-[#003087]">{balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span></p>
         </div>
       </div>
 
@@ -121,6 +151,9 @@ export default function PayerFactures() {
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">EUR</span>
                   </div>
+                  {amount && parseFloat(amount) > balance && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">⚠ Solde insuffisant — disponible : {balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -128,7 +161,7 @@ export default function PayerFactures() {
             <Button
               type="submit"
               className="w-full h-12 bg-[#003087] hover:bg-[#002060] text-base font-semibold"
-              disabled={loading}
+              disabled={loading || !amount || parseFloat(amount) > balance}
             >
               {loading ? "Traitement..." : `Payer ${amount ? `${parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR à ${selectedBiller?.label}` : "la facture"}`}
             </Button>

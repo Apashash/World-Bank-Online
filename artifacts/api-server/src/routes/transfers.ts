@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, transfersTable, activityTable, usersTable } from "@workspace/db";
-import { eq, and, desc, gte } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { CreateTransferBody, UpdateTransferBody } from "@workspace/api-zod";
 
@@ -58,6 +58,20 @@ router.post("/transfers", requireAuth, async (req, res) => {
   if (!parsed.success) { res.status(400).json({ error: "Invalid request body" }); return; }
 
   const { beneficiaryName, amount, currency, message, accessType, expiresAt } = parsed.data;
+
+  // Check balance before creating transfer
+  const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (users.length === 0) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
+  const currentBalance = Number(users[0].balance);
+  if (currentBalance < amount) {
+    res.status(400).json({ error: "Solde insuffisant", balance: currentBalance });
+    return;
+  }
+
+  // Deduct balance
+  await db.update(usersTable)
+    .set({ balance: sql`${usersTable.balance} - ${amount.toFixed(2)}` })
+    .where(eq(usersTable.id, userId));
 
   const [transfer] = await db.insert(transfersTable).values({
     userId,
