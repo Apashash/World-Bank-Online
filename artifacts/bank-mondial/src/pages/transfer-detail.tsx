@@ -1,4 +1,4 @@
-import { useGetTransfer, useUpdateTransfer, getGetTransferQueryKey } from "@workspace/api-client-react";
+import { useGetTransfer, useUpdateTransfer, getGetTransferQueryKey, getGetDashboardSummaryQueryKey, getListTransfersQueryKey } from "@workspace/api-client-react";
 import { useParams, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,12 +58,20 @@ export default function TransferDetail() {
   };
 
   const handleCancel = () => {
-    if (confirm("Voulez-vous vraiment annuler ce virement ?")) {
+    if (confirm("Voulez-vous vraiment annuler ce virement ? Le montant sera remboursé sur votre solde.")) {
       updateTransfer.mutate({ id, data: { status: "cancelled" } }, {
         onSuccess: () => {
-          toast({ title: "Virement annulé" });
+          toast({
+            title: "Virement annulé",
+            description: "Le montant a été remboursé sur votre solde.",
+          });
           queryClient.invalidateQueries({ queryKey: getGetTransferQueryKey(id) });
-        }
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListTransfersQueryKey() });
+        },
+        onError: (err: any) => {
+          toast({ title: "Erreur", description: err.message || "Impossible d'annuler.", variant: "destructive" });
+        },
       });
     }
   };

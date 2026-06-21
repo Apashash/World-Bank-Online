@@ -7,7 +7,7 @@ import { Wallet, ChevronRight, CheckCircle2, CreditCard, Building } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { apiPost } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { getDashboardSummaryQueryKey } from "@workspace/api-client-react";
+import { getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000];
 
@@ -40,7 +40,7 @@ export default function Depot() {
         description: description || undefined,
       });
       setNewBalance(res.balance);
-      queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
       setDone(true);
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });

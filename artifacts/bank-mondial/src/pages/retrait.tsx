@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Landmark, CheckCircle2, MapPin, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useGetDashboardSummary, getDashboardSummaryQueryKey } from "@workspace/api-client-react";
+import { useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 import { apiPost } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -42,7 +42,7 @@ export default function Retrait() {
         method,
       });
       setNewBalance(res.balance);
-      queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
       setDone(true);
     } catch (err: any) {
       if (err.message === "Solde insuffisant") {

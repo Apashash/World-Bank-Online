@@ -7,7 +7,7 @@ import { Receipt, CheckCircle2, Zap, Phone, Wifi, Droplets, Flame, Tv } from "lu
 import { useToast } from "@/hooks/use-toast";
 import { apiPost } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { getDashboardSummaryQueryKey, useGetDashboardSummary } from "@workspace/api-client-react";
+import { getGetDashboardSummaryQueryKey, useGetDashboardSummary } from "@workspace/api-client-react";
 
 const BILLERS = [
   { id: "EDF", label: "EDF", category: "Électricité", icon: Zap, color: "bg-yellow-50 text-yellow-600" },
@@ -47,7 +47,7 @@ export default function PayerFactures() {
         reference,
       });
       setNewBalance(res.balance);
-      queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
       setDone(true);
     } catch (err: any) {
       if (err.message === "Solde insuffisant") {
