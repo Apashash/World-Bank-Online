@@ -44,12 +44,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-3">
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <Search className="h-5 w-5 text-gray-500" />
-          </button>
           <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
             <Bell className="h-5 w-5 text-gray-500" />
           </button>
