@@ -30,6 +30,14 @@ import AdminUsers from "@/pages/admin-users";
 import AdminTransfers from "@/pages/admin-transfers";
 import AdminKyc from "@/pages/admin-kyc";
 
+import Depot from "@/pages/depot";
+import Recevoir from "@/pages/recevoir";
+import ScannerQR from "@/pages/scanner-qr";
+import Retrait from "@/pages/retrait";
+import PayerFactures from "@/pages/payer-factures";
+import Echanger from "@/pages/echanger";
+import Plus from "@/pages/plus";
+
 // Setup auth token for all API requests
 setAuthTokenGetter(() => localStorage.getItem("auth_token"));
 
@@ -52,7 +60,7 @@ function Router() {
       <Route path="/open-account/steps" component={OpenAccountSteps} />
       <Route path="/register" component={Register} />
       <Route path="/t/:token" component={TransferLink} />
-      
+
       {/* Protected Routes */}
       <Route path="/dashboard"><AppLayout><Dashboard /></AppLayout></Route>
       <Route path="/transfers"><AppLayout><Transfers /></AppLayout></Route>
@@ -63,13 +71,22 @@ function Router() {
       <Route path="/referrals"><AppLayout><Referrals /></AppLayout></Route>
       <Route path="/kyc"><AppLayout><Kyc /></AppLayout></Route>
       <Route path="/settings"><AppLayout><Settings /></AppLayout></Route>
-      
+
+      {/* Quick Action Routes */}
+      <Route path="/depot"><AppLayout><Depot /></AppLayout></Route>
+      <Route path="/recevoir"><AppLayout><Recevoir /></AppLayout></Route>
+      <Route path="/scanner-qr"><AppLayout><ScannerQR /></AppLayout></Route>
+      <Route path="/retrait"><AppLayout><Retrait /></AppLayout></Route>
+      <Route path="/payer-factures"><AppLayout><PayerFactures /></AppLayout></Route>
+      <Route path="/echanger"><AppLayout><Echanger /></AppLayout></Route>
+      <Route path="/plus"><AppLayout><Plus /></AppLayout></Route>
+
       {/* Admin Routes */}
       <Route path="/admin"><AppLayout><AdminDashboard /></AppLayout></Route>
       <Route path="/admin/users"><AppLayout><AdminUsers /></AppLayout></Route>
       <Route path="/admin/transfers"><AppLayout><AdminTransfers /></AppLayout></Route>
       <Route path="/admin/kyc"><AppLayout><AdminKyc /></AppLayout></Route>
-      
+
       <Route component={NotFound} />
     </Switch>
   );

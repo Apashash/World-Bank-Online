@@ -12,6 +12,13 @@ import {
   X,
   UserCog,
   Building2,
+  Wallet,
+  Download,
+  QrCode,
+  Landmark,
+  Receipt,
+  ArrowLeftRight,
+  LayoutGrid,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +39,17 @@ function BanqueMondialeLogo({ size = "sm" }: { size?: "sm" | "lg" }) {
     </div>
   );
 }
+
+const quickActions = [
+  { icon: Wallet, label: "Dépôt", href: "/depot" },
+  { icon: Send, label: "Envoyer", href: "/transfers/new" },
+  { icon: Download, label: "Recevoir", href: "/recevoir" },
+  { icon: QrCode, label: "QR", href: "/scanner-qr" },
+  { icon: Landmark, label: "Retrait", href: "/retrait" },
+  { icon: Receipt, label: "Factures", href: "/payer-factures" },
+  { icon: ArrowLeftRight, label: "Échanger", href: "/echanger" },
+  { icon: LayoutGrid, label: "Plus", href: "/plus" },
+];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -102,7 +120,37 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Nav */}
-        <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4">
+        <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4 gap-4">
+
+          {/* Quick Actions Grid */}
+          <div>
+            <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/35">
+              Actions rapides
+            </p>
+            <div className="grid grid-cols-4 gap-1">
+              {quickActions.map(({ icon: Icon, label, href }) => {
+                const active = location === href || (href !== "/dashboard" && location.startsWith(href) && href !== "/transfers" && href.length > 1);
+                return (
+                  <Link key={href} href={href}>
+                    <div
+                      className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl cursor-pointer transition-all ${
+                        active ? "bg-white/20" : "hover:bg-white/10"
+                      }`}
+                    >
+                      <div className={`h-9 w-9 rounded-full flex items-center justify-center ${active ? "bg-white/20" : "bg-white/10"}`}>
+                        <Icon className="h-4 w-4 text-white" strokeWidth={1.5} />
+                      </div>
+                      <span className="text-[9px] font-medium text-white/70 text-center leading-tight">{label}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-white/10" />
+
+          {/* Main Nav */}
           <nav className="flex-1 space-y-0.5">
             {navItems.map((item) => {
               const active =
@@ -193,7 +241,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             className="absolute inset-0 top-14 z-50 md:hidden flex flex-col"
             style={{ background: "linear-gradient(180deg, #002060 0%, #003087 100%)" }}
           >
-            <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+            <div className="px-4 pt-4 pb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-3">Actions rapides</p>
+              <div className="grid grid-cols-4 gap-2">
+                {quickActions.map(({ icon: Icon, label, href }) => (
+                  <Link key={href} href={href} onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className="flex flex-col items-center gap-1.5 py-2 rounded-xl hover:bg-white/10 transition-all cursor-pointer">
+                      <div className="h-11 w-11 rounded-full bg-white/10 flex items-center justify-center">
+                        <Icon className="h-5 w-5 text-white" strokeWidth={1.5} />
+                      </div>
+                      <span className="text-[10px] font-medium text-white/70 text-center leading-tight">{label}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-white/10 mx-4 my-2" />
+
+            <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
               {navItems.map((item) => (
                 <Link
                   key={item.href}

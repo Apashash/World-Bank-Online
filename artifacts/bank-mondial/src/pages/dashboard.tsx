@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useGetMe } from "@workspace/api-client-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { Link } from "wouter";
 
 function buildWeeklyChart(transfers: any[]) {
   const weeks = [0, 1, 2, 3].reverse().map((i) => {
@@ -117,24 +118,23 @@ export default function Dashboard() {
         <CardContent className="pt-5 pb-5">
           <div className="grid grid-cols-4 gap-4">
             {[
-              { icon: Wallet, label: "Dépôt" },
-              { icon: Send, label: "Envoyer" },
-              { icon: Download, label: "Recevoir" },
-              { icon: QrCode, label: "Scanner QR" },
-              { icon: Landmark, label: "Retrait" },
-              { icon: Receipt, label: "Payer factures" },
-              { icon: ArrowLeftRight, label: "Échanger" },
-              { icon: LayoutGrid, label: "Plus" },
-            ].map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                className="flex flex-col items-center gap-2 group"
-              >
-                <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                  <Icon className="h-6 w-6 text-[#003087]" strokeWidth={1.5} />
+              { icon: Wallet, label: "Dépôt", href: "/depot" },
+              { icon: Send, label: "Envoyer", href: "/transfers/new" },
+              { icon: Download, label: "Recevoir", href: "/recevoir" },
+              { icon: QrCode, label: "Scanner QR", href: "/scanner-qr" },
+              { icon: Landmark, label: "Retrait", href: "/retrait" },
+              { icon: Receipt, label: "Payer factures", href: "/payer-factures" },
+              { icon: ArrowLeftRight, label: "Échanger", href: "/echanger" },
+              { icon: LayoutGrid, label: "Plus", href: "/plus" },
+            ].map(({ icon: Icon, label, href }) => (
+              <Link key={label} href={href}>
+                <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                  <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <Icon className="h-6 w-6 text-[#003087]" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs text-gray-600 font-medium text-center leading-tight">{label}</span>
                 </div>
-                <span className="text-xs text-gray-600 font-medium text-center leading-tight">{label}</span>
-              </button>
+              </Link>
             ))}
           </div>
         </CardContent>
