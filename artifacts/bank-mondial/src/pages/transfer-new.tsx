@@ -163,26 +163,28 @@ export default function TransferNew() {
                 )} />
 
 
-                <FormItem>
-                  <FormLabel>Catégorie</FormLabel>
-                  <Select
-                    value={form.watch("category") || ""}
-                    onValueChange={(v) => form.setValue("category", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choisir une catégorie (optionnel)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="logement">🏠 Logement</SelectItem>
-                      <SelectItem value="alimentation">🍔 Alimentation</SelectItem>
-                      <SelectItem value="santé">❤️ Santé</SelectItem>
-                      <SelectItem value="transport">🚗 Transport</SelectItem>
-                      <SelectItem value="loisirs">🎉 Loisirs</SelectItem>
-                      <SelectItem value="éducation">📚 Éducation</SelectItem>
-                      <SelectItem value="autres">📦 Autres</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
+                <FormField control={form.control} name="category" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Catégorie</FormLabel>
+                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choisir une catégorie (optionnel)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="logement">🏠 Logement</SelectItem>
+                        <SelectItem value="alimentation">🍔 Alimentation</SelectItem>
+                        <SelectItem value="santé">❤️ Santé</SelectItem>
+                        <SelectItem value="transport">🚗 Transport</SelectItem>
+                        <SelectItem value="loisirs">🎉 Loisirs</SelectItem>
+                        <SelectItem value="éducation">📚 Éducation</SelectItem>
+                        <SelectItem value="autres">📦 Autres</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
 
                 <FormField control={form.control} name="message" render={({ field }) => (
                   <FormItem>
