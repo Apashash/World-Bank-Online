@@ -53,10 +53,21 @@ export default function Dashboard() {
   const chartData = buildWeeklyChart(transfersData?.transfers || []);
   const recentBeneficiaries = useRecentBeneficiaries();
 
+  const ACTIVITY_TYPE_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
+    transfer_sent:         { label: "Virement envoyé", className: "bg-red-100 text-red-700 border-red-200",       dot: "bg-red-500" },
+    transfer_confirmed:    { label: "Reçu",            className: "bg-green-100 text-green-700 border-green-200", dot: "bg-green-500" },
+    deposit:               { label: "Dépôt",           className: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+    withdrawal:            { label: "Retrait",         className: "bg-orange-100 text-orange-700 border-orange-200", dot: "bg-orange-500" },
+    bill_payment:          { label: "Facture",         className: "bg-purple-100 text-purple-700 border-purple-200", dot: "bg-purple-500" },
+    sub_account_created:   { label: "Sous-compte",     className: "bg-blue-100 text-blue-700 border-blue-200",     dot: "bg-blue-400" },
+    referral_registered:   { label: "Parrainage",      className: "bg-violet-100 text-violet-700 border-violet-200", dot: "bg-violet-400" },
+  };
+
+  const getActivityConfig = (type: string) => ACTIVITY_TYPE_CONFIG[type] ?? { label: type, className: "bg-gray-100 text-gray-600 border-gray-200", dot: "bg-gray-400" };
+
   const getActivityIcon = (type: string) => {
-    if (type === "transfer_sent") return <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 shrink-0" />;
-    if (type === "transfer_confirmed") return <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 shrink-0" />;
-    return <div className="h-2 w-2 rounded-full bg-blue-400 mt-1.5 shrink-0" />;
+    const cfg = getActivityConfig(type);
+    return <div className={`h-2 w-2 rounded-full ${cfg.dot} mt-1.5 shrink-0`} />;
   };
 
   return (
@@ -244,22 +255,31 @@ export default function Dashboard() {
               ) : !Array.isArray(activities) || activities.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Aucune activité récente.</p>
               ) : (
-                activities.slice(0, 6).map((activity) => (
-                  <div key={activity.id} className="flex gap-3">
-                    {getActivityIcon(activity.type)}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 leading-snug truncate">{activity.description}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {format(new Date(activity.createdAt), "dd/MM/yyyy", { locale: fr })}
-                      </p>
-                    </div>
-                    {activity.amount != null && (
-                      <div className={`text-xs font-bold shrink-0 ${activity.type === "transfer_sent" ? "text-red-500" : "text-green-600"}`}>
-                        {activity.type === "transfer_sent" ? "-" : "+"}{Number(activity.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {activity.currency}
+                activities.slice(0, 6).map((activity) => {
+                  const cfg = getActivityConfig(activity.type);
+                  const isDebit = activity.type === "transfer_sent" || activity.type === "withdrawal";
+                  return (
+                    <div key={activity.id} className="flex gap-3 items-start">
+                      {getActivityIcon(activity.type)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cfg.className}`}>
+                            {cfg.label}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-700 leading-snug truncate">{activity.description}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {format(new Date(activity.createdAt), "dd/MM/yyyy HH:mm", { locale: fr })}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                ))
+                      {activity.amount != null && (
+                        <div className={`text-xs font-bold shrink-0 ${isDebit ? "text-red-500" : "text-green-600"}`}>
+                          {isDebit ? "-" : "+"}{Number(activity.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {activity.currency}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </CardContent>

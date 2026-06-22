@@ -25,6 +25,7 @@ const transferSchema = z.object({
   accessType: z.enum(["public", "private", "limited"]),
   expiresAt: z.string().optional(),
   category: z.string().optional(),
+  transactionType: z.enum(["virement", "dépôt", "retrait", "facture"]).default("virement"),
 });
 
 type GeneratedTransfer = {
@@ -55,13 +56,14 @@ export default function TransferNew() {
       accessType: "public",
       expiresAt: "",
       category: "",
+      transactionType: "virement" as const,
     },
   });
 
   const messageValue = form.watch("message") || "";
 
   const onSubmit = (data: z.infer<typeof transferSchema>) => {
-    const payload = { ...data, category: data.category || undefined } as any;
+    const payload = { ...data, category: data.category || undefined, transactionType: data.transactionType } as any;
     createTransfer.mutate({ data: payload }, {
       onSuccess: (res) => {
         queryClient.invalidateQueries({ queryKey: getListTransfersQueryKey() });
@@ -130,6 +132,33 @@ export default function TransferNew() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <FormField control={form.control} name="transactionType" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type d'opération</FormLabel>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: "virement", label: "↗ Virement", color: "blue" },
+                        { value: "dépôt", label: "⬇ Dépôt", color: "green" },
+                        { value: "retrait", label: "⬆ Retrait", color: "orange" },
+                        { value: "facture", label: "📄 Facture", color: "purple" },
+                      ].map((opt) => (
+                        <label
+                          key={opt.value}
+                          className={`flex items-center gap-2 cursor-pointer text-xs px-3 py-2.5 rounded-lg border transition-all ${
+                            field.value === opt.value
+                              ? "border-[#003087] bg-[#003087]/5 text-[#003087] font-semibold"
+                              : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          <input type="radio" className="accent-[#003087]" value={opt.value} checked={field.value === opt.value} onChange={() => field.onChange(opt.value)} />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
                 <FormField control={form.control} name="beneficiaryName" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nom du bénéficiaire</FormLabel>

@@ -27,6 +27,7 @@ function formatTransfer(t: typeof transfersTable.$inferSelect) {
     currency: t.currency,
     message: t.message ?? null,
     category: t.category ?? null,
+    transactionType: t.transactionType ?? "virement",
     status: t.status,
     accessType: t.accessType,
     expiresAt: t.expiresAt?.toISOString() ?? null,
@@ -60,6 +61,10 @@ router.post("/transfers", requireAuth, async (req, res) => {
 
   const { beneficiaryName, amount, currency, message, accessType, expiresAt } = parsed.data;
   const category = typeof req.body.category === "string" ? req.body.category : null;
+  const validTypes = ["virement", "dépôt", "retrait", "facture"];
+  const transactionType = typeof req.body.transactionType === "string" && validTypes.includes(req.body.transactionType)
+    ? req.body.transactionType
+    : "virement";
 
   // Check balance before creating transfer
   const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
@@ -83,6 +88,7 @@ router.post("/transfers", requireAuth, async (req, res) => {
     currency: currency || "EUR",
     message: message ?? null,
     category: category,
+    transactionType: transactionType,
     status: "pending",
     accessType: accessType || "public",
     expiresAt: expiresAt ? new Date(expiresAt) : null,

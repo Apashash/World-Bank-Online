@@ -14,6 +14,7 @@ export const transfersTable = pgTable("transfers", {
   currency: text("currency").notNull().default("EUR"),
   message: text("message"),
   category: text("category"),
+  transactionType: text("transaction_type").notNull().default("virement"),
   status: transferStatusEnum("status").notNull().default("pending"),
   accessType: accessTypeEnum("access_type").notNull().default("public"),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
