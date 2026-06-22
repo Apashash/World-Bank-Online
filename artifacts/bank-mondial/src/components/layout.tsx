@@ -19,6 +19,12 @@ import {
   Receipt,
   ArrowLeftRight,
   LayoutGrid,
+  BookUser,
+  Headphones,
+  CalendarClock,
+  HandCoins,
+  AlertTriangle,
+  MessageCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,17 +76,24 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
     { label: "Virements", href: "/transfers", icon: Send },
+    { label: "Bénéficiaires", href: "/beneficiaries", icon: BookUser },
+    { label: "Planifiés", href: "/scheduled-transfers", icon: CalendarClock },
+    { label: "Demandes de fonds", href: "/fund-requests", icon: HandCoins },
     { label: "Sous-comptes", href: "/sub-accounts", icon: Users },
     { label: "Parrainage", href: "/referrals", icon: CreditCard },
     { label: "KYC & Sécurité", href: "/kyc", icon: ShieldCheck },
+    { label: "Support", href: "/support", icon: Headphones },
     { label: "Paramètres", href: "/settings", icon: Settings },
   ];
 
   const adminNavItems = [
-    { label: "Admin — Vue d'ensemble", href: "/admin", icon: Building2 },
-    { label: "Admin — Utilisateurs", href: "/admin/users", icon: UserCog },
-    { label: "Admin — Virements", href: "/admin/transfers", icon: Send },
-    { label: "Admin — KYC", href: "/admin/kyc", icon: ShieldCheck },
+    { label: "Vue d'ensemble", href: "/admin", icon: Building2 },
+    { label: "Alertes", href: "/admin/alerts", icon: AlertTriangle },
+    { label: "Utilisateurs", href: "/admin/users", icon: UserCog },
+    { label: "Virements", href: "/admin/transfers", icon: Send },
+    { label: "KYC", href: "/admin/kyc", icon: ShieldCheck },
+    { label: "Support", href: "/admin/support", icon: MessageCircle },
+    { label: "Taux de change", href: "/admin/exchange-rates", icon: ArrowLeftRight },
   ];
 
   useEffect(() => {

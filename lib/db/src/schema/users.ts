@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -21,6 +21,7 @@ export const usersTable = pgTable("users", {
   referralCode: text("referral_code").notNull().unique(),
   kycStatus: kycStatusEnum("kyc_status").notNull().default("none"),
   iban: text("iban"),
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

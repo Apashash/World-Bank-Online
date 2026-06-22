@@ -4,3 +4,8 @@ export * from "./sub-accounts";
 export * from "./referrals";
 export * from "./kyc";
 export * from "./activity";
+export * from "./beneficiaries";
+export * from "./support-messages";
+export * from "./exchange-rates";
+export * from "./scheduled-transfers";
+export * from "./fund-requests";

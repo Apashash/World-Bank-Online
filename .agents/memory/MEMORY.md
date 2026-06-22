@@ -1,2 +1,3 @@
 - [Array guard pattern](array-guard.md) — API hooks may return non-array truthy values; always use Array.isArray() not `|| []` for data guards.
 - [layout.tsx fullName](layout-fullname.md) — user.fullName can be undefined; use optional chaining `?.charAt(0)?.toUpperCase() ?? "?"` everywhere.
+- [API server zod imports](api-server-zod.md) — never import zod directly in api-server routes; esbuild cannot resolve it. Use manual validation functions instead.

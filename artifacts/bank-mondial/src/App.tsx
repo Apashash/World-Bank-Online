@@ -29,6 +29,9 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AdminUsers from "@/pages/admin-users";
 import AdminTransfers from "@/pages/admin-transfers";
 import AdminKyc from "@/pages/admin-kyc";
+import AdminAlerts from "@/pages/admin-alerts";
+import AdminExchangeRates from "@/pages/admin-exchange-rates";
+import AdminSupport from "@/pages/admin-support";
 
 import Depot from "@/pages/depot";
 import Recevoir from "@/pages/recevoir";
@@ -38,6 +41,12 @@ import PayerFactures from "@/pages/payer-factures";
 import Echanger from "@/pages/echanger";
 import Plus from "@/pages/plus";
 import Notifications from "@/pages/notifications";
+
+import Beneficiaries from "@/pages/beneficiaries";
+import Support from "@/pages/support";
+import ScheduledTransfers from "@/pages/scheduled-transfers";
+import FundRequests from "@/pages/fund-requests";
+import Onboarding from "@/pages/onboarding";
 
 // Setup auth token for all API requests
 setAuthTokenGetter(() => localStorage.getItem("auth_token"));
@@ -61,6 +70,7 @@ function Router() {
       <Route path="/open-account/steps" component={OpenAccountSteps} />
       <Route path="/register" component={Register} />
       <Route path="/t/:token" component={TransferLink} />
+      <Route path="/onboarding" component={Onboarding} />
 
       {/* Protected Routes */}
       <Route path="/dashboard"><AppLayout><Dashboard /></AppLayout></Route>
@@ -72,6 +82,10 @@ function Router() {
       <Route path="/referrals"><AppLayout><Referrals /></AppLayout></Route>
       <Route path="/kyc"><AppLayout><Kyc /></AppLayout></Route>
       <Route path="/settings"><AppLayout><Settings /></AppLayout></Route>
+      <Route path="/beneficiaries"><AppLayout><Beneficiaries /></AppLayout></Route>
+      <Route path="/support"><AppLayout><Support /></AppLayout></Route>
+      <Route path="/scheduled-transfers"><AppLayout><ScheduledTransfers /></AppLayout></Route>
+      <Route path="/fund-requests"><AppLayout><FundRequests /></AppLayout></Route>
 
       {/* Quick Action Routes */}
       <Route path="/depot"><AppLayout><Depot /></AppLayout></Route>
@@ -88,6 +102,9 @@ function Router() {
       <Route path="/admin/users"><AppLayout><AdminUsers /></AppLayout></Route>
       <Route path="/admin/transfers"><AppLayout><AdminTransfers /></AppLayout></Route>
       <Route path="/admin/kyc"><AppLayout><AdminKyc /></AppLayout></Route>
+      <Route path="/admin/alerts"><AppLayout><AdminAlerts /></AppLayout></Route>
+      <Route path="/admin/exchange-rates"><AppLayout><AdminExchangeRates /></AppLayout></Route>
+      <Route path="/admin/support"><AppLayout><AdminSupport /></AppLayout></Route>
 
       <Route component={NotFound} />
     </Switch>

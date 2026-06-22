@@ -78,4 +78,14 @@ router.post("/users/:id/change-password", requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// POST /users/:id/onboarding — mark onboarding as completed
+router.post("/users/:id/onboarding", requireAuth, async (req, res) => {
+  const { userId } = (req as any).user;
+  const id = parseInt(req.params["id"] as string);
+  if (isNaN(id) || id !== userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  await db.update(usersTable).set({ onboardingCompleted: true }).where(eq(usersTable.id, id));
+  res.json({ success: true });
+});
+
 export default router;

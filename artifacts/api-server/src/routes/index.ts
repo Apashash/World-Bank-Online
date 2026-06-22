@@ -10,6 +10,11 @@ import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
 import walletRouter from "./wallet";
 import notificationsRouter from "./notifications";
+import beneficiariesRouter from "./beneficiaries";
+import supportRouter from "./support";
+import exchangeRatesRouter from "./exchange-rates";
+import scheduledTransfersRouter from "./scheduled-transfers";
+import fundRequestsRouter from "./fund-requests";
 
 const router: IRouter = Router();
 
@@ -24,5 +29,10 @@ router.use(dashboardRouter);
 router.use(adminRouter);
 router.use(walletRouter);
 router.use(notificationsRouter);
+router.use(beneficiariesRouter);
+router.use(supportRouter);
+router.use(exchangeRatesRouter);
+router.use(scheduledTransfersRouter);
+router.use(fundRequestsRouter);
 
 export default router;
