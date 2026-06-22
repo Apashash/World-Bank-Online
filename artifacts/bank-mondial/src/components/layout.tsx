@@ -319,9 +319,41 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Page content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 md:pb-8 md:p-8">
           {children}
         </div>
+
+        {/* ── Mobile Bottom Nav ── */}
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-white/10 safe-area-pb"
+          style={{ background: "linear-gradient(180deg, #002060 0%, #003087 100%)" }}
+        >
+          <div className="grid grid-cols-5 h-16">
+            {[
+              { icon: Wallet,        label: "Dépôt",    href: "/depot" },
+              { icon: Landmark,      label: "Retrait",  href: "/retrait" },
+              { icon: Receipt,       label: "Factures", href: "/payer-factures" },
+              { icon: ArrowLeftRight,label: "Échanger", href: "/echanger" },
+              { icon: LayoutGrid,    label: "Plus",     href: "/plus" },
+            ].map(({ icon: Icon, label, href }) => {
+              const active = location === href || location.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <div className={`flex flex-col items-center justify-center h-full gap-1 transition-all ${active ? "opacity-100" : "opacity-60"}`}>
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all ${active ? "bg-white/20" : ""}`}>
+                      <Icon className={`h-5 w-5 text-white`} strokeWidth={1.5} />
+                    </div>
+                    <span className={`text-[9px] font-semibold text-white leading-none`}>{label}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </main>
     </div>
   );
