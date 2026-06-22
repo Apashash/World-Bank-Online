@@ -13,6 +13,7 @@ export const transfersTable = pgTable("transfers", {
   amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("EUR"),
   message: text("message"),
+  category: text("category"),
   status: transferStatusEnum("status").notNull().default("pending"),
   accessType: accessTypeEnum("access_type").notNull().default("public"),
   expiresAt: timestamp("expires_at", { withTimezone: true }),

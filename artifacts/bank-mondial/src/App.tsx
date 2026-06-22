@@ -47,6 +47,7 @@ import Support from "@/pages/support";
 import ScheduledTransfers from "@/pages/scheduled-transfers";
 import FundRequests from "@/pages/fund-requests";
 import Onboarding from "@/pages/onboarding";
+import Analyses from "@/pages/analyses";
 
 // Setup auth token for all API requests
 setAuthTokenGetter(() => localStorage.getItem("auth_token"));
@@ -86,6 +87,7 @@ function Router() {
       <Route path="/support"><AppLayout><Support /></AppLayout></Route>
       <Route path="/scheduled-transfers"><AppLayout><ScheduledTransfers /></AppLayout></Route>
       <Route path="/fund-requests"><AppLayout><FundRequests /></AppLayout></Route>
+      <Route path="/analyses"><AppLayout><Analyses /></AppLayout></Route>
 
       {/* Quick Action Routes */}
       <Route path="/depot"><AppLayout><Depot /></AppLayout></Route>

@@ -24,6 +24,7 @@ const transferSchema = z.object({
   message: z.string().max(250).optional(),
   accessType: z.enum(["public", "private", "limited"]),
   expiresAt: z.string().optional(),
+  category: z.string().optional(),
 });
 
 type GeneratedTransfer = {
@@ -53,13 +54,15 @@ export default function TransferNew() {
       message: "",
       accessType: "public",
       expiresAt: "",
+      category: "",
     },
   });
 
   const messageValue = form.watch("message") || "";
 
   const onSubmit = (data: z.infer<typeof transferSchema>) => {
-    createTransfer.mutate({ data }, {
+    const payload = { ...data, category: data.category || undefined } as any;
+    createTransfer.mutate({ data: payload }, {
       onSuccess: (res) => {
         queryClient.invalidateQueries({ queryKey: getListTransfersQueryKey() });
         setGenerated(res as GeneratedTransfer);
@@ -159,6 +162,27 @@ export default function TransferNew() {
                   </FormItem>
                 )} />
 
+
+                <FormItem>
+                  <FormLabel>Catégorie</FormLabel>
+                  <Select
+                    value={form.watch("category") || ""}
+                    onValueChange={(v) => form.setValue("category", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir une catégorie (optionnel)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="logement">🏠 Logement</SelectItem>
+                      <SelectItem value="alimentation">🍔 Alimentation</SelectItem>
+                      <SelectItem value="santé">❤️ Santé</SelectItem>
+                      <SelectItem value="transport">🚗 Transport</SelectItem>
+                      <SelectItem value="loisirs">🎉 Loisirs</SelectItem>
+                      <SelectItem value="éducation">📚 Éducation</SelectItem>
+                      <SelectItem value="autres">📦 Autres</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
 
                 <FormField control={form.control} name="message" render={({ field }) => (
                   <FormItem>

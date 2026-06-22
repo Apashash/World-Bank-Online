@@ -26,6 +26,7 @@ function formatTransfer(t: typeof transfersTable.$inferSelect) {
     amount: Number(t.amount),
     currency: t.currency,
     message: t.message ?? null,
+    category: t.category ?? null,
     status: t.status,
     accessType: t.accessType,
     expiresAt: t.expiresAt?.toISOString() ?? null,
@@ -58,6 +59,7 @@ router.post("/transfers", requireAuth, async (req, res) => {
   if (!parsed.success) { res.status(400).json({ error: "Invalid request body" }); return; }
 
   const { beneficiaryName, amount, currency, message, accessType, expiresAt } = parsed.data;
+  const category = typeof req.body.category === "string" ? req.body.category : null;
 
   // Check balance before creating transfer
   const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
@@ -80,6 +82,7 @@ router.post("/transfers", requireAuth, async (req, res) => {
     amount: amount.toString(),
     currency: currency || "EUR",
     message: message ?? null,
+    category: category,
     status: "pending",
     accessType: accessType || "public",
     expiresAt: expiresAt ? new Date(expiresAt) : null,

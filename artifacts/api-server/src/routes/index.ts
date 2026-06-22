@@ -15,6 +15,7 @@ import supportRouter from "./support";
 import exchangeRatesRouter from "./exchange-rates";
 import scheduledTransfersRouter from "./scheduled-transfers";
 import fundRequestsRouter from "./fund-requests";
+import analyticsRouter from "./analytics";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(supportRouter);
 router.use(exchangeRatesRouter);
 router.use(scheduledTransfersRouter);
 router.use(fundRequestsRouter);
+router.use(analyticsRouter);
 
 export default router;

@@ -21,11 +21,16 @@ router.patch("/users/:id", requireAuth, async (req, res) => {
   const { userId } = (req as any).user;
   if (id !== userId) { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const { fullName, phone, country, email } = req.body;
-  const updates: Record<string, string> = {};
+  const { fullName, phone, country, email, balanceAlertThreshold } = req.body;
+  const updates: Record<string, any> = {};
   if (fullName) updates.fullName = fullName;
   if (phone) updates.phone = phone;
   if (country) updates.country = country;
+
+  if (balanceAlertThreshold !== undefined) {
+    const threshold = parseFloat(balanceAlertThreshold);
+    updates.balanceAlertThreshold = isNaN(threshold) || threshold < 0 ? null : threshold.toFixed(2);
+  }
 
   if (email) {
     const existing = await db.select({ id: usersTable.id })
@@ -78,7 +83,6 @@ router.post("/users/:id/change-password", requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
-// POST /users/:id/onboarding — mark onboarding as completed
 router.post("/users/:id/onboarding", requireAuth, async (req, res) => {
   const { userId } = (req as any).user;
   const id = parseInt(req.params["id"] as string);
@@ -86,6 +90,20 @@ router.post("/users/:id/onboarding", requireAuth, async (req, res) => {
 
   await db.update(usersTable).set({ onboardingCompleted: true }).where(eq(usersTable.id, id));
   res.json({ success: true });
+});
+
+router.post("/users/:id/lock", requireAuth, async (req, res) => {
+  const { userId } = (req as any).user;
+  const id = parseInt(req.params["id"] as string);
+  if (isNaN(id) || id !== userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const users = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (users.length === 0) { res.status(404).json({ error: "Utilisateur introuvable." }); return; }
+
+  const current = users[0].status;
+  const newStatus = current === "blocked" ? "active" : "blocked";
+  const [updated] = await db.update(usersTable).set({ status: newStatus }).where(eq(usersTable.id, id)).returning();
+  res.json(formatUser(updated));
 });
 
 export default router;

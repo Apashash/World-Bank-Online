@@ -22,6 +22,7 @@ export const usersTable = pgTable("users", {
   kycStatus: kycStatusEnum("kyc_status").notNull().default("none"),
   iban: text("iban"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  balanceAlertThreshold: numeric("balance_alert_threshold", { precision: 15, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

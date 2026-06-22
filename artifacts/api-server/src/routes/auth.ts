@@ -25,7 +25,7 @@ function generateIban(): string {
   return `FR76 ${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 12)} ${digits.slice(12, 16)} ${digits.slice(16, 20)}`;
 }
 
-function formatUser(user: typeof usersTable.$inferSelect) {
+export function formatUser(user: typeof usersTable.$inferSelect) {
   return {
     id: user.id,
     clientId: user.clientId,
@@ -40,6 +40,8 @@ function formatUser(user: typeof usersTable.$inferSelect) {
     referralCode: user.referralCode,
     kycStatus: user.kycStatus,
     iban: user.iban ?? null,
+    onboardingCompleted: user.onboardingCompleted,
+    balanceAlertThreshold: user.balanceAlertThreshold ? Number(user.balanceAlertThreshold) : null,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -149,5 +151,4 @@ router.get("/auth/me", requireAuth, async (req, res) => {
   res.json(formatUser(users[0]));
 });
 
-export { formatUser };
 export default router;

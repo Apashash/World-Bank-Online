@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Copy, Share2, CheckCheck, QrCode } from "lucide-react";
+import { Download, Copy, Share2, CheckCheck, MessageCircle, Phone } from "lucide-react";
 import { useGetMe, useGetDashboardSummary } from "@workspace/api-client-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function Recevoir() {
   const { data: user } = useGetMe();
@@ -12,8 +13,11 @@ export default function Recevoir() {
   const [copiedIban, setCopiedIban] = useState(false);
   const [copiedBic, setCopiedBic] = useState(false);
 
-  const iban = summary?.iban || "FR76 3000 6000 0112 3456 7890 189";
+  const iban = summary?.iban || user?.iban || "FR76 3000 6000 0112 3456 7890 189";
   const bic = "BNPAFRPPXXX";
+  const qrData = `IBAN:${iban.replace(/\s/g, "")}|BIC:${bic}|NAME:${user?.fullName ?? ""}`;
+
+  const shareText = `Mes coordonnées bancaires :\nNom : ${user?.fullName ?? ""}\nIBAN : ${iban}\nBIC : ${bic}`;
 
   const copy = (text: string, which: "iban" | "bic") => {
     navigator.clipboard.writeText(text);
@@ -28,13 +32,20 @@ export default function Recevoir() {
   };
 
   const share = async () => {
-    const text = `Voici mes coordonnées bancaires :\nNom : ${user?.fullName}\nIBAN : ${iban}\nBIC : ${bic}`;
     if (navigator.share) {
-      await navigator.share({ title: "Coordonnées bancaires", text });
+      await navigator.share({ title: "Coordonnées bancaires", text: shareText });
     } else {
-      navigator.clipboard.writeText(text);
+      navigator.clipboard.writeText(shareText);
       toast({ title: "Coordonnées copiées", description: "Partagez-les comme vous le souhaitez." });
     }
+  };
+
+  const shareWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
+  };
+
+  const shareSms = () => {
+    window.open(`sms:?body=${encodeURIComponent(shareText)}`, "_blank");
   };
 
   return (
@@ -49,16 +60,25 @@ export default function Recevoir() {
         </div>
       </div>
 
-      {/* QR Code placeholder */}
+      {/* QR Code */}
       <Card className="border shadow-sm text-center">
-        <CardContent className="pt-8 pb-8">
-          <div className="inline-flex items-center justify-center h-40 w-40 border-2 border-dashed border-[#003087]/30 rounded-2xl bg-blue-50 mx-auto">
-            <div className="text-center space-y-2">
-              <QrCode className="h-12 w-12 text-[#003087] mx-auto" />
-              <p className="text-xs text-gray-500 font-medium">QR Code IBAN</p>
-            </div>
+        <CardContent className="pt-8 pb-6">
+          <div className="inline-flex items-center justify-center rounded-2xl bg-white p-4 border border-gray-100 shadow-sm mx-auto mb-3">
+            <QRCodeSVG
+              value={qrData}
+              size={160}
+              fgColor="#003087"
+              bgColor="#ffffff"
+              level="M"
+              imageSettings={{
+                src: "/logo-banque-mondiale.png",
+                height: 28,
+                width: 28,
+                excavate: true,
+              }}
+            />
           </div>
-          <p className="text-sm text-gray-500 mt-4">Faites scanner ce code pour recevoir un virement</p>
+          <p className="text-sm text-gray-500">Faites scanner ce QR code pour recevoir un virement</p>
         </CardContent>
       </Card>
 
@@ -108,13 +128,34 @@ export default function Recevoir() {
         </CardContent>
       </Card>
 
-      <Button
-        onClick={share}
-        className="w-full h-12 bg-[#003087] hover:bg-[#002060] text-base font-semibold"
-      >
-        <Share2 className="h-4 w-4 mr-2" />
-        Partager mes coordonnées
-      </Button>
+      {/* Share buttons */}
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            onClick={shareWhatsApp}
+            className="h-12 font-semibold gap-2"
+            style={{ backgroundColor: "#25D366" }}
+          >
+            <MessageCircle className="h-4 w-4" />
+            WhatsApp
+          </Button>
+          <Button
+            onClick={shareSms}
+            variant="outline"
+            className="h-12 font-semibold gap-2 border-gray-300"
+          >
+            <Phone className="h-4 w-4" />
+            SMS
+          </Button>
+        </div>
+        <Button
+          onClick={share}
+          className="w-full h-12 bg-[#003087] hover:bg-[#002060] text-base font-semibold"
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          Partager mes coordonnées
+        </Button>
+      </div>
     </div>
   );
 }

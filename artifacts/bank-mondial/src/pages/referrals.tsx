@@ -1,25 +1,92 @@
-import { useGetReferralStats, useListReferrals, useGetMe } from "@workspace/api-client-react";
+import { useGetReferralStats, useListReferrals, useGetMe, useListTransfers } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Gift, Copy, Link2 } from "lucide-react";
+import { Users, Gift, Copy, Link2, Award, ShieldCheck, Send, Star } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
-function getLevel(count: number): { label: string; color: string; next: number | null } {
-  if (count >= 10) return { label: "Gold", color: "#F59E0B", next: null };
-  if (count >= 5) return { label: "Silver", color: "#6B7280", next: 10 };
-  return { label: "Bronze", color: "#B45309", next: 5 };
+function getLevel(count: number): { label: string; color: string; next: number | null; emoji: string } {
+  if (count >= 10) return { label: "Gold", color: "#F59E0B", next: null, emoji: "🥇" };
+  if (count >= 5)  return { label: "Silver", color: "#6B7280", next: 10, emoji: "🥈" };
+  return { label: "Bronze", color: "#B45309", next: 5, emoji: "🥉" };
 }
+
+type Badge = {
+  id: string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  unlocked: boolean;
+  color: string;
+};
 
 export default function Referrals() {
   const { data: stats, isLoading: isLoadingStats } = useGetReferralStats();
   const { data: referrals, isLoading: isLoadingReferrals } = useListReferrals();
   const { data: user } = useGetMe();
+  const { data: transfersData } = useListTransfers({ page: 1, limit: 1 });
   const { toast } = useToast();
 
   const referralCode = user?.referralCode || "";
   const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
   const level = getLevel(stats?.totalReferrals ?? 0);
+
+  const totalReferrals = stats?.totalReferrals ?? 0;
+  const hasTransfer = (transfersData?.total ?? 0) > 0;
+  const kycVerified = user?.kycStatus === "verified";
+
+  const badges: Badge[] = [
+    {
+      id: "first_transfer",
+      label: "Premier virement",
+      description: "Effectuez votre premier virement",
+      icon: <Send className="h-5 w-5" />,
+      unlocked: hasTransfer,
+      color: "#003087",
+    },
+    {
+      id: "kyc_verified",
+      label: "Identité vérifiée",
+      description: "Complétez la vérification KYC",
+      icon: <ShieldCheck className="h-5 w-5" />,
+      unlocked: kycVerified,
+      color: "#6DC142",
+    },
+    {
+      id: "first_referral",
+      label: "Premier filleul",
+      description: "Parrainez votre premier utilisateur",
+      icon: <Users className="h-5 w-5" />,
+      unlocked: totalReferrals >= 1,
+      color: "#8B5CF6",
+    },
+    {
+      id: "five_referrals",
+      label: "5 filleuls",
+      description: "Parrainez 5 utilisateurs (niveau Silver)",
+      icon: <Star className="h-5 w-5" />,
+      unlocked: totalReferrals >= 5,
+      color: "#6B7280",
+    },
+    {
+      id: "ten_referrals",
+      label: "10 filleuls",
+      description: "Parrainez 10 utilisateurs (niveau Gold)",
+      icon: <Award className="h-5 w-5" />,
+      unlocked: totalReferrals >= 10,
+      color: "#F59E0B",
+    },
+    {
+      id: "rewards_earned",
+      label: "Gains parrainage",
+      description: "Recevez vos premières récompenses",
+      icon: <Gift className="h-5 w-5" />,
+      unlocked: (stats?.totalRewards ?? 0) > 0,
+      color: "#EC4899",
+    },
+  ];
+
+  const unlockedCount = badges.filter((b) => b.unlocked).length;
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(referralCode);
@@ -29,6 +96,11 @@ export default function Referrals() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
     toast({ title: "Lien copié !" });
+  };
+
+  const shareWhatsApp = () => {
+    const text = `Rejoins Banque Mondiale avec mon code parrain ${referralCode} et profite d'une offre exclusive ! 🎁\n${referralLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   return (
@@ -61,7 +133,7 @@ export default function Referrals() {
           <Card className="border shadow-sm">
             <CardContent className="pt-5 pb-5">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Votre lien de parrainage</p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-3">
                 <div className="flex-1 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 overflow-hidden">
                   <span className="text-xs text-blue-700 font-mono truncate block">{referralLink}</span>
                 </div>
@@ -73,6 +145,14 @@ export default function Referrals() {
                   <Copy className="h-4 w-4 text-blue-600" />
                 </button>
               </div>
+              <button
+                onClick={shareWhatsApp}
+                className="w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#25D366" }}
+              >
+                <span className="text-base">💬</span>
+                Partager sur WhatsApp
+              </button>
             </CardContent>
           </Card>
 
@@ -80,19 +160,19 @@ export default function Referrals() {
           <div className="grid grid-cols-3 gap-3">
             <Card className="border shadow-sm">
               <CardContent className="pt-4 pb-4 text-center">
-                <div className="text-2xl font-bold text-gray-900">{stats?.totalReferrals ?? 0}</div>
+                <div className="text-2xl font-bold text-gray-900">{totalReferrals}</div>
                 <p className="text-xs text-muted-foreground mt-0.5">Filleuls</p>
               </CardContent>
             </Card>
             <Card className="border shadow-sm">
               <CardContent className="pt-4 pb-4 text-center">
-                <div className="text-2xl font-bold text-[#003087]">{(stats?.totalRewards ?? 0).toFixed(0)} EUR</div>
-                <p className="text-xs text-muted-foreground mt-0.5">Total gains</p>
+                <div className="text-2xl font-bold text-[#003087]">{(stats?.totalRewards ?? 0).toFixed(0)} €</div>
+                <p className="text-xs text-muted-foreground mt-0.5">Gains</p>
               </CardContent>
             </Card>
             <Card className="border shadow-sm">
               <CardContent className="pt-4 pb-4 text-center">
-                <div className="text-xl font-bold" style={{ color: level.color }}>{level.label}</div>
+                <div className="text-xl font-bold" style={{ color: level.color }}>{level.emoji} {level.label}</div>
                 <p className="text-xs text-muted-foreground mt-0.5">Niveau</p>
               </CardContent>
             </Card>
@@ -104,19 +184,19 @@ export default function Referrals() {
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-muted-foreground">Progression vers {level.next >= 10 ? "Gold" : "Silver"}</span>
-                  <span className="text-xs font-semibold text-gray-700">{stats?.totalReferrals ?? 0}/{level.next}</span>
+                  <span className="text-xs font-semibold text-gray-700">{totalReferrals}/{level.next}</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.min(100, ((stats?.totalReferrals ?? 0) / level.next) * 100)}%`,
+                      width: `${Math.min(100, (totalReferrals / level.next) * 100)}%`,
                       backgroundColor: level.color,
                     }}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Encore {level.next - (stats?.totalReferrals ?? 0)} filleul(s) pour atteindre le niveau supérieur
+                  Encore {level.next - totalReferrals} filleul(s) pour atteindre le niveau supérieur
                 </p>
               </CardContent>
             </Card>
@@ -180,13 +260,12 @@ export default function Referrals() {
               </div>
             )}
 
-            {/* Summary at bottom */}
-            {(stats?.totalReferrals ?? 0) > 0 && (
+            {totalReferrals > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4 text-center">
                 <div>
                   <div className="flex items-center justify-center gap-1 text-sm font-bold text-gray-900">
                     <Users className="h-3.5 w-3.5 text-blue-500" />
-                    {stats?.totalReferrals ?? 0}
+                    {totalReferrals}
                   </div>
                   <p className="text-xs text-muted-foreground">Filleuls total</p>
                 </div>
@@ -202,6 +281,50 @@ export default function Referrals() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Badges & récompenses ── */}
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Award className="h-4 w-4 text-[#003087]" />
+              Badges & Récompenses
+            </CardTitle>
+            <span className="text-xs font-semibold text-muted-foreground bg-gray-100 px-2.5 py-1 rounded-full">
+              {unlockedCount}/{badges.length} obtenus
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {badges.map((badge) => (
+              <div
+                key={badge.id}
+                className={`relative rounded-xl border p-3 text-center transition-all ${
+                  badge.unlocked
+                    ? "border-transparent shadow-sm"
+                    : "border-gray-200 bg-gray-50/50 opacity-50"
+                }`}
+                style={badge.unlocked ? { backgroundColor: `${badge.color}10`, borderColor: `${badge.color}30` } : {}}
+              >
+                {badge.unlocked && (
+                  <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[#6DC142] flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">✓</span>
+                  </div>
+                )}
+                <div
+                  className="h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2"
+                  style={{ backgroundColor: badge.unlocked ? `${badge.color}20` : "#f3f4f6", color: badge.unlocked ? badge.color : "#9ca3af" }}
+                >
+                  {badge.icon}
+                </div>
+                <p className="text-xs font-semibold text-gray-800 leading-tight mb-0.5">{badge.label}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">{badge.description}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* How it works */}
       <Card className="border shadow-sm bg-[#003087]/5 border-[#003087]/20">

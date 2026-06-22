@@ -1,13 +1,30 @@
 import { useGetDashboardSummary, useGetRecentActivity, useGetReferralStats, useListTransfers } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownRight, ArrowUpRight, Users, Euro, Bell, Search, TrendingUp, TrendingDown, Wallet, Send, Download, QrCode, Landmark, Receipt, ArrowLeftRight, LayoutGrid } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Users, Euro, Bell, Wallet, Send, Download, QrCode, Landmark, Receipt, ArrowLeftRight, LayoutGrid, User } from "lucide-react";
 import { format, subWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useGetMe } from "@workspace/api-client-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
+
+type Beneficiary = { id: number; name: string; iban?: string | null };
+
+function useRecentBeneficiaries() {
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) return;
+    fetch("/api/beneficiaries?limit=3", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setBeneficiaries(data.slice(0, 3));
+      })
+      .catch(() => {});
+  }, []);
+  return beneficiaries;
+}
 
 function buildWeeklyChart(transfers: any[]) {
   const weeks = [0, 1, 2, 3].reverse().map((i) => {
@@ -34,6 +51,7 @@ export default function Dashboard() {
   const [period, setPeriod] = useState("30");
 
   const chartData = buildWeeklyChart(transfersData?.transfers || []);
+  const recentBeneficiaries = useRecentBeneficiaries();
 
   const getActivityIcon = (type: string) => {
     if (type === "transfer_sent") return <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 shrink-0" />;
@@ -133,6 +151,30 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recent Beneficiaries shortcuts */}
+      {recentBeneficiaries.length > 0 && (
+        <Card className="border shadow-sm">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Bénéficiaires récents</p>
+              <Link href="/beneficiaries" className="text-xs text-[#003087] font-medium hover:underline">Voir tout</Link>
+            </div>
+            <div className="flex gap-4">
+              {recentBeneficiaries.map((b) => (
+                <Link key={b.id} href="/transfers/new">
+                  <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
+                    <div className="h-12 w-12 rounded-full bg-[#003087]/10 flex items-center justify-center group-hover:bg-[#003087]/20 transition-colors">
+                      <User className="h-5 w-5 text-[#003087]" />
+                    </div>
+                    <span className="text-xs text-gray-600 font-medium text-center max-w-[60px] truncate">{b.name.split(" ")[0]}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Chart + Activity */}
       <div className="grid gap-6 lg:grid-cols-3">

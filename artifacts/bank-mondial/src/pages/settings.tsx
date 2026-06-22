@@ -11,8 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { User, Mail, Phone, Globe, Lock, CreditCard, ShieldCheck, Copy, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { User, Mail, Phone, Globe, Lock, CreditCard, Copy, Eye, EyeOff, Moon, Sun, ShieldOff, ShieldCheck, Bell, AlertTriangle } from "lucide-react";
 import { apiPost } from "@/lib/api";
+import { useTheme } from "@/hooks/use-theme";
 
 const profileSchema = z.object({
   fullName: z.string().min(2, "Nom requis (min. 2 caractères)"),
@@ -75,16 +76,45 @@ function InfoRow({ label, value, mono = false, copyable = false }: { label: stri
   );
 }
 
+function generateVirtualCard(userId?: number): { number: string; expiry: string; cvv: string } {
+  const seed = userId ?? 1;
+  const n = (seed * 7919 + 12345) % 10000;
+  const a = (seed * 3571 + 54321) % 10000;
+  const b = (seed * 1234 + 98765) % 10000;
+  const c = (seed * 9876 + 11111) % 10000;
+  const number = `${String(n).padStart(4, "0")} ${String(a).padStart(4, "0")} ${String(b).padStart(4, "0")} ${String(c).padStart(4, "0")}`;
+  const month = ((seed % 12) + 1).toString().padStart(2, "0");
+  const year = (28 + (seed % 5)).toString();
+  const cvv = String(((seed * 421) % 900) + 100);
+  return { number, expiry: `${month}/${year}`, cvv };
+}
+
 export default function Settings() {
   const { data: user, isLoading } = useGetMe();
   const updateUser = useUpdateUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { theme, toggleTheme } = useTheme();
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [lockLoading, setLockLoading] = useState(false);
+  const [showCvv, setShowCvv] = useState(false);
+  const [showCardNumber, setShowCardNumber] = useState(false);
+  const [alertThreshold, setAlertThreshold] = useState<string>("");
+  const [alertLoading, setAlertLoading] = useState(false);
+
+  const virtualCard = generateVirtualCard(user?.id);
+
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({ fullName: user.fullName || "", phone: user.phone || "", country: user.country || "" });
+      emailForm.reset({ email: user.email || "" });
+      setAlertThreshold(user.balanceAlertThreshold != null ? String(user.balanceAlertThreshold) : "");
+    }
+  }, [user]);
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -100,13 +130,6 @@ export default function Settings() {
     resolver: zodResolver(passwordSchema),
     defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
   });
-
-  useEffect(() => {
-    if (user) {
-      profileForm.reset({ fullName: user.fullName || "", phone: user.phone || "", country: user.country || "" });
-      emailForm.reset({ email: user.email || "" });
-    }
-  }, [user]);
 
   const onProfileSubmit = (data: z.infer<typeof profileSchema>) => {
     if (!user) return;
@@ -152,6 +175,39 @@ export default function Settings() {
     }
   };
 
+  const handleLockToggle = async () => {
+    if (!user) return;
+    setLockLoading(true);
+    try {
+      await apiPost(`/api/users/${user.id}/lock`, {});
+      await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      toast({
+        title: user.status === "blocked" ? "Compte réactivé" : "Compte bloqué",
+        description: user.status === "blocked"
+          ? "Votre compte est de nouveau actif."
+          : "Votre compte a été temporairement bloqué.",
+      });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message || "Impossible de modifier le statut.", variant: "destructive" });
+    } finally {
+      setLockLoading(false);
+    }
+  };
+
+  const handleSaveAlert = async () => {
+    if (!user) return;
+    setAlertLoading(true);
+    try {
+      await apiPost(`/api/users/${user.id}`, { balanceAlertThreshold: alertThreshold === "" ? null : parseFloat(alertThreshold) }, "PATCH");
+      await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      toast({ title: "Alerte mise à jour", description: alertThreshold === "" ? "Alerte de solde désactivée." : `Alerte configurée à ${alertThreshold} €.` });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message || "Impossible de mettre à jour l'alerte.", variant: "destructive" });
+    } finally {
+      setAlertLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -160,9 +216,10 @@ export default function Settings() {
     );
   }
 
+  const isBlocked = user?.status === "blocked";
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Paramètres</h1>
         <p className="text-sm text-muted-foreground mt-1">Gérez votre profil et la sécurité de votre compte.</p>
@@ -181,6 +238,9 @@ export default function Settings() {
                 {user?.role === "admin" && (
                   <Badge className="bg-[#003087]/10 text-[#003087] border-[#003087]/20">Admin</Badge>
                 )}
+                {isBlocked && (
+                  <Badge className="bg-red-100 text-red-700 border-red-200">Bloqué</Badge>
+                )}
               </div>
             </div>
           </div>
@@ -192,6 +252,197 @@ export default function Settings() {
           <InfoRow label="Solde"       value={`${Number(user?.balance ?? 0).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} ${user?.currency ?? "EUR"}`} />
           <InfoRow label="Statut"      value={user?.status === "active" ? "Actif" : user?.status === "blocked" ? "Bloqué" : "En attente"} />
           <InfoRow label="Membre depuis" value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" }) : "—"} />
+        </CardContent>
+      </Card>
+
+      {/* ── Thème ── */}
+      <Card className="border shadow-sm">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50">
+              {theme === "dark" ? <Moon className="h-4 w-4 text-slate-600" /> : <Sun className="h-4 w-4 text-amber-500" />}
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-base">Thème d'affichage</CardTitle>
+              <CardDescription>Basculez entre le mode clair et sombre.</CardDescription>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                theme === "dark" ? "bg-[#003087]" : "bg-gray-200"
+              }`}
+              aria-checked={theme === "dark"}
+              role="switch"
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  theme === "dark" ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* ── Carte virtuelle ── */}
+      <Card className="border shadow-sm">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
+              <CreditCard className="h-4 w-4 text-indigo-600" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Carte virtuelle</CardTitle>
+              <CardDescription>Numéro de carte à usage unique pour les achats en ligne.</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div
+            className="rounded-2xl p-5 text-white relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #002060 0%, #003087 50%, #0050C8 100%)" }}
+          >
+            <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-white/5 -translate-y-8 translate-x-8" />
+            <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-white/5 translate-y-8 -translate-x-8" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-xs font-bold tracking-widest text-white/60 uppercase">Banque Mondiale</span>
+                <div className="flex gap-1">
+                  <div className="h-5 w-5 rounded-full bg-white/30" />
+                  <div className="h-5 w-5 rounded-full bg-white/20 -ml-2" />
+                </div>
+              </div>
+              <div className="mb-4 flex items-center justify-between">
+                <span className="font-mono text-lg font-semibold tracking-widest">
+                  {showCardNumber ? virtualCard.number : "•••• •••• •••• " + virtualCard.number.slice(-4)}
+                </span>
+                <button onClick={() => setShowCardNumber(!showCardNumber)} className="text-white/60 hover:text-white transition-colors ml-2">
+                  {showCardNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Titulaire</p>
+                  <p className="text-sm font-semibold truncate max-w-[150px]">{user?.fullName?.toUpperCase()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Expiration</p>
+                  <p className="text-sm font-semibold">{virtualCard.expiry}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">CVV</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-semibold">{showCvv ? virtualCard.cvv : "•••"}</p>
+                    <button onClick={() => setShowCvv(!showCvv)} className="text-white/60 hover:text-white">
+                      {showCvv ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 text-xs"
+              onClick={() => {
+                navigator.clipboard.writeText(virtualCard.number.replace(/\s/g, ""));
+                toast({ title: "Numéro copié !" });
+              }}
+            >
+              <Copy className="h-3.5 w-3.5 mr-1.5" />
+              Copier le numéro
+            </Button>
+            <p className="text-[11px] text-muted-foreground self-center ml-2">Usage unique — ne partagez pas</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Blocage de compte ── */}
+      <Card className={`border shadow-sm ${isBlocked ? "border-red-200 bg-red-50/30" : ""}`}>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${isBlocked ? "bg-red-50" : "bg-gray-50"}`}>
+              {isBlocked ? <ShieldOff className="h-4 w-4 text-red-500" /> : <ShieldCheck className="h-4 w-4 text-gray-600" />}
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-base">{isBlocked ? "Compte bloqué" : "Blocage de compte"}</CardTitle>
+              <CardDescription>
+                {isBlocked
+                  ? "Votre compte est temporairement bloqué. Cliquez pour le réactiver."
+                  : "Verrouillez temporairement votre compte en un clic."}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`flex items-start gap-3 rounded-xl p-3 mb-4 ${isBlocked ? "bg-red-50 border border-red-200" : "bg-amber-50 border border-amber-200"}`}>
+            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${isBlocked ? "text-red-500" : "text-amber-500"}`} />
+            <p className="text-xs text-gray-600 leading-relaxed">
+              {isBlocked
+                ? "Le compte est bloqué. Aucun virement ni opération ne peut être effectuée. Réactivez pour reprendre."
+                : "Le blocage empêche tous les virements et retraits. Vous pouvez le réactiver à tout moment depuis cette page."}
+            </p>
+          </div>
+          <Button
+            onClick={handleLockToggle}
+            disabled={lockLoading}
+            variant={isBlocked ? "default" : "destructive"}
+            className={isBlocked ? "bg-[#003087] hover:bg-[#002060]" : ""}
+          >
+            {lockLoading
+              ? "En cours..."
+              : isBlocked
+              ? "Réactiver mon compte"
+              : "Bloquer mon compte"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* ── Alertes de solde ── */}
+      <Card className="border shadow-sm">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-50">
+              <Bell className="h-4 w-4 text-yellow-600" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Alerte de solde</CardTitle>
+              <CardDescription>Recevez une notification si votre solde descend sous ce seuil.</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                placeholder="Ex : 100.00"
+                value={alertThreshold}
+                onChange={(e) => setAlertThreshold(e.target.value)}
+                className="pr-10"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">€</span>
+            </div>
+            <Button
+              onClick={handleSaveAlert}
+              disabled={alertLoading}
+              className="bg-[#003087] hover:bg-[#002060] shrink-0"
+            >
+              {alertLoading ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+          </div>
+          {user?.balanceAlertThreshold != null && (
+            <p className="text-xs text-muted-foreground">
+              Seuil actuel : <span className="font-semibold text-[#003087]">{Number(user.balanceAlertThreshold).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+            </p>
+          )}
+          {(user?.balanceAlertThreshold == null && alertThreshold === "") && (
+            <p className="text-xs text-muted-foreground">Aucune alerte configurée. Laissez vide pour désactiver.</p>
+          )}
         </CardContent>
       </Card>
 

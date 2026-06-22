@@ -25,6 +25,7 @@ import {
   HandCoins,
   AlertTriangle,
   MessageCircle,
+  BarChart2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,6 +82,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { label: "Demandes de fonds", href: "/fund-requests", icon: HandCoins },
     { label: "Sous-comptes", href: "/sub-accounts", icon: Users },
     { label: "Parrainage", href: "/referrals", icon: CreditCard },
+    { label: "Analyses", href: "/analyses", icon: BarChart2 },
     { label: "KYC & Sécurité", href: "/kyc", icon: ShieldCheck },
     { label: "Support", href: "/support", icon: Headphones },
     { label: "Paramètres", href: "/settings", icon: Settings },
