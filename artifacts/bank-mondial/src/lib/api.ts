@@ -4,10 +4,14 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiPost<T = unknown>(path: string, body: unknown): Promise<T> {
+export async function apiPost<T = unknown>(
+  path: string,
+  body: unknown,
+  method: "POST" | "PATCH" | "PUT" = "POST"
+): Promise<T> {
   const token = localStorage.getItem("auth_token");
   const res = await fetch(path, {
-    method: "POST",
+    method,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
