@@ -1,0 +1,33 @@
+PIN de transaction — code 4-6 chiffres requis avant chaque virement ou retrait
+Alerte de connexion — notification push/email si connexion depuis un nouvel appareil ou pays
+Blocage de carte — verrouillage temporaire du compte en un clic depuis l'app
+💳 Produits bancaires
+Carte virtuelle — numéro de carte généré à usage unique pour les achats en ligne
+Plafonds personnalisables — définir un plafond journalier/mensuel de virement ou de retrait
+Comptes en devises multiples — portefeuilles parallèles en USD, EUR, GBP, XOF avec conversion intégrée
+Épargne automatique — règle "arrondir à l'euro" ou "épargner X% de chaque dépôt"
+Cagnotte partagée — compte collectif entre plusieurs utilisateurs avec contributions visibles
+📊 Analyse & Reporting
+Catégorisation des dépenses — étiqueter les virements (logement, alimentation, santé…) avec graphique camembert
+Rapport mensuel PDF — relevé de compte téléchargeable au format PDF formaté Banque Mondiale
+Export CSV filtré — exporter l'historique avec filtres (période, type, montant min/max)
+Budget mensuel — définir un budget par catégorie avec barre de progression et alertes
+Prévision de solde — simulation de solde à 30/60/90 jours basée sur les virements planifiés
+📱 Expérience mobile
+Connexion biométrique — empreinte digitale / Face ID via WebAuthn
+Raccourcis rapides — widget-like sur la page d'accueil avec les 3 derniers bénéficiaires
+Mode hors-ligne — afficher le dernier solde et historique sans connexion (cache local)
+Thème sombre — dark mode complet basculable depuis Paramètres
+Paiement QR code — générer / scanner un QR avec montant et bénéficiaire prérempli
+🤝 Social & Communauté
+Paiement par lien WhatsApp/SMS — lien de paiement partageable directement dans une app de messagerie
+Cagnotte d'anniversaire — créer une cagnotte collective avec deadline et objectif de montant
+Statut de virement public — page de suivi partageable (/suivi/:token) pour voir l'état d'un virement
+Invitations de groupe — inviter plusieurs personnes à rejoindre la plateforme depuis une interface dédiée
+Badges & récompenses — gamification : badges pour premier virement, 10 parrainages, KYC complété, etc.
+🛎️ Alertes & Communication
+Alertes de solde — notification si le solde passe sous un seuil personnalisé
+Rappels de virement récurrent — créer un virement mensuel/hebdomadaire avec rappel avant exécution
+Historique des téléchargements — page listant tous les PDF/relevés téléchargés par l'utilisateur
+Centre de messages — boîte de réception pour les annonces officielles de la banque
+Enquête de satisfaction — NPS automatique après chaque virement confirmé (note 1-5 + commentaire)
