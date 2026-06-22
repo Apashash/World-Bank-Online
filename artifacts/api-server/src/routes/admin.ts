@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, usersTable, transfersTable, kycTable, subAccountsTable, referralsTable } from "@workspace/db";
-import { eq, ilike, or } from "drizzle-orm";
+import { eq, ilike, or, gte, sql } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { AdminBlockUserBody, AdminUpdateBalanceBody, AdminReviewKycBody } from "@workspace/api-zod";
 import { formatUser } from "./auth";
@@ -97,6 +97,71 @@ router.patch("/admin/kyc/:id/review", requireAuth, requireAdmin, async (req, res
   await db.update(usersTable).set({ kycStatus: parsed.data.status as any }).where(eq(usersTable.id, kycs[0].userId));
 
   res.json(formatKyc(updated));
+});
+
+// GET /admin/charts — time-series data for the last N days
+router.get("/admin/charts", requireAuth, requireAdmin, async (req, res) => {
+  const days = Math.min(Number(req.query["days"] ?? 14), 90);
+  const since = new Date();
+  since.setDate(since.getDate() - days + 1);
+  since.setHours(0, 0, 0, 0);
+
+  // All transfers and users in the window
+  const allTransfers = await db.select().from(transfersTable);
+  const allUsers = await db.select().from(usersTable);
+
+  // Build day-keyed maps
+  const dayKeys: string[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(since);
+    d.setDate(d.getDate() + i);
+    dayKeys.push(d.toISOString().slice(0, 10));
+  }
+
+  const transfersByDay: Record<string, { count: number; amount: number; confirmed: number }> = {};
+  const usersByDay: Record<string, number> = {};
+  dayKeys.forEach((k) => {
+    transfersByDay[k] = { count: 0, amount: 0, confirmed: 0 };
+    usersByDay[k] = 0;
+  });
+
+  for (const t of allTransfers) {
+    const k = t.createdAt.toISOString().slice(0, 10);
+    if (transfersByDay[k]) {
+      transfersByDay[k].count++;
+      transfersByDay[k].amount += Number(t.amount);
+      if (t.status === "confirmed") transfersByDay[k].confirmed++;
+    }
+  }
+  for (const u of allUsers) {
+    const k = u.createdAt.toISOString().slice(0, 10);
+    if (usersByDay[k] !== undefined) usersByDay[k]++;
+  }
+
+  // Status breakdown (all time)
+  const statusMap: Record<string, number> = {};
+  for (const t of allTransfers) {
+    statusMap[t.status] = (statusMap[t.status] ?? 0) + 1;
+  }
+
+  // Currency breakdown (all time)
+  const currencyVol: Record<string, number> = {};
+  for (const t of allTransfers) {
+    currencyVol[t.currency] = (currencyVol[t.currency] ?? 0) + Number(t.amount);
+  }
+
+  res.json({
+    days: dayKeys.map((date) => ({
+      date,
+      label: date.slice(5), // MM-DD
+      transfers: transfersByDay[date].count,
+      volume: Math.round(transfersByDay[date].amount * 100) / 100,
+      confirmedTransfers: transfersByDay[date].confirmed,
+      newUsers: usersByDay[date],
+    })),
+    statusBreakdown: Object.entries(statusMap).map(([status, count]) => ({ status, count })),
+    currencyVolume: Object.entries(currencyVol).map(([currency, volume]) => ({ currency, volume: Math.round(volume * 100) / 100 })),
+  });
 });
 
 router.get("/admin/stats", requireAuth, requireAdmin, async (req, res) => {
