@@ -47,6 +47,20 @@ router.get("/notifications/count", requireAuth, async (req, res) => {
   res.json({ count: rows.length });
 });
 
+// POST /api/notifications/:id/read — mark one as read
+router.post("/notifications/:id/read", requireAuth, async (req, res) => {
+  const { userId } = (req as any).user;
+  const id = parseInt(req.params["id"] as string);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  await db
+    .update(activityTable)
+    .set({ isRead: true })
+    .where(and(eq(activityTable.id, id), eq(activityTable.userId, userId)));
+
+  res.json({ success: true });
+});
+
 // POST /api/notifications/mark-read — mark all as read
 router.post("/notifications/mark-read", requireAuth, async (req, res) => {
   const { userId } = (req as any).user;

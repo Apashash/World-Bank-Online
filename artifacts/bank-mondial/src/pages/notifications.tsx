@@ -208,14 +208,31 @@ export default function Notifications() {
         <div className="space-y-2">
           {items.map((notif) => {
             const isTransfer = TRANSFER_TYPES.includes(notif.type) && notif.referenceId != null;
-            const Wrapper = isTransfer ? "button" : "div";
             return (
-              <Wrapper
+              <button
                 key={notif.id}
-                onClick={isTransfer ? () => setLocation(`/transfers/${notif.referenceId}`) : undefined}
-                className={`w-full text-left flex items-start gap-4 p-4 rounded-xl border transition-colors ${
-                  notif.isRead ? "bg-white border-gray-100" : "bg-blue-50/60 border-blue-100"
-                } ${isTransfer ? "hover:border-[#003087]/30 hover:bg-blue-50 cursor-pointer" : ""}`}
+                onClick={async () => {
+                  // Optimistically mark as read in UI
+                  if (!notif.isRead) {
+                    setItems((prev) =>
+                      prev.map((n) => n.id === notif.id ? { ...n, isRead: true } : n)
+                    );
+                    const token = localStorage.getItem("auth_token");
+                    fetch(`/api/notifications/${notif.id}/read`, {
+                      method: "POST",
+                      headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    }).catch(() => {});
+                  }
+                  // Navigate for transfer types
+                  if (isTransfer) {
+                    setLocation(`/transfers/${notif.referenceId}`);
+                  }
+                }}
+                className={`w-full text-left flex items-start gap-4 p-4 rounded-xl border transition-colors cursor-pointer ${
+                  notif.isRead
+                    ? "bg-white border-gray-100 hover:bg-gray-50 hover:border-gray-200"
+                    : "bg-blue-50/60 border-blue-100 hover:bg-blue-100/60 hover:border-blue-200"
+                }`}
               >
                 {/* Icon */}
                 <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${typeBg(notif.type)}`}>
@@ -256,7 +273,7 @@ export default function Notifications() {
                     </span>
                   </div>
                 </div>
-              </Wrapper>
+              </button>
             );
           })}
         </div>
