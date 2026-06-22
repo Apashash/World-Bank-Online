@@ -24,6 +24,7 @@ export const activityTable = pgTable("activity", {
   currency: text("currency"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   isRead: boolean("is_read").notNull().default(false),
+  referenceId: integer("reference_id"),
 });
 
 export const insertActivitySchema = createInsertSchema(activityTable).omit({ id: true, createdAt: true });

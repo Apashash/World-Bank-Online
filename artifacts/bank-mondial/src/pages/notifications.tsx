@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Bell, CheckCheck, ArrowUpRight, ArrowDownLeft, CircleCheck,
   UserPlus, ShieldCheck, LogIn, Users, Wallet, Landmark,
-  Receipt, RefreshCw, Send, CreditCard,
+  Receipt, RefreshCw, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { apiPost } from "@/lib/api";
+import { useLocation } from "wouter";
 
 interface Notification {
   id: number;
@@ -18,6 +19,7 @@ interface Notification {
   currency: string | null;
   createdAt: string;
   isRead: boolean;
+  referenceId: number | null;
 }
 
 const FILTERS = [
@@ -73,12 +75,15 @@ function typeBg(type: string) {
   }
 }
 
+const TRANSFER_TYPES = ["transfer_sent", "transfer_received", "transfer_confirmed"];
+
 export default function Notifications() {
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingRead, setMarkingRead] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const currentTypes = FILTERS.find((f) => f.key === activeFilter)?.types ?? [];
 
@@ -201,51 +206,59 @@ export default function Notifications() {
         </div>
       ) : (
         <div className="space-y-2">
-          {items.map((notif) => (
-            <div
-              key={notif.id}
-              className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${
-                notif.isRead
-                  ? "bg-white border-gray-100"
-                  : "bg-blue-50/60 border-blue-100"
-              }`}
-            >
-              {/* Icon */}
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${typeBg(notif.type)}`}>
-                {typeIcon(notif.type)}
-              </div>
+          {items.map((notif) => {
+            const isTransfer = TRANSFER_TYPES.includes(notif.type) && notif.referenceId != null;
+            const Wrapper = isTransfer ? "button" : "div";
+            return (
+              <Wrapper
+                key={notif.id}
+                onClick={isTransfer ? () => setLocation(`/transfers/${notif.referenceId}`) : undefined}
+                className={`w-full text-left flex items-start gap-4 p-4 rounded-xl border transition-colors ${
+                  notif.isRead ? "bg-white border-gray-100" : "bg-blue-50/60 border-blue-100"
+                } ${isTransfer ? "hover:border-[#003087]/30 hover:bg-blue-50 cursor-pointer" : ""}`}
+              >
+                {/* Icon */}
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${typeBg(notif.type)}`}>
+                  {typeIcon(notif.type)}
+                </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <p className={`text-sm leading-snug ${notif.isRead ? "text-gray-700" : "font-semibold text-gray-900"}`}>
-                    {notif.description}
-                  </p>
-                  {!notif.isRead && (
-                    <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-1.5">
-                  {notif.amount && notif.currency && (
-                    <span className={`text-xs font-semibold ${
-                      ["transfer_received", "deposit"].includes(notif.type)
-                        ? "text-green-600"
-                        : "text-[#003087]"
-                    }`}>
-                      {["transfer_sent", "withdrawal", "bill_payment"].includes(notif.type) ? "−" : "+"}
-                      {Number(notif.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {notif.currency}
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className={`text-sm leading-snug ${notif.isRead ? "text-gray-700" : "font-semibold text-gray-900"}`}>
+                      {notif.description}
+                    </p>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {!notif.isRead && (
+                        <span className="mt-0.5 h-2 w-2 rounded-full bg-blue-500" />
+                      )}
+                      {isTransfer && (
+                        <ChevronRight className="h-4 w-4 text-gray-400 mt-0.5" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    {notif.amount && notif.currency && (
+                      <span className={`text-xs font-semibold ${
+                        ["transfer_received", "deposit"].includes(notif.type)
+                          ? "text-green-600"
+                          : "text-[#003087]"
+                      }`}>
+                        {["transfer_sent", "withdrawal", "bill_payment"].includes(notif.type) ? "−" : "+"}
+                        {Number(notif.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {notif.currency}
+                      </span>
+                    )}
+                    <span
+                      className="text-xs text-muted-foreground"
+                      title={format(new Date(notif.createdAt), "dd MMM yyyy HH:mm", { locale: fr })}
+                    >
+                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: fr })}
                     </span>
-                  )}
-                  <span
-                    className="text-xs text-muted-foreground"
-                    title={format(new Date(notif.createdAt), "dd MMM yyyy HH:mm", { locale: fr })}
-                  >
-                    {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: fr })}
-                  </span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </Wrapper>
+            );
+          })}
         </div>
       )}
     </div>

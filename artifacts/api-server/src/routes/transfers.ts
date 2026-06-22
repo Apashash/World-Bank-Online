@@ -92,6 +92,7 @@ router.post("/transfers", requireAuth, async (req, res) => {
     description: `Virement créé pour ${beneficiaryName}`,
     amount: amount.toString(),
     currency: currency || "EUR",
+    referenceId: transfer.id,
   });
 
   res.status(201).json(formatTransfer(transfer));
@@ -132,6 +133,7 @@ router.post("/transfers/link/:token/confirm", async (req, res) => {
     description: `Virement confirmé par ${transfer.beneficiaryName}`,
     amount: transfer.amount,
     currency: transfer.currency,
+    referenceId: transfer.id,
   });
 
   res.json(formatTransfer(updated));
@@ -174,6 +176,7 @@ router.patch("/transfers/:id", requireAuth, async (req, res) => {
       description: `Remboursement annulation virement pour ${transfer.beneficiaryName}`,
       amount: transfer.amount,
       currency: transfer.currency,
+      referenceId: transfer.id,
     });
   }
 
@@ -201,6 +204,7 @@ router.delete("/transfers/:id", requireAuth, async (req, res) => {
       description: `Remboursement suppression virement pour ${transfer.beneficiaryName}`,
       amount: transfer.amount,
       currency: transfer.currency,
+      referenceId: transfer.id,
     });
   }
 
@@ -221,6 +225,7 @@ router.post("/transfers/:id/confirm", requireAuth, async (req, res) => {
     description: `Virement confirmé par ${transfers[0].beneficiaryName}`,
     amount: transfers[0].amount,
     currency: transfers[0].currency,
+    referenceId: transfers[0].id,
   });
 
   res.json(formatTransfer(updated));
