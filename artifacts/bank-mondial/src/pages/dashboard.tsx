@@ -49,6 +49,8 @@ export default function Dashboard() {
   const { data: transfersData } = useListTransfers({ page: 1, limit: 100 });
   const { data: user } = useGetMe();
   const [period, setPeriod] = useState("30");
+  const [activityPage, setActivityPage] = useState(0);
+  const ACTIVITY_PAGE_SIZE = 5;
 
   const chartData = buildWeeklyChart(transfersData?.transfers || []);
   const recentBeneficiaries = useRecentBeneficiaries();
@@ -246,7 +248,14 @@ export default function Dashboard() {
         {/* Recent Activities */}
         <Card className="border shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">Activités récentes</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold text-gray-900">Activités récentes</CardTitle>
+              {Array.isArray(activities) && activities.length > 0 && (
+                <span className="text-[11px] text-muted-foreground">
+                  {activityPage * ACTIVITY_PAGE_SIZE + 1}–{Math.min((activityPage + 1) * ACTIVITY_PAGE_SIZE, activities.length)} sur {activities.length}
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="px-4">
             <div className="space-y-4">
@@ -255,33 +264,70 @@ export default function Dashboard() {
               ) : !Array.isArray(activities) || activities.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Aucune activité récente.</p>
               ) : (
-                activities.slice(0, 6).map((activity) => {
-                  const cfg = getActivityConfig(activity.type);
-                  const isDebit = activity.type === "transfer_sent" || activity.type === "withdrawal";
-                  return (
-                    <div key={activity.id} className="flex gap-3 items-start">
-                      {getActivityIcon(activity.type)}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cfg.className}`}>
-                            {cfg.label}
-                          </span>
+                activities
+                  .slice(activityPage * ACTIVITY_PAGE_SIZE, (activityPage + 1) * ACTIVITY_PAGE_SIZE)
+                  .map((activity) => {
+                    const cfg = getActivityConfig(activity.type);
+                    const isDebit = activity.type === "transfer_sent" || activity.type === "withdrawal";
+                    return (
+                      <div key={activity.id} className="flex gap-3 items-start">
+                        {getActivityIcon(activity.type)}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cfg.className}`}>
+                              {cfg.label}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-700 leading-snug truncate">{activity.description}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {format(new Date(activity.createdAt), "dd/MM/yyyy HH:mm", { locale: fr })}
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-700 leading-snug truncate">{activity.description}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {format(new Date(activity.createdAt), "dd/MM/yyyy HH:mm", { locale: fr })}
-                        </p>
+                        {activity.amount != null && (
+                          <div className={`text-xs font-bold shrink-0 ${isDebit ? "text-red-500" : "text-green-600"}`}>
+                            {isDebit ? "-" : "+"}{Number(activity.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {activity.currency}
+                          </div>
+                        )}
                       </div>
-                      {activity.amount != null && (
-                        <div className={`text-xs font-bold shrink-0 ${isDebit ? "text-red-500" : "text-green-600"}`}>
-                          {isDebit ? "-" : "+"}{Number(activity.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {activity.currency}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
+                    );
+                  })
               )}
             </div>
+
+            {/* Pagination controls */}
+            {Array.isArray(activities) && activities.length > ACTIVITY_PAGE_SIZE && (
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                <button
+                  onClick={() => setActivityPage((p) => Math.max(0, p - 1))}
+                  disabled={activityPage === 0}
+                  className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  ← Précédent
+                </button>
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.ceil(activities.length / ACTIVITY_PAGE_SIZE) }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActivityPage(i)}
+                      className={`w-6 h-6 rounded-full text-[11px] font-semibold transition-all ${
+                        i === activityPage
+                          ? "bg-[#003087] text-white"
+                          : "text-gray-400 hover:bg-gray-100"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setActivityPage((p) => Math.min(Math.ceil(activities.length / ACTIVITY_PAGE_SIZE) - 1, p + 1))}
+                  disabled={(activityPage + 1) * ACTIVITY_PAGE_SIZE >= activities.length}
+                  className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  Suivant →
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
