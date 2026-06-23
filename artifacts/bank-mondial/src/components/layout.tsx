@@ -280,24 +280,39 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
             <div className="border-t border-white/10 mx-4 my-2" />
 
-            <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all ${
+            <div className="px-4 pb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-3">Navigation</p>
+              <div className="grid grid-cols-4 gap-2">
+                {navItems.map((item) => {
+                  const active =
                     location.startsWith(item.href) &&
-                    (item.href !== "/dashboard" || location === "/dashboard")
-                      ? "bg-white/15 text-white"
-                      : "text-white/65 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+                    (item.href !== "/dashboard" || location === "/dashboard");
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className={`flex flex-col items-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${active ? "bg-white/15" : "hover:bg-white/10"}`}>
+                        <div className={`h-11 w-11 rounded-full flex items-center justify-center ${active ? "bg-[#6DC142]/30" : "bg-white/10"}`}>
+                          <item.icon
+                            className="h-5 w-5"
+                            style={{ color: active ? "#6DC142" : "white" }}
+                            strokeWidth={active ? 2.2 : 1.5}
+                          />
+                        </div>
+                        <span
+                          className="text-[10px] font-medium text-center leading-tight"
+                          style={{ color: active ? "#6DC142" : "rgba(255,255,255,0.7)" }}
+                        >
+                          {item.label}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
             <div className="border-t border-white/10 p-4">
               <div className="flex items-center gap-3 px-2 py-2 mb-2">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#6DC142] text-[#003087] font-bold">
