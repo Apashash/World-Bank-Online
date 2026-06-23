@@ -489,8 +489,13 @@ export default function Landing() {
             <h1 className="anim-title text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] text-white mb-7">
               La banque en ligne qui va vous faire aimer les chiffres
             </h1>
-            <div className="anim-sub1">
+            <div className="anim-sub1 flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Cta className="shimmer-btn relative overflow-hidden w-full sm:w-auto text-base px-8 py-4" />
+              <Link href="/login">
+                <button className="anim-sub2 w-full sm:w-auto text-base px-8 py-4 rounded-full font-bold border border-white/40 text-white hover:bg-white/10 active:scale-95 transition-all duration-200">
+                  Se connecter
+                </button>
+              </Link>
             </div>
           </div>
         </section>
