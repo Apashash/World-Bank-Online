@@ -299,11 +299,18 @@ function Header({ bannerVisible, onCookies }: { bannerVisible: boolean; onCookie
                 </span>
               </div>
             </Link>
-            <Link href="/open-account">
-              <button className="rounded-full font-bold text-sm px-5 py-2 bg-[#6DC142] text-[#0a1a04] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200">
-                Ouvrir un compte
-              </button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <button className="rounded-full font-bold text-sm px-4 py-2 border border-white/30 text-white hover:bg-white/10 active:scale-95 transition-all duration-200 hidden sm:inline-flex">
+                  Se connecter
+                </button>
+              </Link>
+              <Link href="/open-account">
+                <button className="rounded-full font-bold text-sm px-5 py-2 bg-[#6DC142] text-[#0a1a04] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200">
+                  Ouvrir un compte
+                </button>
+              </Link>
+            </div>
             <button
               onClick={() => setMenuOpen(o => !o)}
               className="ml-3 text-white opacity-70 hover:opacity-100 transition-opacity"
