@@ -106,24 +106,28 @@ router.post("/auth/register", async (req, res) => {
 router.post("/auth/login", async (req, res) => {
   const parsed = LoginBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid request body" });
+    res.status(400).json({ error: "Invalid request body", code: "VALIDATION_ERROR" });
     return;
   }
   const { email, password } = parsed.data;
 
   const users = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
   if (users.length === 0) {
-    res.status(401).json({ error: "Invalid credentials" });
+    res.status(401).json({ error: "Invalid credentials", code: "INVALID_CREDENTIALS" });
     return;
   }
   const user = users[0];
   if (user.status === "blocked") {
-    res.status(401).json({ error: "Account blocked" });
+    res.status(403).json({ error: "Account blocked", code: "ACCOUNT_BLOCKED" });
+    return;
+  }
+  if (user.status === "suspended") {
+    res.status(403).json({ error: "Account suspended", code: "ACCOUNT_SUSPENDED" });
     return;
   }
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
-    res.status(401).json({ error: "Invalid credentials" });
+    res.status(401).json({ error: "Invalid credentials", code: "INVALID_CREDENTIALS" });
     return;
   }
 

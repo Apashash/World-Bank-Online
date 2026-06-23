@@ -1,24 +1,135 @@
 import { useState } from "react";
 import { useLogin } from "@workspace/api-client-react";
 import { useLocation, Link } from "wouter";
-import { ArrowLeft, Eye, EyeOff, Globe, ShieldCheck, Zap } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Globe, ShieldCheck, Zap, AlertCircle, Lock, WifiOff, Ban, RefreshCw } from "lucide-react";
 
-const inputCls =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003087] focus:ring-2 focus:ring-[#003087]/10 transition-all";
+const inputCls = (hasError: boolean) =>
+  `w-full rounded-xl border px-4 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all bg-white ${
+    hasError
+      ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-[#003087] focus:ring-[#003087]/10"
+  }`;
+
+type ErrorInfo = {
+  code: string;
+  icon: React.ReactNode;
+  title: string;
+  message: string;
+  hint?: React.ReactNode;
+  color: "red" | "orange" | "blue";
+};
+
+function getErrorInfo(err: any): ErrorInfo {
+  const code: string = err?.response?.data?.code ?? err?.code ?? "";
+  const status: number = err?.response?.status ?? err?.status ?? 0;
+
+  if (!navigator.onLine || err?.message === "Failed to fetch" || err?.message?.includes("network")) {
+    return {
+      code: "NETWORK_ERROR",
+      icon: <WifiOff className="w-4 h-4" />,
+      title: "Problème de connexion",
+      message: "Impossible de joindre nos serveurs. Vérifiez votre connexion internet et réessayez.",
+      color: "blue",
+    };
+  }
+
+  if (code === "ACCOUNT_BLOCKED") {
+    return {
+      code,
+      icon: <Ban className="w-4 h-4" />,
+      title: "Compte bloqué",
+      message: "Votre compte a été bloqué suite à une activité suspecte.",
+      hint: <span>Contactez notre support au <strong>+33 1 80 00 00 00</strong> ou par email à <strong>support@banquemondiale.fr</strong></span>,
+      color: "red",
+    };
+  }
+
+  if (code === "ACCOUNT_SUSPENDED") {
+    return {
+      code,
+      icon: <Lock className="w-4 h-4" />,
+      title: "Compte suspendu",
+      message: "Votre compte est temporairement suspendu.",
+      hint: <span>Contactez notre support pour plus d'informations.</span>,
+      color: "orange",
+    };
+  }
+
+  if (code === "INVALID_CREDENTIALS" || status === 401) {
+    return {
+      code: "INVALID_CREDENTIALS",
+      icon: <AlertCircle className="w-4 h-4" />,
+      title: "Identifiants incorrects",
+      message: "L'adresse email ou le mot de passe saisi est incorrect.",
+      hint: <span>Vérifiez votre saisie ou <Link href="/open-account" className="font-bold underline underline-offset-2 hover:opacity-80">créez un compte</Link> si vous n'en avez pas.</span>,
+      color: "red",
+    };
+  }
+
+  if (code === "VALIDATION_ERROR" || status === 400) {
+    return {
+      code: "VALIDATION_ERROR",
+      icon: <AlertCircle className="w-4 h-4" />,
+      title: "Données invalides",
+      message: "Veuillez vérifier le format de votre adresse email et remplir tous les champs.",
+      color: "red",
+    };
+  }
+
+  if (status >= 500) {
+    return {
+      code: "SERVER_ERROR",
+      icon: <RefreshCw className="w-4 h-4" />,
+      title: "Erreur serveur",
+      message: "Nos serveurs rencontrent un problème momentané. Veuillez réessayer dans quelques instants.",
+      color: "orange",
+    };
+  }
+
+  return {
+    code: "UNKNOWN",
+    icon: <AlertCircle className="w-4 h-4" />,
+    title: "Erreur de connexion",
+    message: err?.response?.data?.error ?? err?.message ?? "Une erreur inattendue s'est produite. Veuillez réessayer.",
+    color: "red",
+  };
+}
+
+const colorMap = {
+  red:    { bg: "bg-red-50",    border: "border-red-200",    icon: "text-red-500",    title: "text-red-700",    text: "text-red-600"    },
+  orange: { bg: "bg-orange-50", border: "border-orange-200", icon: "text-orange-500", title: "text-orange-700", text: "text-orange-600" },
+  blue:   { bg: "bg-blue-50",   border: "border-blue-200",   icon: "text-blue-500",   title: "text-blue-700",   text: "text-blue-600"   },
+};
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  const [error, setError] = useState("");
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
+  const [shake, setShake] = useState(false);
 
   const [, setLocation] = useLocation();
   const loginMutation = useLogin();
 
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    if (!email || !password) { setError("Veuillez remplir tous les champs."); return; }
+    setErrorInfo(null);
+    if (!email || !password) {
+      setErrorInfo({
+        code: "EMPTY_FIELDS",
+        icon: <AlertCircle className="w-4 h-4" />,
+        title: "Champs manquants",
+        message: "Veuillez renseigner votre adresse email et votre mot de passe.",
+        color: "red",
+      });
+      triggerShake();
+      return;
+    }
     loginMutation.mutate(
       { data: { email, password } },
       {
@@ -27,12 +138,14 @@ export default function Login() {
           setLocation("/dashboard");
         },
         onError: (err: any) => {
-          const msg = err?.response?.data?.error ?? err?.message ?? "Identifiants invalides";
-          setError(msg === "Invalid credentials" ? "Email ou mot de passe incorrect." : msg);
+          setErrorInfo(getErrorInfo(err));
+          triggerShake();
         },
       }
     );
   };
+
+  const hasCredentialError = errorInfo?.code === "INVALID_CREDENTIALS" || errorInfo?.code === "EMPTY_FIELDS" || errorInfo?.code === "VALIDATION_ERROR";
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans overflow-x-hidden">
@@ -88,6 +201,17 @@ export default function Login() {
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Se connecter</h2>
               <p className="text-sm text-gray-400 mb-7">Entrez vos identifiants pour accéder à votre espace</p>
 
+              <style>{`
+                @keyframes shake {
+                  0%,100%{transform:translateX(0)}
+                  20%{transform:translateX(-6px)}
+                  40%{transform:translateX(6px)}
+                  60%{transform:translateX(-4px)}
+                  80%{transform:translateX(4px)}
+                }
+                .shake { animation: shake 0.45s ease; }
+              `}</style>
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Adresse email</label>
@@ -95,22 +219,29 @@ export default function Login() {
                     type="email"
                     placeholder="jean.dupont@exemple.fr"
                     value={email}
-                    onChange={e => { setEmail(e.target.value); setError(""); }}
-                    className={inputCls}
+                    onChange={e => { setEmail(e.target.value); setErrorInfo(null); }}
+                    className={inputCls(hasCredentialError && !email)}
                     autoComplete="email"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mot de passe</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700">Mot de passe</label>
+                    {errorInfo?.code === "INVALID_CREDENTIALS" && (
+                      <span className="text-xs text-[#003087] font-medium animate-pulse">
+                        Mot de passe oublié ?
+                      </span>
+                    )}
+                  </div>
                   <div className="relative">
                     <input
                       type={showPw ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
-                      onChange={e => { setPassword(e.target.value); setError(""); }}
-                      className={`${inputCls} pr-12`}
+                      onChange={e => { setPassword(e.target.value); setErrorInfo(null); }}
+                      className={`${inputCls(hasCredentialError && !password)} pr-12`}
                       autoComplete="current-password"
                       required
                     />
@@ -121,21 +252,35 @@ export default function Login() {
                   </div>
                 </div>
 
-                {error && (
-                  <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-3 py-2.5">
-                    <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <p className="text-xs text-red-600 leading-relaxed">{error}</p>
-                  </div>
-                )}
+                {errorInfo && (() => {
+                  const c = colorMap[errorInfo.color];
+                  return (
+                    <div className={`rounded-xl border px-4 py-3.5 ${c.bg} ${c.border} ${shake ? "shake" : ""}`}>
+                      <div className="flex items-start gap-2.5">
+                        <span className={`shrink-0 mt-0.5 ${c.icon}`}>{errorInfo.icon}</span>
+                        <div>
+                          <p className={`text-sm font-bold leading-tight ${c.title}`}>{errorInfo.title}</p>
+                          <p className={`text-xs mt-0.5 leading-relaxed ${c.text}`}>{errorInfo.message}</p>
+                          {errorInfo.hint && (
+                            <p className={`text-xs mt-1.5 leading-relaxed ${c.text} opacity-80`}>{errorInfo.hint}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <button
                   type="submit"
                   disabled={loginMutation.isPending}
                   className="w-full rounded-full font-bold text-base py-4 bg-[#6DC142] text-[#1a2e10] hover:bg-[#5BAF32] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
                 >
-                  {loginMutation.isPending ? "Connexion en cours…" : "Se connecter"}
+                  {loginMutation.isPending ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                      Connexion en cours…
+                    </span>
+                  ) : "Se connecter"}
                 </button>
               </form>
 
