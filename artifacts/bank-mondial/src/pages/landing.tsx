@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { Info, ChevronDown, X } from "lucide-react";
 import BankCard from "@/components/BankCard";
+import CookieConsent from "@/components/CookieConsent";
 import heroImage from "@assets/IMG_3956_1781683455055.jpeg";
 
 /* ═══════════════════════════════════════════
@@ -150,9 +151,128 @@ function AnnouncementBanner({ onClose }: { onClose: () => void }) {
 }
 
 /* ═══════════════════════════════════════════
+   MOBILE NAV MENU
+═══════════════════════════════════════════ */
+function MobileMenu({ open, onClose, onCookies }: { open: boolean; onClose: () => void; onCookies: () => void }) {
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  const navLinks = [
+    { label: "Se connecter", href: "/login", icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    )},
+    { label: "Ouvrir un compte", href: "/open-account", icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+    )},
+    { label: "Nos offres", href: "#offres", icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    )},
+    { label: "À propos", href: "#about", icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    )},
+    { label: "Support client", href: "#support", icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    )},
+  ];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-[70]"
+        style={{
+          background: "rgba(0,0,0,0.65)",
+          backdropFilter: "blur(4px)",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 0.3s ease",
+        }}
+      />
+
+      {/* Slide-in panel */}
+      <div
+        className="fixed top-0 right-0 h-full z-[80] flex flex-col"
+        style={{
+          width: "min(340px, 90vw)",
+          background: "#0a0a0a",
+          transform: open ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.35s cubic-bezier(.22,1,.36,1)",
+          boxShadow: open ? "-8px 0 40px rgba(0,0,0,0.6)" : "none",
+        }}
+      >
+        {/* Panel header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <img src="/logo-banque-mondiale.png" alt="Banque Mondiale" className="h-7 w-7 object-contain" />
+            <span className="font-black text-[11px] tracking-wider uppercase text-white">BANQUE MONDIALE</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Nav links */}
+        <nav className="flex-1 px-4 py-6 overflow-y-auto">
+          <div className="flex flex-col gap-1">
+            {navLinks.map((link, i) => (
+              <Link key={i} href={link.href} onClick={onClose}>
+                <div
+                  className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-white/80 hover:text-white hover:bg-white/8 active:bg-white/12 transition-all cursor-pointer"
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  <span className="text-[#6DC142] shrink-0">{link.icon}</span>
+                  <span className="font-medium text-[15px]">{link.label}</span>
+                  <svg className="ml-auto w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </Link>
+            ))}
+
+            {/* Cookies separator item */}
+            <button
+              onClick={() => { onCookies(); onClose(); }}
+              className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-white/80 hover:text-white hover:bg-white/8 active:bg-white/12 transition-all w-full text-left"
+            >
+              <span className="text-[#6DC142] shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>
+              </span>
+              <span className="font-medium text-[15px]">Gestion des cookies</span>
+              <svg className="ml-auto w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </nav>
+
+        {/* Bottom CTA */}
+        <div className="px-5 py-5 border-t border-white/10 flex flex-col gap-3">
+          <Link href="/open-account" onClick={onClose}>
+            <button className="w-full rounded-full font-bold text-[15px] py-3.5 bg-[#6DC142] text-[#0a1a04] hover:bg-[#5BAF32] active:scale-95 transition-all">
+              Ouvrir un compte
+            </button>
+          </Link>
+          <Link href="/login" onClick={onClose}>
+            <button className="w-full rounded-full font-bold text-[15px] py-3.5 border border-white/20 text-white hover:bg-white/8 active:scale-95 transition-all">
+              Se connecter
+            </button>
+          </Link>
+          <p className="text-center text-white/25 text-[11px] mt-1">
+            © 2024 Banque Mondiale · <button onClick={() => { onCookies(); onClose(); }} className="underline hover:text-white/50 transition-colors">Cookies</button> · Mentions légales
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════
    HEADER
 ═══════════════════════════════════════════ */
-function Header({ bannerVisible }: { bannerVisible: boolean }) {
+function Header({ bannerVisible, onCookies }: { bannerVisible: boolean; onCookies: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
@@ -162,37 +282,45 @@ function Header({ bannerVisible }: { bannerVisible: boolean }) {
   }, []);
   const bannerH = bannerVisible ? "40px" : "0px";
   return (
-    <header className="fixed top-0 w-full z-50 transition-all duration-300" style={{ top: bannerH }}>
-      <div className="w-full transition-all duration-300" style={{
-        background: scrolled ? "rgba(10,10,10,0.97)" : "#0a0a0a",
-        boxShadow: scrolled ? "0 1px 20px rgba(0,0,0,0.4)" : "none",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-      }}>
-        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer group">
-              <img src="/logo-banque-mondiale.png" alt="Banque Mondiale"
-                className="h-8 w-8 sm:h-10 sm:w-10 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
-              <span className="font-black text-[11px] sm:text-[13px] leading-tight tracking-wider uppercase text-white whitespace-nowrap">
-                BANQUE MONDIALE
-              </span>
-            </div>
-          </Link>
-          <Link href="/open-account">
-            <button className="rounded-full font-bold text-sm px-5 py-2 bg-[#6DC142] text-[#0a1a04] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200">
-              Ouvrir un compte
+    <>
+      <header className="fixed top-0 w-full z-50 transition-all duration-300" style={{ top: bannerH }}>
+        <div className="w-full transition-all duration-300" style={{
+          background: scrolled ? "rgba(10,10,10,0.97)" : "#0a0a0a",
+          boxShadow: scrolled ? "0 1px 20px rgba(0,0,0,0.4)" : "none",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+        }}>
+          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+            <Link href="/">
+              <div className="flex items-center gap-2 cursor-pointer group">
+                <img src="/logo-banque-mondiale.png" alt="Banque Mondiale"
+                  className="h-8 w-8 sm:h-10 sm:w-10 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
+                <span className="font-black text-[11px] sm:text-[13px] leading-tight tracking-wider uppercase text-white whitespace-nowrap">
+                  BANQUE MONDIALE
+                </span>
+              </div>
+            </Link>
+            <Link href="/open-account">
+              <button className="rounded-full font-bold text-sm px-5 py-2 bg-[#6DC142] text-[#0a1a04] hover:bg-[#5BAF32] active:scale-95 transition-all duration-200">
+                Ouvrir un compte
+              </button>
+            </Link>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              className="ml-3 text-white opacity-70 hover:opacity-100 transition-opacity"
+              aria-label="Menu"
+            >
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <rect y="4" width="22" height="2" rx="1" fill="currentColor"/>
+                <rect y="10" width="22" height="2" rx="1" fill="currentColor"/>
+                <rect y="16" width="22" height="2" rx="1" fill="currentColor"/>
+              </svg>
             </button>
-          </Link>
-          <button onClick={() => setMenuOpen(o => !o)} className="ml-3 text-white opacity-70 hover:opacity-100 transition-opacity">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <rect y="4" width="22" height="2" rx="1" fill="currentColor"/>
-              <rect y="10" width="22" height="2" rx="1" fill="currentColor"/>
-              <rect y="16" width="22" height="2" rx="1" fill="currentColor"/>
-            </svg>
-          </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} onCookies={onCookies} />
+    </>
   );
 }
 
@@ -265,6 +393,7 @@ export default function Landing() {
   const [showConditions, setShowConditions] = useState(true);
   const [showComparatif, setShowComparatif] = useState(true);
   const [bannerVisible, setBannerVisible] = useState(true);
+  const [cookieOpen, setCookieOpen] = useState(false);
   const scrollProgress = useScrollProgress();
   const parallaxY = useParallax(0.18);
 
@@ -325,7 +454,7 @@ export default function Landing() {
         </div>
       )}
 
-      <Header bannerVisible={bannerVisible} />
+      <Header bannerVisible={bannerVisible} onCookies={() => setCookieOpen(true)} />
 
       <main className="flex-1" style={{ paddingTop: topOffset }}>
 
@@ -693,6 +822,11 @@ export default function Landing() {
           <Cta className="w-full sm:w-auto sm:px-12 text-base py-4 sm:mx-auto sm:block" />
         </div>
       </div>
+
+      {/* Cookie consent re-openable from menu */}
+      {cookieOpen && (
+        <CookieConsent forceOpen={cookieOpen} onClose={() => setCookieOpen(false)} />
+      )}
     </div>
   );
 }

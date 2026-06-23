@@ -28,7 +28,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 type Panel = "main" | "settings";
 
-export default function CookieConsent() {
+export default function CookieConsent({ forceOpen, onClose }: { forceOpen?: boolean; onClose?: () => void } = {}) {
   const [visible, setVisible] = useState(false);
   const [panel, setPanel] = useState<Panel>("main");
   const [prefs, setPrefs] = useState<ConsentState>({
@@ -46,21 +46,28 @@ export default function CookieConsent() {
     }
   }, []);
 
+  useEffect(() => {
+    if (forceOpen) { setVisible(true); setPanel("main"); }
+  }, [forceOpen]);
+
   function acceptAll() {
     const consent: ConsentState = { accepted: true, analytics: true, personalisation: true, advertising: true };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(consent));
     setVisible(false);
+    onClose?.();
   }
 
   function continueWithout() {
     const consent: ConsentState = { accepted: false, analytics: false, personalisation: false, advertising: false };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(consent));
     setVisible(false);
+    onClose?.();
   }
 
   function saveSettings() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...prefs, accepted: true }));
     setVisible(false);
+    onClose?.();
   }
 
   if (!visible) return null;
