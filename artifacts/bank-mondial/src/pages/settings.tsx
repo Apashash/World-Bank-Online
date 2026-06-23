@@ -1,4 +1,4 @@
-import { useGetMe, useUpdateUser, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,16 +14,6 @@ import { useEffect, useState } from "react";
 import { User, Mail, Phone, Globe, Lock, CreditCard, Copy, Eye, EyeOff, Moon, Sun, ShieldOff, ShieldCheck, Bell, AlertTriangle } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { useTheme } from "@/hooks/use-theme";
-
-const profileSchema = z.object({
-  fullName: z.string().min(2, "Nom requis (min. 2 caractères)"),
-  phone: z.string().min(5, "Numéro requis"),
-  country: z.string().min(2, "Pays requis"),
-});
-
-const emailSchema = z.object({
-  email: z.string().email("Email invalide"),
-});
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Mot de passe actuel requis"),
@@ -91,7 +81,6 @@ function generateVirtualCard(userId?: number): { number: string; expiry: string;
 
 export default function Settings() {
   const { data: user, isLoading } = useGetMe();
-  const updateUser = useUpdateUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { theme, toggleTheme } = useTheme();
@@ -99,7 +88,6 @@ export default function Settings() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
-  const [emailLoading, setEmailLoading] = useState(false);
   const [lockLoading, setLockLoading] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
   const [showCardNumber, setShowCardNumber] = useState(false);
@@ -110,53 +98,14 @@ export default function Settings() {
 
   useEffect(() => {
     if (user) {
-      profileForm.reset({ fullName: user.fullName || "", phone: user.phone || "", country: user.country || "" });
-      emailForm.reset({ email: user.email || "" });
       setAlertThreshold(user.balanceAlertThreshold != null ? String(user.balanceAlertThreshold) : "");
     }
   }, [user]);
-
-  const profileForm = useForm<z.infer<typeof profileSchema>>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: { fullName: "", phone: "", country: "" },
-  });
-
-  const emailForm = useForm<z.infer<typeof emailSchema>>({
-    resolver: zodResolver(emailSchema),
-    defaultValues: { email: "" },
-  });
 
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
     defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
   });
-
-  const onProfileSubmit = (data: z.infer<typeof profileSchema>) => {
-    if (!user) return;
-    updateUser.mutate({ id: user.id, data }, {
-      onSuccess: () => {
-        toast({ title: "Profil mis à jour", description: "Vos informations ont été enregistrées." });
-        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
-      },
-      onError: (err: any) => {
-        toast({ title: "Erreur", description: err.message || "Impossible de mettre à jour.", variant: "destructive" });
-      },
-    });
-  };
-
-  const onEmailSubmit = async (data: z.infer<typeof emailSchema>) => {
-    if (!user) return;
-    setEmailLoading(true);
-    try {
-      await apiPost(`/api/users/${user.id}`, data, "PATCH");
-      toast({ title: "Email mis à jour", description: "Votre adresse email a été modifiée." });
-      queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
-    } catch (err: any) {
-      toast({ title: "Erreur", description: err.message || "Cet email est peut-être déjà utilisé.", variant: "destructive" });
-    } finally {
-      setEmailLoading(false);
-    }
-  };
 
   const onPasswordSubmit = async (data: z.infer<typeof passwordSchema>) => {
     if (!user) return;
@@ -446,105 +395,76 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* ── Informations personnelles ── */}
+      {/* ── Informations personnelles (lecture seule) ── */}
       <Card className="border shadow-sm">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
-              <User className="h-4 w-4 text-blue-600" />
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+                <User className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Informations personnelles</CardTitle>
+                <CardDescription>Données fournies à l'inscription — non modifiables.</CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-base">Informations personnelles</CardTitle>
-              <CardDescription>Nom, téléphone et pays.</CardDescription>
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-400 bg-gray-100 rounded-full px-2.5 py-1">
+              <Lock className="h-3 w-3" />
+              Verrouillé
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Form {...profileForm}>
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-              <FormField control={profileForm.control} name="fullName" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nom complet</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input className="pl-9" placeholder="Jean Dupont" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField control={profileForm.control} name="phone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input className="pl-9" placeholder="+33 6 00 00 00 00" {...field} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={profileForm.control} name="country" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pays</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input className="pl-9" placeholder="France" {...field} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+        <CardContent className="pt-2">
+          <div className="space-y-1">
+            {/* Nom */}
+            <div className="flex items-center gap-3 py-3 border-b border-gray-100">
+              <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                <User className="h-4 w-4 text-gray-400" />
               </div>
-              <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={updateUser.isPending} className="bg-[#003087] hover:bg-[#002060]">
-                  {updateUser.isPending ? "Enregistrement..." : "Enregistrer"}
-                </Button>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">Nom complet</p>
+                <p className="text-sm font-semibold text-gray-800 truncate">{user?.fullName ?? "—"}</p>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* ── Email ── */}
-      <Card className="border shadow-sm">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50">
-              <Mail className="h-4 w-4 text-purple-600" />
+              <Lock className="h-3.5 w-3.5 text-gray-300 shrink-0" />
             </div>
-            <div>
-              <CardTitle className="text-base">Adresse email</CardTitle>
-              <CardDescription>Utilisée pour la connexion et les notifications.</CardDescription>
+            {/* Email */}
+            <div className="flex items-center gap-3 py-3 border-b border-gray-100">
+              <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                <Mail className="h-4 w-4 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">Adresse email</p>
+                <p className="text-sm font-semibold text-gray-800 truncate">{user?.email ?? "—"}</p>
+              </div>
+              <Lock className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+            </div>
+            {/* Téléphone */}
+            <div className="flex items-center gap-3 py-3 border-b border-gray-100">
+              <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                <Phone className="h-4 w-4 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">Téléphone</p>
+                <p className="text-sm font-semibold text-gray-800">{user?.phone ?? "—"}</p>
+              </div>
+              <Lock className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+            </div>
+            {/* Pays */}
+            <div className="flex items-center gap-3 py-3">
+              <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                <Globe className="h-4 w-4 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">Pays d'inscription</p>
+                <p className="text-sm font-semibold text-gray-800">{user?.country ?? "—"}</p>
+              </div>
+              <Lock className="h-3.5 w-3.5 text-gray-300 shrink-0" />
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Form {...emailForm}>
-            <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-              <FormField control={emailForm.control} name="email" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input className="pl-9" type="email" placeholder="vous@exemple.com" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={emailLoading} className="bg-[#003087] hover:bg-[#002060]">
-                  {emailLoading ? "Mise à jour..." : "Changer l'email"}
-                </Button>
-              </div>
-            </form>
-          </Form>
+          <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-gray-100 flex items-center gap-1.5">
+            <Lock className="h-3 w-3" />
+            Pour modifier ces informations, veuillez contacter le support client.
+          </p>
         </CardContent>
       </Card>
 
