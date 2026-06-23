@@ -17,6 +17,7 @@ import {
   QrCode,
   Landmark,
   Receipt,
+  Home,
   ArrowLeftRight,
   LayoutGrid,
   BookUser,
@@ -325,29 +326,53 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* ── Mobile Bottom Nav ── */}
         <nav
-          className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-white/10 safe-area-pb"
-          style={{ background: "linear-gradient(180deg, #002060 0%, #003087 100%)" }}
+          className="fixed bottom-0 left-0 right-0 z-40 md:hidden safe-area-pb"
+          style={{ background: "#001a4d", borderTop: "1px solid rgba(255,255,255,0.08)" }}
         >
-          <div className="grid grid-cols-5 h-16">
+          <div className="grid grid-cols-5 h-[62px]">
             {[
+              { icon: Home,          label: "Accueil",  href: "/dashboard" },
               { icon: Wallet,        label: "Dépôt",    href: "/depot" },
               { icon: Landmark,      label: "Retrait",  href: "/retrait" },
-              { icon: Receipt,       label: "Factures", href: "/payer-factures" },
               { icon: ArrowLeftRight,label: "Échanger", href: "/echanger" },
               { icon: LayoutGrid,    label: "Plus",     href: "/plus" },
             ].map(({ icon: Icon, label, href }) => {
-              const active = location === href || location.startsWith(href);
+              const active = location === href || (href !== "/dashboard" && location.startsWith(href));
               return (
                 <Link
                   key={href}
                   href={href}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <div className={`flex flex-col items-center justify-center h-full gap-1 transition-all ${active ? "opacity-100" : "opacity-60"}`}>
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all ${active ? "bg-white/20" : ""}`}>
-                      <Icon className={`h-5 w-5 text-white`} strokeWidth={1.5} />
+                  <div className="flex flex-col items-center justify-center h-full gap-0.5 relative">
+                    {active && (
+                      <span
+                        className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-full"
+                        style={{ width: 28, height: 3, background: "#6DC142" }}
+                      />
+                    )}
+                    <div
+                      className="flex items-center justify-center rounded-xl transition-all duration-200"
+                      style={{
+                        width: 38, height: 28,
+                        background: active ? "rgba(109,193,66,0.18)" : "transparent",
+                      }}
+                    >
+                      <Icon
+                        className="transition-all duration-200"
+                        style={{
+                          width: 18, height: 18,
+                          color: active ? "#6DC142" : "rgba(255,255,255,0.5)",
+                          strokeWidth: active ? 2.2 : 1.6,
+                        }}
+                      />
                     </div>
-                    <span className={`text-[9px] font-semibold text-white leading-none`}>{label}</span>
+                    <span
+                      className="text-[9px] font-semibold leading-none tracking-wide transition-all duration-200"
+                      style={{ color: active ? "#6DC142" : "rgba(255,255,255,0.45)" }}
+                    >
+                      {label}
+                    </span>
                   </div>
                 </Link>
               );
