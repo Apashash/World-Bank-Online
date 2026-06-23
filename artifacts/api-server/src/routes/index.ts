@@ -16,6 +16,7 @@ import exchangeRatesRouter from "./exchange-rates";
 import scheduledTransfersRouter from "./scheduled-transfers";
 import fundRequestsRouter from "./fund-requests";
 import analyticsRouter from "./analytics";
+import uploadRouter from "./upload";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(exchangeRatesRouter);
 router.use(scheduledTransfersRouter);
 router.use(fundRequestsRouter);
 router.use(analyticsRouter);
+router.use(uploadRouter);
 
 export default router;
