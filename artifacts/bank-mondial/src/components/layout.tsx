@@ -239,7 +239,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile Header */}
         <header
-          className="flex h-14 shrink-0 items-center justify-between px-4 md:hidden"
+          className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between px-4 md:hidden"
           style={{ background: "linear-gradient(90deg, #002060 0%, #003087 100%)" }}
         >
           <Link href="/dashboard">
