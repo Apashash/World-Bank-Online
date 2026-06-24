@@ -59,9 +59,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 - Always use `Array.isArray(data)` guard when rendering lists from react-query hooks — `data || []` is unsafe if data can be a truthy non-array.
 - `user.fullName` can be undefined even when `user` is defined; always use `?.charAt(0)?.toUpperCase() ?? "?"`.
-- The `Start application` workflow always fails (port conflict) because `artifacts/bank-mondial: web` is already on port 20225. Use the artifact workflow instead.
+- The artifact `artifacts/bank-mondial: web` runs on port 20225 (Replit injects PORT=20225 for artifacts). The `Start application` webview workflow runs on port 5000 (external 80) for the Replit preview pane. Both run in parallel — this is intentional.
 - The `activity` DB table requires `pnpm --filter @workspace/db run push` to be run after any schema changes.
 - After editing API server code, restart the `API Server` workflow to rebuild and reload.
+- `vite.config.ts` defaults PORT=5000 and BASE_PATH=/ so the artifact workflow can run without explicit env vars.
 
 ## Pointers
 
