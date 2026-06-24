@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   MessageCircle,
   BarChart2,
+  Shield,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -195,23 +196,55 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
             {user.role === "admin" && (
               <>
-                <div className="mt-6 mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-white/35">
-                  Administration
-                </div>
-                {adminNavItems.map((item) => (
+                <div className="pt-2">
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
-                      location === item.href
-                        ? "bg-white/15 text-white shadow-sm"
-                        : "text-white/65 hover:bg-white/10 hover:text-white"
+                    href="/admin"
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                      location.startsWith("/admin")
+                        ? "text-white shadow-sm"
+                        : "text-white hover:opacity-90"
                     }`}
+                    style={{
+                      background: location.startsWith("/admin")
+                        ? "linear-gradient(135deg, #6DC142 0%, #4da830 100%)"
+                        : "linear-gradient(135deg, #6DC142cc 0%, #4da830cc 100%)",
+                    }}
                   >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    {item.label}
+                    <Shield className="h-4 w-4 shrink-0" />
+                    Panneau Admin
                   </Link>
-                ))}
+                </div>
+
+                {location.startsWith("/admin") && (
+                  <>
+                    <div className="mt-3 mb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-white/35">
+                      Administration
+                    </div>
+                    {adminNavItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all ${
+                          location === item.href
+                            ? "bg-white/15 text-white shadow-sm"
+                            : "text-white/65 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {item.label}
+                      </Link>
+                    ))}
+                    <div className="pt-1">
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-white/50 hover:bg-white/10 hover:text-white transition-all"
+                      >
+                        <LayoutDashboard className="h-4 w-4 shrink-0" />
+                        Retour au tableau de bord
+                      </Link>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </nav>
@@ -318,6 +351,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   );
                 })}
               </div>
+
+              {user.role === "admin" && (
+                <div className="mt-3">
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <div
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-all"
+                      style={{ background: "linear-gradient(135deg, #6DC142 0%, #4da830 100%)" }}
+                    >
+                      <Shield className="h-5 w-5 shrink-0" />
+                      Panneau Admin
+                    </div>
+                  </Link>
+                </div>
+              )}
             </div>
             <div className="border-t border-white/10 p-4">
               <div className="flex items-center gap-3 px-2 py-2 mb-2">
