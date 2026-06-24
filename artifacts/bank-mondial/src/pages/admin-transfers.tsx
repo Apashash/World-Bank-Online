@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAdminListTransfers } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -9,10 +10,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2, ExternalLink } from "lucide-react";
+import { Plus, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2, ExternalLink, Unlock, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "wouter";
+
+function authFetch(url: string, options: RequestInit = {}) {
+  const token = localStorage.getItem("auth_token");
+  return fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers as Record<string, string> ?? {}),
+    },
+  });
+}
 
 const STATUS_TABS = [
   { label: "Tous", value: "all" },
@@ -38,6 +51,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function AdminTransfers() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [unlocking, setUnlocking] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const { data, isLoading, refetch } = useAdminListTransfers({ page: 1, limit: 500 });
 
@@ -50,6 +65,20 @@ export default function AdminTransfers() {
   const totalVolume = allTransfers.reduce((s, t) => s + t.amount, 0);
   const pendingCount = allTransfers.filter((t) => t.status === "pending").length;
   const completedCount = allTransfers.filter((t) => t.status === "completed").length;
+
+  const handleUnlock = async (id: number) => {
+    setUnlocking(id);
+    try {
+      const r = await authFetch(`/api/admin/transfers/${id}/unlock`, { method: "POST" });
+      const result = await r.json();
+      if (!r.ok) throw new Error(result.error ?? "Erreur");
+      toast({ title: "Retrait débloqué — le receveur peut maintenant procéder." });
+      refetch();
+    } catch (e: any) {
+      toast({ title: e.message, variant: "destructive" });
+    }
+    setUnlocking(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -153,7 +182,7 @@ export default function AdminTransfers() {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
-        <Table className="min-w-[600px]">
+        <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead className="text-xs font-semibold text-slate-500">Date</TableHead>
@@ -162,24 +191,25 @@ export default function AdminTransfers() {
               <TableHead className="text-xs font-semibold text-slate-500">Référence</TableHead>
               <TableHead className="text-xs font-semibold text-slate-500">Statut</TableHead>
               <TableHead className="text-xs font-semibold text-slate-500 text-right">Montant</TableHead>
+              <TableHead className="text-xs font-semibold text-slate-500 text-center">Verrou</TableHead>
               <TableHead className="text-xs font-semibold text-slate-500 text-center">Lien</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-16">
+                <TableCell colSpan={8} className="text-center py-16">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto text-slate-300" />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-16 text-slate-400 text-sm">
+                <TableCell colSpan={8} className="text-center py-16 text-slate-400 text-sm">
                   Aucun virement dans cette catégorie
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((t) => (
+              filtered.map((t: any) => (
                 <TableRow key={t.id} className="hover:bg-slate-50 transition-colors">
                   <TableCell className="text-xs text-slate-500">
                     {format(new Date(t.createdAt), "dd/MM/yy HH:mm", { locale: fr })}
@@ -203,6 +233,31 @@ export default function AdminTransfers() {
                   <TableCell className="text-right">
                     <span className="font-bold text-slate-900">{t.amount.toFixed(2)}</span>
                     <span className="text-xs text-slate-400 ml-1">{t.currency}</span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {t.blockReason ? (
+                      t.adminUnlocked ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
+                          <Unlock className="h-3 w-3" /> Débloqué
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleUnlock(t.id)}
+                          disabled={unlocking === t.id}
+                          title="Confirmer le déblocage du retrait"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
+                        >
+                          {unlocking === t.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Lock className="h-3 w-3" />
+                          )}
+                          Débloquer
+                        </button>
+                      )
+                    ) : (
+                      <span className="text-slate-300 text-xs">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     {t.token && (

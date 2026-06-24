@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, numeric, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -46,6 +46,10 @@ export const transfersTable = pgTable("transfers", {
 
   // WhatsApp number for admin contact
   whatsappNumber: text("whatsapp_number"),
+
+  // Admin must explicitly unlock the withdrawal before receiver can proceed
+  adminUnlocked: boolean("admin_unlocked").notNull().default(false),
+  adminUnlockedAt: timestamp("admin_unlocked_at", { withTimezone: true }),
 });
 
 export const insertTransferSchema = createInsertSchema(transfersTable).omit({ id: true, createdAt: true });

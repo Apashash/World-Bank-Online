@@ -58,6 +58,8 @@ function formatTransfer(t: typeof transfersTable.$inferSelect) {
     paymentMethods: t.paymentMethods ?? null,
     blockReason: t.blockReason ?? null,
     whatsappNumber: t.whatsappNumber ?? null,
+    adminUnlocked: t.adminUnlocked ?? false,
+    adminUnlockedAt: t.adminUnlockedAt?.toISOString() ?? null,
   };
 }
 

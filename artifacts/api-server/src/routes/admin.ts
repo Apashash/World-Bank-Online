@@ -68,10 +68,33 @@ router.get("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
       createdAt: t.createdAt.toISOString(),
       confirmedAt: t.confirmedAt?.toISOString() ?? null,
       linkUrl: `/t/${t.token}`,
+      blockReason: t.blockReason ?? null,
+      adminUnlocked: t.adminUnlocked ?? false,
+      adminUnlockedAt: t.adminUnlockedAt?.toISOString() ?? null,
     })),
     total: allTransfers.length,
     page: p,
     limit: l,
+  });
+});
+
+// POST /admin/transfers/:id/unlock — admin confirms withdrawal unblocking
+router.post("/admin/transfers/:id/unlock", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  if (isNaN(id)) { res.status(400).json({ error: "ID invalide" }); return; }
+
+  const [transfer] = await db.select().from(transfersTable).where(eq(transfersTable.id, id)).limit(1);
+  if (!transfer) { res.status(404).json({ error: "Virement introuvable" }); return; }
+
+  const [updated] = await db.update(transfersTable)
+    .set({ adminUnlocked: true, adminUnlockedAt: new Date() })
+    .where(eq(transfersTable.id, id))
+    .returning();
+
+  res.json({
+    id: updated.id,
+    adminUnlocked: updated.adminUnlocked,
+    adminUnlockedAt: updated.adminUnlockedAt?.toISOString() ?? null,
   });
 });
 
