@@ -618,6 +618,15 @@ export default function TransferLink() {
           </div>
         </div>
 
+        <div className="flex justify-center pb-2">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#003087] text-white text-sm font-semibold shadow hover:bg-[#002070] transition-colors"
+          >
+            Découvrir Banque Mondiale
+          </a>
+        </div>
+
         <p className="text-center text-xs text-gray-400 pb-2">
           © {new Date().getFullYear()} La Banque Mondiale · Tous droits réservés
         </p>
