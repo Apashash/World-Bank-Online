@@ -10,6 +10,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -44,6 +45,7 @@ import {
   UserCheck,
   UserX,
   Clock,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -391,21 +393,21 @@ export default function AdminUsers() {
           {localUser && (
             <>
               <SheetHeader
-                className="px-6 py-5 shrink-0"
+                className="px-4 py-4 shrink-0"
                 style={{
                   background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
                   borderBottom: "none",
                 }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-3">
                   <div
-                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white font-black text-xl"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white font-black text-lg"
                     style={{ background: "#003087" }}
                   >
                     {localUser.fullName?.charAt(0)?.toUpperCase() ?? "?"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <SheetTitle className="text-white text-lg font-bold truncate">
+                    <SheetTitle className="text-white text-base font-bold truncate pr-8">
                       {localUser.fullName}
                     </SheetTitle>
                     <p className="text-slate-400 text-xs truncate mt-0.5">{localUser.email}</p>
@@ -427,6 +429,9 @@ export default function AdminUsers() {
                       )}
                     </div>
                   </div>
+                  <SheetClose className="ml-auto shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                    <X className="h-4 w-4 text-white" />
+                  </SheetClose>
                 </div>
               </SheetHeader>
 
