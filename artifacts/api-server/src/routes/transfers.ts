@@ -14,10 +14,14 @@ function generateToken(): string {
 }
 
 function generateReference(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let suffix = "";
-  for (let i = 0; i < 25; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 12; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
   return "BMDW" + suffix;
+}
+
+function safeString(val: unknown): string | null {
+  return typeof val === "string" && val.trim().length > 0 ? val.trim() : null;
 }
 
 function formatTransfer(t: typeof transfersTable.$inferSelect) {
@@ -38,6 +42,22 @@ function formatTransfer(t: typeof transfersTable.$inferSelect) {
     createdAt: t.createdAt.toISOString(),
     confirmedAt: t.confirmedAt?.toISOString() ?? null,
     linkUrl: `/t/${t.token}`,
+    // Sender info
+    senderFirstName: t.senderFirstName ?? null,
+    senderLastName: t.senderLastName ?? null,
+    senderCountry: t.senderCountry ?? null,
+    senderCity: t.senderCity ?? null,
+    // Receiver info
+    receiverFirstName: t.receiverFirstName ?? null,
+    receiverLastName: t.receiverLastName ?? null,
+    receiverEmail: t.receiverEmail ?? null,
+    receiverCountry: t.receiverCountry ?? null,
+    receiverCity: t.receiverCity ?? null,
+    // Display currency and payment config
+    displayCurrency: t.displayCurrency ?? "EUR",
+    paymentMethods: t.paymentMethods ?? null,
+    blockReason: t.blockReason ?? null,
+    whatsappNumber: t.whatsappNumber ?? null,
   };
 }
 
@@ -63,11 +83,30 @@ router.post("/transfers", requireAuth, async (req, res) => {
   if (!parsed.success) { res.status(400).json({ error: "Invalid request body" }); return; }
 
   const { beneficiaryName, amount, currency, message, accessType, expiresAt } = parsed.data;
-  const category = typeof req.body.category === "string" ? req.body.category : null;
+  const category = safeString(req.body.category);
   const validTypes = ["virement", "dépôt", "retrait", "facture"];
   const transactionType = typeof req.body.transactionType === "string" && validTypes.includes(req.body.transactionType)
-    ? req.body.transactionType
-    : "virement";
+    ? req.body.transactionType : "virement";
+
+  // New fields
+  const senderFirstName = safeString(req.body.senderFirstName);
+  const senderLastName = safeString(req.body.senderLastName);
+  const senderCountry = safeString(req.body.senderCountry);
+  const senderCity = safeString(req.body.senderCity);
+  const receiverFirstName = safeString(req.body.receiverFirstName);
+  const receiverLastName = safeString(req.body.receiverLastName);
+  const receiverEmail = safeString(req.body.receiverEmail);
+  const receiverCountry = safeString(req.body.receiverCountry);
+  const receiverCity = safeString(req.body.receiverCity);
+  const displayCurrency = safeString(req.body.displayCurrency) ?? "EUR";
+  const blockReason = safeString(req.body.blockReason);
+  const whatsappNumber = safeString(req.body.whatsappNumber);
+
+  // paymentMethods: array of strings
+  let paymentMethods: string | null = null;
+  if (Array.isArray(req.body.paymentMethods) && req.body.paymentMethods.length > 0) {
+    paymentMethods = JSON.stringify(req.body.paymentMethods.filter((m: any) => typeof m === "string"));
+  }
 
   // Check balance before creating transfer
   const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
@@ -90,12 +129,25 @@ router.post("/transfers", requireAuth, async (req, res) => {
     amount: amount.toString(),
     currency: currency || "EUR",
     message: message ?? null,
-    category: category,
-    transactionType: transactionType,
+    category,
+    transactionType,
     status: "pending",
     accessType: accessType || "public",
     expiresAt: expiresAt ? new Date(expiresAt) : null,
     reference: generateReference(),
+    senderFirstName,
+    senderLastName,
+    senderCountry,
+    senderCity,
+    receiverFirstName,
+    receiverLastName,
+    receiverEmail,
+    receiverCountry,
+    receiverCity,
+    displayCurrency,
+    paymentMethods,
+    blockReason,
+    whatsappNumber,
   }).returning();
 
   await db.insert(activityTable).values({
@@ -116,7 +168,6 @@ router.get("/transfers/link/:token", async (req, res) => {
   if (transfers.length === 0) { res.status(404).json({ error: "Transfer not found" }); return; }
 
   const transfer = transfers[0];
-
   const users = await db.select({ fullName: usersTable.fullName }).from(usersTable).where(eq(usersTable.id, transfer.userId)).limit(1);
   const senderName = users[0]?.fullName ?? null;
 
@@ -176,7 +227,6 @@ router.patch("/transfers/:id", requireAuth, async (req, res) => {
   if (parsed.data.status) updates.status = parsed.data.status;
   if (parsed.data.message !== undefined) updates.message = parsed.data.message;
 
-  // Refund balance if cancelling a pending transfer
   const isCancelling = parsed.data.status === "cancelled" && transfer.status === "pending";
   if (isCancelling) {
     await db.update(usersTable)
@@ -204,8 +254,6 @@ router.delete("/transfers/:id", requireAuth, async (req, res) => {
   if (existing.length === 0) { res.status(404).json({ error: "Not found" }); return; }
 
   const transfer = existing[0];
-
-  // Refund balance if deleting a pending transfer
   if (transfer.status === "pending") {
     await db.update(usersTable)
       .set({ balance: sql`${usersTable.balance} + ${transfer.amount}` })

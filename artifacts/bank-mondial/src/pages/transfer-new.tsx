@@ -12,22 +12,70 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, Copy, Share2, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Copy, Share2, ArrowLeft, User, Users, CreditCard, Smartphone, Wallet } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "wouter";
+import { CURRENCY_LABELS, convertFromEur, formatCurrencyAmount } from "@/lib/currency";
+
+const PAYMENT_METHOD_OPTIONS = [
+  { id: "card", label: "Carte bancaire", icon: CreditCard, color: "#003087" },
+  { id: "paypal", label: "PayPal", icon: Wallet, color: "#0070BA" },
+  { id: "mobile_money", label: "Mobile Money", icon: Smartphone, color: "#1DB954" },
+];
+
+const COUNTRIES = [
+  "Afghanistan", "Afrique du Sud", "Albanie", "Algérie", "Allemagne", "Angola", "Arabie Saoudite",
+  "Argentine", "Australie", "Autriche", "Azerbaïdjan", "Bahreïn", "Bangladesh", "Belgique", "Bénin",
+  "Bolivie", "Bosnie-Herzégovine", "Botswana", "Brésil", "Bulgarie", "Burkina Faso", "Burundi",
+  "Cameroun", "Canada", "Cap-Vert", "Centrafrique", "Chili", "Chine", "Chypre", "Colombie",
+  "Comores", "Congo", "Corée du Sud", "Costa Rica", "Côte d'Ivoire", "Croatie", "Cuba",
+  "Danemark", "Djibouti", "Égypte", "Émirats arabes unis", "Équateur", "Espagne", "Estonie",
+  "Éthiopie", "Finlande", "France", "Gabon", "Gambie", "Ghana", "Grèce", "Guatemala",
+  "Guinée", "Guinée-Bissau", "Guinée équatoriale", "Haïti", "Honduras", "Hongrie",
+  "Îles Maurice", "Inde", "Indonésie", "Irak", "Iran", "Irlande", "Islande", "Israël", "Italie",
+  "Jamaïque", "Japon", "Jordanie", "Kazakhstan", "Kenya", "Kosovo", "Koweït", "Laos", "Lesotho",
+  "Lettonie", "Liban", "Libéria", "Libye", "Lituanie", "Luxembourg", "Macédoine du Nord",
+  "Madagascar", "Malawi", "Mali", "Malte", "Maroc", "Mauritanie", "Mexique", "Moldavie",
+  "Monaco", "Mongolie", "Monténégro", "Mozambique", "Namibie", "Niger", "Nigéria", "Norvège",
+  "Nouvelle-Zélande", "Oman", "Ouganda", "Pakistan", "Palestine", "Panama", "Paraguay", "Pays-Bas",
+  "Pérou", "Philippines", "Pologne", "Portugal", "Qatar", "République démocratique du Congo",
+  "Roumanie", "Royaume-Uni", "Russie", "Rwanda", "Sénégal", "Serbie", "Sierra Leone", "Singapour",
+  "Slovaquie", "Slovénie", "Somalie", "Soudan", "Sri Lanka", "Suède", "Suisse", "Syrie",
+  "Tanzanie", "Tchad", "Thaïlande", "Togo", "Tunisie", "Turquie", "Ukraine", "Uruguay",
+  "Venezuela", "Vietnam", "Yémen", "Zambie", "Zimbabwe",
+];
 
 const transferSchema = z.object({
-  beneficiaryName: z.string().min(2, "Nom requis"),
-  amount: z.coerce.number().positive("Montant invalide"),
-  currency: z.string().min(3),
+  transactionType: z.enum(["virement", "dépôt", "retrait", "facture"]).default("virement"),
+  // Sender
+  senderFirstName: z.string().min(1, "Prénom requis"),
+  senderLastName: z.string().min(1, "Nom requis"),
+  senderCountry: z.string().min(1, "Pays requis"),
+  senderCity: z.string().min(1, "Ville requise"),
+  // Receiver
+  receiverFirstName: z.string().min(1, "Prénom requis"),
+  receiverLastName: z.string().min(1, "Nom requis"),
+  receiverEmail: z.string().email("Email invalide"),
+  receiverCountry: z.string().min(1, "Pays requis"),
+  receiverCity: z.string().min(1, "Ville requise"),
+  // Amount & currency
+  amountEur: z.coerce.number().positive("Montant invalide"),
+  displayCurrency: z.string().min(3),
+  // Payment methods
+  paymentMethods: z.array(z.string()).min(1, "Sélectionnez au moins un moyen de paiement"),
+  // Block reason & WhatsApp
+  blockReason: z.string().min(1, "Raison de blocage requise"),
+  whatsappNumber: z.string().min(5, "Numéro WhatsApp requis"),
+  // Optional
   message: z.string().max(250).optional(),
-  accessType: z.enum(["public", "private", "limited"]),
+  accessType: z.enum(["public", "private", "limited"]).default("public"),
   expiresAt: z.string().optional(),
   category: z.string().optional(),
-  transactionType: z.enum(["virement", "dépôt", "retrait", "facture"]).default("virement"),
 });
+
+type FormValues = z.infer<typeof transferSchema>;
 
 type GeneratedTransfer = {
   id: number;
@@ -36,38 +84,91 @@ type GeneratedTransfer = {
   beneficiaryName: string;
   amount: number;
   currency: string;
+  displayCurrency: string;
   expiresAt: string | null;
   linkUrl: string;
 };
+
+function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+      <div className="h-7 w-7 rounded-lg bg-[#003087]/10 flex items-center justify-center">
+        <Icon className="h-4 w-4 text-[#003087]" />
+      </div>
+      <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+    </div>
+  );
+}
 
 export default function TransferNew() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createTransfer = useCreateTransfer();
-  const { formatAmount } = useCurrency();
   const [generated, setGenerated] = useState<GeneratedTransfer | null>(null);
 
-  const form = useForm<z.infer<typeof transferSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(transferSchema),
     defaultValues: {
-      beneficiaryName: "",
-      amount: undefined as any,
-      currency: "EUR",
+      transactionType: "virement",
+      senderFirstName: "",
+      senderLastName: "",
+      senderCountry: "",
+      senderCity: "",
+      receiverFirstName: "",
+      receiverLastName: "",
+      receiverEmail: "",
+      receiverCountry: "",
+      receiverCity: "",
+      amountEur: undefined as any,
+      displayCurrency: "EUR",
+      paymentMethods: [],
+      blockReason: "",
+      whatsappNumber: "",
       message: "",
       accessType: "public",
       expiresAt: "",
       category: "",
-      transactionType: "virement" as const,
     },
   });
 
+  const watchedAmount = form.watch("amountEur");
+  const watchedCurrency = form.watch("displayCurrency");
+  const watchedMethods = form.watch("paymentMethods");
   const messageValue = form.watch("message") || "";
 
-  const onSubmit = (data: z.infer<typeof transferSchema>) => {
-    const payload = { ...data, category: data.category || undefined, transactionType: data.transactionType } as any;
-    createTransfer.mutate({ data: payload }, {
-      onSuccess: (res) => {
+  const convertedAmount = watchedAmount && watchedCurrency
+    ? convertFromEur(Number(watchedAmount), watchedCurrency)
+    : null;
+
+  const onSubmit = (data: FormValues) => {
+    const receiverName = `${data.receiverFirstName} ${data.receiverLastName}`.trim();
+    const payload = {
+      beneficiaryName: receiverName,
+      amount: data.amountEur,
+      currency: "EUR",
+      message: data.message || undefined,
+      accessType: data.accessType,
+      expiresAt: data.expiresAt || undefined,
+      category: data.category || undefined,
+      transactionType: data.transactionType,
+      senderFirstName: data.senderFirstName,
+      senderLastName: data.senderLastName,
+      senderCountry: data.senderCountry,
+      senderCity: data.senderCity,
+      receiverFirstName: data.receiverFirstName,
+      receiverLastName: data.receiverLastName,
+      receiverEmail: data.receiverEmail,
+      receiverCountry: data.receiverCountry,
+      receiverCity: data.receiverCity,
+      displayCurrency: data.displayCurrency,
+      paymentMethods: data.paymentMethods,
+      blockReason: data.blockReason,
+      whatsappNumber: data.whatsappNumber,
+    };
+
+    createTransfer.mutate({ data: payload as any }, {
+      onSuccess: (res: unknown) => {
         queryClient.invalidateQueries({ queryKey: getListTransfersQueryKey() });
         setGenerated(res as GeneratedTransfer);
       },
@@ -88,32 +189,92 @@ export default function TransferNew() {
     toast({ title: "Lien copié !" });
   };
 
-  const shareLinks = generated ? [
-    {
-      label: "WhatsApp",
-      color: "#25D366",
-      icon: "W",
-      href: `https://wa.me/?text=${encodeURIComponent(`Virement de ${formatAmount(generated.amount, generated.currency)} - Confirmez ici : ${fullLink}`)}`,
-    },
-    {
-      label: "Facebook",
-      color: "#1877F2",
-      icon: "f",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullLink)}`,
-    },
-    {
-      label: "Telegram",
-      color: "#229ED9",
-      icon: "T",
-      href: `https://t.me/share/url?url=${encodeURIComponent(fullLink)}&text=${encodeURIComponent(`Virement de ${formatAmount(generated.amount, generated.currency)}`)}`,
-    },
-    {
-      label: "Email",
-      color: "#6b7280",
-      icon: "✉",
-      href: `mailto:?subject=${encodeURIComponent(`Virement ${generated.reference}`)}&body=${encodeURIComponent(`Bonjour,\n\nVeuillez confirmer la réception du virement de ${formatAmount(generated.amount, generated.currency)}.\n\nLien : ${fullLink}\n\nRéférence : ${generated.reference}`)}`,
-    },
-  ] : [];
+  if (generated) {
+    const convAmount = convertFromEur(generated.amount, generated.displayCurrency);
+    return (
+      <div className="space-y-6 max-w-xl">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => { setGenerated(null); form.reset(); }}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight">Virement créé</h1>
+        </div>
+
+        <Card className="border shadow-sm">
+          <CardContent className="pt-6 pb-5">
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="h-14 w-14 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              </div>
+              <p className="font-bold text-gray-900 text-lg">Lien généré avec succès !</p>
+              <p className="text-sm text-gray-500 mt-1">Partagez ce lien avec le destinataire</p>
+            </div>
+
+            <div className="mb-5">
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Lien de virement</p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700 font-mono truncate">
+                  {fullLink}
+                </div>
+                <Button size="sm" variant="outline" onClick={handleCopyLink} className="shrink-0 h-9 px-3 border-blue-200">
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-400 mb-0.5">Référence</p>
+                <p className="font-mono text-xs font-semibold text-gray-800 break-all">{generated.reference}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-400 mb-0.5">Montant (EUR)</p>
+                <p className="font-bold text-gray-900">{generated.amount.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+              </div>
+              {generated.displayCurrency !== "EUR" && (
+                <div className="bg-blue-50 rounded-xl p-3 col-span-2">
+                  <p className="text-xs text-blue-400 mb-0.5">Affiché en {generated.displayCurrency}</p>
+                  <p className="font-bold text-blue-800">{formatCurrencyAmount(convAmount, generated.displayCurrency)}</p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Share2 className="h-3.5 w-3.5" /> Partager via
+              </p>
+              <div className="flex gap-2">
+                {[
+                  { label: "WhatsApp", color: "#25D366", char: "W", href: `https://wa.me/?text=${encodeURIComponent(`Virement – Confirmez ici : ${fullLink}`)}` },
+                  { label: "Telegram", color: "#229ED9", char: "T", href: `https://t.me/share/url?url=${encodeURIComponent(fullLink)}` },
+                  { label: "Email", color: "#6b7280", char: "✉", href: `mailto:?subject=${encodeURIComponent(`Virement ${generated.reference}`)}&body=${encodeURIComponent(`Bonjour,\n\nVeuillez confirmer la réception du virement.\n\nLien : ${fullLink}\n\nRéférence : ${generated.reference}`)}` },
+                ].map((sl) => (
+                  <a key={sl.label} href={sl.href} target="_blank" rel="noreferrer" title={sl.label}
+                    className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: sl.color }}>
+                    {sl.char}
+                  </a>
+                ))}
+                <button onClick={handleCopyLink} title="Copier"
+                  className="h-9 w-9 rounded-full flex items-center justify-center bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors">
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={() => setLocation(`/transfers/${generated.id}`)}>
+            Voir le détail
+          </Button>
+          <Button className="flex-1 bg-[#003087] hover:bg-[#002060]" onClick={() => { setGenerated(null); form.reset(); }}>
+            Nouveau virement
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -124,278 +285,318 @@ export default function TransferNew() {
         <h1 className="text-2xl font-bold tracking-tight">Nouveau virement</h1>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Form */}
-        <Card className="border shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Détails du virement</CardTitle>
-            <CardDescription>Remplissez les informations pour générer un lien de virement sécurisé.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                <FormField control={form.control} name="transactionType" render={({ field }) => (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+
+          {/* Transaction Type */}
+          <Card className="border shadow-sm">
+            <CardContent className="pt-5 pb-4">
+              <FormField control={form.control} name="transactionType" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-semibold">Type d'opération</FormLabel>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {[
+                      { value: "virement", label: "↗ Virement" },
+                      { value: "dépôt", label: "⬇ Dépôt" },
+                      { value: "retrait", label: "⬆ Retrait" },
+                      { value: "facture", label: "📄 Facture" },
+                    ].map((opt) => (
+                      <label key={opt.value}
+                        className={`flex items-center gap-2 cursor-pointer text-xs px-3 py-2.5 rounded-lg border transition-all ${
+                          field.value === opt.value
+                            ? "border-[#003087] bg-[#003087]/5 text-[#003087] font-semibold"
+                            : "border-gray-200 text-gray-600 hover:border-gray-300"
+                        }`}>
+                        <input type="radio" className="accent-[#003087]" value={opt.value} checked={field.value === opt.value} onChange={() => field.onChange(opt.value)} />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                </FormItem>
+              )} />
+            </CardContent>
+          </Card>
+
+          {/* Sender Info */}
+          <Card className="border shadow-sm">
+            <CardContent className="pt-5 pb-4">
+              <SectionTitle icon={User} title="Informations de l'expéditeur" />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="senderFirstName" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type d'opération</FormLabel>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { value: "virement", label: "↗ Virement", color: "blue" },
-                        { value: "dépôt", label: "⬇ Dépôt", color: "green" },
-                        { value: "retrait", label: "⬆ Retrait", color: "orange" },
-                        { value: "facture", label: "📄 Facture", color: "purple" },
-                      ].map((opt) => (
-                        <label
-                          key={opt.value}
-                          className={`flex items-center gap-2 cursor-pointer text-xs px-3 py-2.5 rounded-lg border transition-all ${
-                            field.value === opt.value
-                              ? "border-[#003087] bg-[#003087]/5 text-[#003087] font-semibold"
-                              : "border-gray-200 text-gray-600 hover:border-gray-300"
-                          }`}
-                        >
-                          <input type="radio" className="accent-[#003087]" value={opt.value} checked={field.value === opt.value} onChange={() => field.onChange(opt.value)} />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
+                    <FormLabel>Prénom</FormLabel>
+                    <FormControl><Input placeholder="Prénom" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
-
-                <FormField control={form.control} name="beneficiaryName" render={({ field }) => (
+                <FormField control={form.control} name="senderLastName" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom du bénéficiaire</FormLabel>
-                    <FormControl><Input placeholder="Entrez le nom du bénéficiaire" {...field} /></FormControl>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl><Input placeholder="Nom de famille" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
-
-                <FormField control={form.control} name="amount" render={({ field }) => (
+                <FormField control={form.control} name="senderCountry" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Montant</FormLabel>
-                    <div className="flex gap-2">
+                    <FormLabel>Pays</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <Input type="number" step="0.01" placeholder="Entrez le montant" className="flex-1" {...field} />
+                        <SelectTrigger><SelectValue placeholder="Pays" /></SelectTrigger>
                       </FormControl>
-                      <FormField control={form.control} name="currency" render={({ field: cf }) => (
-                        <Select onValueChange={cf.onChange} defaultValue={cf.value}>
-                          <SelectTrigger className="w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="EUR">EUR</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="GBP">GBP</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )} />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-
-                <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Catégorie</FormLabel>
-                    <Select value={field.value || ""} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choisir une catégorie (optionnel)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="logement">🏠 Logement</SelectItem>
-                        <SelectItem value="alimentation">🍔 Alimentation</SelectItem>
-                        <SelectItem value="santé">❤️ Santé</SelectItem>
-                        <SelectItem value="transport">🚗 Transport</SelectItem>
-                        <SelectItem value="loisirs">🎉 Loisirs</SelectItem>
-                        <SelectItem value="éducation">📚 Éducation</SelectItem>
-                        <SelectItem value="autres">📦 Autres</SelectItem>
+                      <SelectContent className="max-h-60">
+                        {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
-
-                <FormField control={form.control} name="message" render={({ field }) => (
+                <FormField control={form.control} name="senderCity" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Message personnalisé</FormLabel>
+                    <FormLabel>Ville</FormLabel>
+                    <FormControl><Input placeholder="Ville" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Receiver Info */}
+          <Card className="border shadow-sm">
+            <CardContent className="pt-5 pb-4">
+              <SectionTitle icon={Users} title="Informations du receveur" />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="receiverFirstName" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prénom</FormLabel>
+                    <FormControl><Input placeholder="Prénom" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="receiverLastName" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl><Input placeholder="Nom de famille" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="receiverEmail" render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Email</FormLabel>
+                    <FormControl><Input type="email" placeholder="email@exemple.com" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="receiverCountry" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pays</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Pays" /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-60">
+                        {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="receiverCity" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ville</FormLabel>
+                    <FormControl><Input placeholder="Ville" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Amount & Currency */}
+          <Card className="border shadow-sm">
+            <CardContent className="pt-5 pb-4">
+              <SectionTitle icon={Wallet} title="Montant et devise" />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="amountEur" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Montant en EUR (€)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="displayCurrency" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Devise d'affichage</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-60">
+                        {Object.entries(CURRENCY_LABELS).map(([code, label]) => (
+                          <SelectItem key={code} value={code}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+              {convertedAmount !== null && watchedCurrency !== "EUR" && (
+                <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between">
+                  <span className="text-xs text-blue-600 font-medium">Montant affiché au receveur</span>
+                  <span className="text-sm font-bold text-blue-800">{formatCurrencyAmount(convertedAmount, watchedCurrency)}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Payment Methods */}
+          <Card className="border shadow-sm">
+            <CardContent className="pt-5 pb-4">
+              <SectionTitle icon={CreditCard} title="Moyens de paiement activés" />
+              <FormField control={form.control} name="paymentMethods" render={({ field }) => (
+                <FormItem>
+                  <div className="space-y-2">
+                    {PAYMENT_METHOD_OPTIONS.map((opt) => {
+                      const Icon = opt.icon;
+                      const checked = Array.isArray(field.value) && field.value.includes(opt.id);
+                      return (
+                        <label key={opt.id}
+                          className={`flex items-center gap-3 cursor-pointer px-4 py-3 rounded-xl border transition-all ${
+                            checked ? "border-[#003087] bg-[#003087]/5" : "border-gray-200 hover:border-gray-300"
+                          }`}>
+                          <input
+                            type="checkbox"
+                            className="accent-[#003087] h-4 w-4"
+                            checked={checked}
+                            onChange={(e) => {
+                              const current = Array.isArray(field.value) ? field.value : [];
+                              if (e.target.checked) {
+                                field.onChange([...current, opt.id]);
+                              } else {
+                                field.onChange(current.filter((v) => v !== opt.id));
+                              }
+                            }}
+                          />
+                          <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: opt.color + "20" }}>
+                            <Icon className="h-4 w-4" style={{ color: opt.color }} />
+                          </div>
+                          <span className={`text-sm font-medium ${checked ? "text-[#003087]" : "text-gray-700"}`}>{opt.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </CardContent>
+          </Card>
+
+          {/* Block Reason & WhatsApp */}
+          <Card className="border shadow-sm">
+            <CardContent className="pt-5 pb-4">
+              <SectionTitle icon={Smartphone} title="Configuration retrait" />
+              <div className="space-y-4">
+                <FormField control={form.control} name="blockReason" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Raison de blocage du retrait</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Écrivez votre message ici..."
-                        maxLength={250}
+                        placeholder="Ex: Document d'identité requis avant déblocage des fonds..."
                         className="resize-none"
-                        rows={3}
+                        rows={2}
                         {...field}
                       />
                     </FormControl>
-                    <div className="text-[11px] text-muted-foreground text-right">{messageValue.length}/250</div>
+                    <p className="text-[11px] text-muted-foreground">Ce message sera affiché au receveur quand il tentera d'effectuer le retrait.</p>
                     <FormMessage />
                   </FormItem>
                 )} />
-
-                <FormField control={form.control} name="expiresAt" render={({ field }) => (
+                <FormField control={form.control} name="whatsappNumber" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date d'expiration</FormLabel>
-                    <FormControl>
-                      <Input type="date" placeholder="Sélectionnez la date d'expiration" {...field} />
-                    </FormControl>
+                    <FormLabel>Numéro WhatsApp admin (avec indicatif)</FormLabel>
+                    <FormControl><Input placeholder="+33612345678" {...field} /></FormControl>
+                    <p className="text-[11px] text-muted-foreground">Le receveur contactera ce numéro pour débloquer ses fonds.</p>
                     <FormMessage />
                   </FormItem>
                 )} />
-
-                <FormField control={form.control} name="accessType" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type d'accès</FormLabel>
-                    <div className="flex gap-3">
-                      {[
-                        { value: "public", label: "Public" },
-                        { value: "private", label: "Privé (lien protégé)" },
-                        { value: "limited", label: "Limité (accès restreint)" },
-                      ].map((opt) => (
-                        <label key={opt.value} className={`flex items-center gap-1.5 cursor-pointer text-xs px-3 py-2 rounded-lg border transition-all ${field.value === opt.value ? "border-[#003087] bg-[#003087]/5 text-[#003087] font-medium" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
-                          <input
-                            type="radio"
-                            className="accent-[#003087]"
-                            value={opt.value}
-                            checked={field.value === opt.value}
-                            onChange={() => field.onChange(opt.value)}
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <div className="pt-2">
-                  <Button
-                    type="submit"
-                    className="w-full bg-[#003087] hover:bg-[#002060] text-white h-11"
-                    disabled={createTransfer.isPending}
-                  >
-                    {createTransfer.isPending ? "Génération..." : "Générer le lien"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Result panel */}
-        {generated ? (
-          <div className="space-y-4">
-            {/* Success + Link */}
-            <Card className="border shadow-sm">
-              <CardContent className="pt-6 pb-5">
-                <div className="flex flex-col items-center text-center mb-5">
-                  <div className="h-14 w-14 rounded-full bg-green-100 flex items-center justify-center mb-3">
-                    <CheckCircle2 className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="font-semibold text-gray-900">Lien généré avec succès !</p>
-                </div>
-
-                <div className="mb-4">
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Voici votre lien de virement</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700 font-mono truncate">
-                      {fullLink}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCopyLink}
-                      className="shrink-0 h-9 px-3 border-blue-200"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                    <Share2 className="h-3.5 w-3.5" /> Partager le lien
-                  </p>
-                  <div className="flex gap-2">
-                    {shareLinks.map((sl) => (
-                      <a
-                        key={sl.label}
-                        href={sl.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={sl.label}
-                        className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: sl.color }}
-                      >
-                        {sl.icon}
-                      </a>
-                    ))}
-                    <button
-                      onClick={handleCopyLink}
-                      title="Copier"
-                      className="h-9 w-9 rounded-full flex items-center justify-center bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Transfer details */}
-            <Card className="border shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-gray-900">Informations du virement</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2.5 pb-5">
-                {[
-                  { label: "Référence", value: generated.reference },
-                  { label: "Montant", value: formatAmount(generated.amount, generated.currency) },
-                  { label: "Bénéficiaire", value: generated.beneficiaryName },
-                  {
-                    label: "Expiration",
-                    value: generated.expiresAt
-                      ? format(new Date(generated.expiresAt), "dd/MM/yyyy", { locale: fr })
-                      : "Aucune",
-                  },
-                ].map((row) => (
-                  <div key={row.label} className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">{row.label}</span>
-                    <span className="font-medium text-gray-900">{row.value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setLocation(`/transfers/${generated.id}`)}
-              >
-                Voir le détail
-              </Button>
-              <Button
-                className="flex-1 bg-[#003087] hover:bg-[#002060]"
-                onClick={() => { setGenerated(null); form.reset(); }}
-              >
-                Nouveau virement
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="hidden lg:flex items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 min-h-[400px]">
-            <div className="text-center text-muted-foreground px-8">
-              <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                <Share2 className="h-7 w-7 text-gray-400" />
               </div>
-              <p className="font-medium text-gray-600 mb-1">Lien de virement</p>
-              <p className="text-sm text-gray-400">Remplissez le formulaire et cliquez sur<br />"Générer le lien" pour obtenir votre lien de virement sécurisé.</p>
-            </div>
-          </div>
-        )}
-      </div>
+            </CardContent>
+          </Card>
+
+          {/* Optional fields */}
+          <Card className="border shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-700">Options supplémentaires</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-0">
+              <FormField control={form.control} name="category" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Catégorie</FormLabel>
+                  <Select value={field.value || ""} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Choisir une catégorie (optionnel)" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {[
+                        { value: "logement", label: "🏠 Logement" },
+                        { value: "alimentation", label: "🍔 Alimentation" },
+                        { value: "santé", label: "❤️ Santé" },
+                        { value: "transport", label: "🚗 Transport" },
+                        { value: "loisirs", label: "🎉 Loisirs" },
+                        { value: "éducation", label: "📚 Éducation" },
+                        { value: "autres", label: "📦 Autres" },
+                      ].map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="message" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message personnalisé</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Message pour le receveur..." maxLength={250} className="resize-none" rows={2} {...field} />
+                  </FormControl>
+                  <div className="text-[11px] text-muted-foreground text-right">{messageValue.length}/250</div>
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="expiresAt" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date d'expiration</FormLabel>
+                  <FormControl><Input type="date" {...field} /></FormControl>
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="accessType" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type d'accès</FormLabel>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { value: "public", label: "Public" },
+                      { value: "private", label: "Privé" },
+                      { value: "limited", label: "Limité" },
+                    ].map((opt) => (
+                      <label key={opt.value} className={`flex items-center gap-1.5 cursor-pointer text-xs px-3 py-2 rounded-lg border transition-all ${field.value === opt.value ? "border-[#003087] bg-[#003087]/5 text-[#003087] font-medium" : "border-gray-200 text-gray-600"}`}>
+                        <input type="radio" className="accent-[#003087]" value={opt.value} checked={field.value === opt.value} onChange={() => field.onChange(opt.value)} />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                </FormItem>
+              )} />
+            </CardContent>
+          </Card>
+
+          <Button
+            type="submit"
+            className="w-full bg-[#003087] hover:bg-[#002060] text-white h-12 text-base font-semibold"
+            disabled={createTransfer.isPending}
+          >
+            {createTransfer.isPending ? "Génération en cours…" : "Générer le lien de virement"}
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }

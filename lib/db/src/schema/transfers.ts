@@ -21,6 +21,31 @@ export const transfersTable = pgTable("transfers", {
   reference: text("reference").notNull().unique(),
   confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+
+  // Sender info
+  senderFirstName: text("sender_first_name"),
+  senderLastName: text("sender_last_name"),
+  senderCountry: text("sender_country"),
+  senderCity: text("sender_city"),
+
+  // Receiver info
+  receiverFirstName: text("receiver_first_name"),
+  receiverLastName: text("receiver_last_name"),
+  receiverEmail: text("receiver_email"),
+  receiverCountry: text("receiver_country"),
+  receiverCity: text("receiver_city"),
+
+  // Display currency (amount stored in EUR, displayed in this currency)
+  displayCurrency: text("display_currency").notNull().default("EUR"),
+
+  // Payment methods (JSON array: ["card","paypal","mobile_money"])
+  paymentMethods: text("payment_methods"),
+
+  // Withdrawal block reason (configured by admin at creation)
+  blockReason: text("block_reason"),
+
+  // WhatsApp number for admin contact
+  whatsappNumber: text("whatsapp_number"),
 });
 
 export const insertTransferSchema = createInsertSchema(transfersTable).omit({ id: true, createdAt: true });
