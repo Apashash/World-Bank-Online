@@ -1,7 +1,9 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# compiled output
-dist
+# compiled output (sous-packages ignorés, dist/ racine tracké pour Plesk)
+artifacts/*/dist/
+lib/*/dist/
+scripts/dist/
 tmp
 out-tsc
 *.tsbuildinfo
