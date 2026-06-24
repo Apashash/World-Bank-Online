@@ -78669,12 +78669,12 @@ var fundRequestsTable = pgTable("fund_requests", {
 var { Pool: Pool3 } = esm_default;
 var connectionString = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
 if (!connectionString) {
-  throw new Error(
-    "SUPABASE_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?"
+  console.error(
+    "[db] FATAL: SUPABASE_DATABASE_URL and DATABASE_URL are both missing. Set one in your environment variables (Plesk \u2192 Custom environment variables). The server will start but all database operations will fail."
   );
 }
 var pool = new Pool3({
-  connectionString,
+  connectionString: connectionString ?? "postgresql://localhost/placeholder",
   ssl: process.env.SUPABASE_DATABASE_URL ? { rejectUnauthorized: false } : void 0
 });
 var db = drizzle(pool, { schema: schema_exports });
@@ -80567,6 +80567,21 @@ app.use("/api", routes_default);
 var app_default = app;
 
 // src/plesk-entry.ts
+process.on("uncaughtException", (err) => {
+  console.error("[plesk] Uncaught exception:", err);
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[plesk] Unhandled rejection:", reason);
+  process.exit(1);
+});
+var requiredEnvVars = ["SUPABASE_DATABASE_URL", "DATABASE_URL"];
+var hasDb = requiredEnvVars.some((k) => process.env[k]);
+if (!hasDb) {
+  console.error(
+    "[plesk] ERROR: No database URL found.\n  \u2192 Set SUPABASE_DATABASE_URL in Plesk \u2192 Custom environment variables\n  \u2192 Value: your Supabase connection string\n  \u2192 Then click 'Restart App'"
+  );
+}
 var publicDir = import_path3.default.join(__dirname, "public");
 app_default.use(import_express21.default.static(publicDir));
 app_default.get("*", (_req, res) => {
@@ -80575,11 +80590,14 @@ app_default.get("*", (_req, res) => {
 var rawPort = process.env["PORT"] ?? "3000";
 var port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
-  logger.error("Invalid PORT value: " + rawPort);
+  console.error("[plesk] Invalid PORT value: " + rawPort);
   process.exit(1);
 }
 app_default.listen(port, () => {
   logger.info({ port }, "Banque Mondiale production server running");
+  console.log(`[plesk] Server listening on port ${port}`);
+  console.log(`[plesk] Serving static files from: ${publicDir}`);
+  console.log(`[plesk] DB URL configured: ${hasDb ? "YES \u2713" : "NO \u2717 \u2014 set env vars!"}`);
 });
 /*! Bundled license information:
 

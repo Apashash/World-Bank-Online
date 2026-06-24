@@ -7,15 +7,18 @@ const { Pool } = pg;
 const connectionString = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error(
-    "SUPABASE_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?",
+  console.error(
+    "[db] FATAL: SUPABASE_DATABASE_URL and DATABASE_URL are both missing. " +
+    "Set one in your environment variables (Plesk → Custom environment variables). " +
+    "The server will start but all database operations will fail."
   );
 }
 
 export const pool = new Pool({
-  connectionString,
+  connectionString: connectionString ?? "postgresql://localhost/placeholder",
   ssl: process.env.SUPABASE_DATABASE_URL ? { rejectUnauthorized: false } : undefined,
 });
+
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
