@@ -57,7 +57,6 @@ const quickActions = [
   { icon: QrCode, label: "QR", href: "/scanner-qr" },
   { icon: Landmark, label: "Retrait", href: "/retrait" },
   { icon: Receipt, label: "Factures", href: "/payer-factures" },
-  { icon: ArrowLeftRight, label: "Échanger", href: "/echanger" },
   { icon: LayoutGrid, label: "Plus", href: "/plus" },
 ];
 

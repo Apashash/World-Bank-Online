@@ -39,7 +39,6 @@ import Recevoir from "@/pages/recevoir";
 import ScannerQR from "@/pages/scanner-qr";
 import Retrait from "@/pages/retrait";
 import PayerFactures from "@/pages/payer-factures";
-import Echanger from "@/pages/echanger";
 import Plus from "@/pages/plus";
 import Notifications from "@/pages/notifications";
 
@@ -96,7 +95,6 @@ function Router() {
       <Route path="/scanner-qr"><AppLayout><ScannerQR /></AppLayout></Route>
       <Route path="/retrait"><AppLayout><Retrait /></AppLayout></Route>
       <Route path="/payer-factures"><AppLayout><PayerFactures /></AppLayout></Route>
-      <Route path="/echanger"><AppLayout><Echanger /></AppLayout></Route>
       <Route path="/plus"><AppLayout><Plus /></AppLayout></Route>
       <Route path="/notifications"><AppLayout><Notifications /></AppLayout></Route>
 

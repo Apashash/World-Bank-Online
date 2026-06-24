@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import {
-  Wallet, Send, Download, QrCode, Landmark, Receipt, ArrowLeftRight,
+  Wallet, Send, Download, QrCode, Landmark, Receipt,
   LayoutDashboard, Users, CreditCard, ShieldCheck, Settings, ArrowUpRight,
 } from "lucide-react";
 
@@ -11,7 +11,6 @@ const ACTIONS = [
   { icon: QrCode, label: "Scanner QR", href: "/scanner-qr", color: "bg-blue-50 text-[#003087]" },
   { icon: Landmark, label: "Retrait", href: "/retrait", color: "bg-blue-50 text-[#003087]" },
   { icon: Receipt, label: "Payer factures", href: "/payer-factures", color: "bg-blue-50 text-[#003087]" },
-  { icon: ArrowLeftRight, label: "Échanger", href: "/echanger", color: "bg-blue-50 text-[#003087]" },
 ];
 
 const NAV = [

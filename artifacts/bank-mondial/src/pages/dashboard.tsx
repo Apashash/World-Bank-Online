@@ -151,7 +151,6 @@ export default function Dashboard() {
               { icon: QrCode, label: "Scanner QR", href: "/scanner-qr" },
               { icon: Landmark, label: "Retrait", href: "/retrait" },
               { icon: Receipt, label: "Payer factures", href: "/payer-factures" },
-              { icon: ArrowLeftRight, label: "Échanger", href: "/echanger" },
               { icon: LayoutGrid, label: "Plus", href: "/plus" },
             ].map(({ icon: Icon, label, href }) => (
               <Link key={label} href={href}>
