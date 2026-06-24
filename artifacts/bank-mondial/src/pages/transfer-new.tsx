@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useCreateTransfer, getListTransfersQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useCurrency } from "@/contexts/currency-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ export default function TransferNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createTransfer = useCreateTransfer();
+  const { formatAmount } = useCurrency();
   const [generated, setGenerated] = useState<GeneratedTransfer | null>(null);
 
   const form = useForm<z.infer<typeof transferSchema>>({
@@ -91,7 +93,7 @@ export default function TransferNew() {
       label: "WhatsApp",
       color: "#25D366",
       icon: "W",
-      href: `https://wa.me/?text=${encodeURIComponent(`Virement de ${generated.amount.toFixed(2)} ${generated.currency} - Confirmez ici : ${fullLink}`)}`,
+      href: `https://wa.me/?text=${encodeURIComponent(`Virement de ${formatAmount(generated.amount, generated.currency)} - Confirmez ici : ${fullLink}`)}`,
     },
     {
       label: "Facebook",
@@ -103,13 +105,13 @@ export default function TransferNew() {
       label: "Telegram",
       color: "#229ED9",
       icon: "T",
-      href: `https://t.me/share/url?url=${encodeURIComponent(fullLink)}&text=${encodeURIComponent(`Virement de ${generated.amount.toFixed(2)} ${generated.currency}`)}`,
+      href: `https://t.me/share/url?url=${encodeURIComponent(fullLink)}&text=${encodeURIComponent(`Virement de ${formatAmount(generated.amount, generated.currency)}`)}`,
     },
     {
       label: "Email",
       color: "#6b7280",
       icon: "✉",
-      href: `mailto:?subject=${encodeURIComponent(`Virement ${generated.reference}`)}&body=${encodeURIComponent(`Bonjour,\n\nVeuillez confirmer la réception du virement de ${generated.amount.toFixed(2)} ${generated.currency}.\n\nLien : ${fullLink}\n\nRéférence : ${generated.reference}`)}`,
+      href: `mailto:?subject=${encodeURIComponent(`Virement ${generated.reference}`)}&body=${encodeURIComponent(`Bonjour,\n\nVeuillez confirmer la réception du virement de ${formatAmount(generated.amount, generated.currency)}.\n\nLien : ${fullLink}\n\nRéférence : ${generated.reference}`)}`,
     },
   ] : [];
 
@@ -349,7 +351,7 @@ export default function TransferNew() {
               <CardContent className="space-y-2.5 pb-5">
                 {[
                   { label: "Référence", value: generated.reference },
-                  { label: "Montant", value: `${generated.amount.toFixed(2)} ${generated.currency}` },
+                  { label: "Montant", value: formatAmount(generated.amount, generated.currency) },
                   { label: "Bénéficiaire", value: generated.beneficiaryName },
                   {
                     label: "Expiration",

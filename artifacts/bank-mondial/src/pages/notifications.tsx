@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { apiPost } from "@/lib/api";
 import { useLocation } from "wouter";
+import { useCurrency } from "@/contexts/currency-context";
 
 interface Notification {
   id: number;
@@ -84,6 +85,7 @@ export default function Notifications() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { formatAmount } = useCurrency();
 
   const currentTypes = FILTERS.find((f) => f.key === activeFilter)?.types ?? [];
 
@@ -262,7 +264,7 @@ export default function Notifications() {
                           : "text-[#003087]"
                       }`}>
                         {["transfer_sent", "withdrawal", "bill_payment"].includes(notif.type) ? "−" : "+"}
-                        {Number(notif.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {notif.currency}
+                        {formatAmount(Number(notif.amount), notif.currency ?? "EUR")}
                       </span>
                     )}
                     <span

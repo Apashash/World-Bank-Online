@@ -8,6 +8,7 @@ import { fr } from "date-fns/locale";
 import { Copy, ArrowLeft, ExternalLink, Ban, Share2, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCurrency } from "@/contexts/currency-context";
 
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
@@ -43,6 +44,7 @@ export default function TransferDetail() {
   const id = Number(params.id);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { formatAmount } = useCurrency();
 
   const { data: transfer, isLoading } = useGetTransfer(id, {
     query: { enabled: !!id, queryKey: getGetTransferQueryKey(id) }
@@ -97,7 +99,7 @@ export default function TransferDetail() {
       label: "WhatsApp",
       color: "#25D366",
       icon: "W",
-      href: `https://wa.me/?text=${encodeURIComponent(`Virement de ${transfer.amount.toFixed(2)} ${transfer.currency} - Confirmez ici : ${fullLink}`)}`,
+      href: `https://wa.me/?text=${encodeURIComponent(`Virement de ${formatAmount(transfer.amount, transfer.currency)} - Confirmez ici : ${fullLink}`)}`,
     },
     {
       label: "Facebook",
@@ -115,7 +117,7 @@ export default function TransferDetail() {
       label: "Email",
       color: "#6b7280",
       icon: "✉",
-      href: `mailto:?subject=${encodeURIComponent(`Virement ${transfer.reference}`)}&body=${encodeURIComponent(`Confirmez la réception du virement de ${transfer.amount.toFixed(2)} ${transfer.currency}.\n\nLien : ${fullLink}`)}`,
+      href: `mailto:?subject=${encodeURIComponent(`Virement ${transfer.reference}`)}&body=${encodeURIComponent(`Confirmez la réception du virement de ${formatAmount(transfer.amount, transfer.currency)}.\n\nLien : ${fullLink}`)}`,
     },
   ];
 
@@ -141,7 +143,7 @@ export default function TransferDetail() {
                 <CardDescription className="font-mono text-xs mt-0.5">{transfer.reference}</CardDescription>
               </div>
               <span className="text-2xl font-bold text-[#003087]">
-                {transfer.amount.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {transfer.currency}
+                {formatAmount(transfer.amount, transfer.currency)}
               </span>
             </div>
           </CardHeader>

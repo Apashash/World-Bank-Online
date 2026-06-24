@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { BarChart2, TrendingDown, Tag } from "lucide-react";
+import { useCurrency } from "@/contexts/currency-context";
 
 const CATEGORY_COLORS: Record<string, string> = {
   logement: "#003087",
@@ -52,6 +53,7 @@ export default function Analyses() {
   const [budgets, setBudgets] = useState<Record<string, number>>(BUDGET_DEFAULTS);
   const [editingBudget, setEditingBudget] = useState<string | null>(null);
   const [tempBudget, setTempBudget] = useState<string>("");
+  const { formatAmount } = useCurrency();
 
   useEffect(() => {
     const saved = localStorage.getItem("bm_budgets");
@@ -136,7 +138,7 @@ export default function Analyses() {
                 Répartition des dépenses
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Total : {data.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {currency}
+                Total : {formatAmount(data.total, currency)}
               </p>
             </CardHeader>
             <CardContent>
@@ -160,7 +162,7 @@ export default function Analyses() {
                   </Pie>
                   <Tooltip
                     formatter={(value: any, _: any, props: any) => [
-                      `${Number(value).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} ${currency}`,
+                      formatAmount(Number(value), currency),
                       props.payload?.name,
                     ]}
                     contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 12 }}
@@ -209,7 +211,7 @@ export default function Analyses() {
                       </div>
                       <div className="flex items-center gap-2 text-xs">
                         <span className={`font-semibold ${over ? "text-red-500" : "text-gray-700"}`}>
-                          {item.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })}
+                          {formatAmount(item.total, currency)}
                         </span>
                         <span className="text-muted-foreground">/</span>
                         {isEditing ? (
@@ -233,7 +235,7 @@ export default function Analyses() {
                             }}
                             className="text-[#003087] font-semibold hover:underline"
                           >
-                            {budget.toLocaleString("fr-FR")} {currency}
+                            {formatAmount(budget, currency)}
                           </button>
                         )}
                       </div>
@@ -283,7 +285,7 @@ export default function Analyses() {
                       <span className="text-xs text-muted-foreground">{item.count} virement(s)</span>
                       <span className="text-xs text-muted-foreground w-12 text-right">{pct}%</span>
                       <span className="text-sm font-bold text-gray-900 w-28 text-right">
-                        {item.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {item.currency}
+                        {formatAmount(item.total, item.currency)}
                       </span>
                     </div>
                   );

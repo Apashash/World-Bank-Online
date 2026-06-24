@@ -4,6 +4,7 @@ import { Users, Gift, Copy, Link2, Award, ShieldCheck, Send, Star } from "lucide
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/contexts/currency-context";
 
 function getLevel(count: number): { label: string; color: string; next: number | null; emoji: string } {
   if (count >= 10) return { label: "Gold", color: "#F59E0B", next: null, emoji: "🥇" };
@@ -26,6 +27,7 @@ export default function Referrals() {
   const { data: user } = useGetMe();
   const { data: transfersData } = useListTransfers({ page: 1, limit: 1 });
   const { toast } = useToast();
+  const { formatAmount } = useCurrency();
 
   const referralCode = user?.referralCode || "";
   const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
@@ -166,7 +168,7 @@ export default function Referrals() {
             </Card>
             <Card className="border shadow-sm">
               <CardContent className="pt-4 pb-4 text-center">
-                <div className="text-2xl font-bold text-[#003087]">{(stats?.totalRewards ?? 0).toFixed(0)} €</div>
+                <div className="text-2xl font-bold text-[#003087]">{formatAmount(stats?.totalRewards ?? 0, "EUR")}</div>
                 <p className="text-xs text-muted-foreground mt-0.5">Gains</p>
               </CardContent>
             </Card>
@@ -247,7 +249,7 @@ export default function Referrals() {
                     </div>
                     <div className="text-right">
                       {ref.reward ? (
-                        <span className="text-sm font-bold text-[#003087]">{ref.reward.toFixed(2)} €</span>
+                        <span className="text-sm font-bold text-[#003087]">{formatAmount(ref.reward, "EUR")}</span>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
@@ -272,7 +274,7 @@ export default function Referrals() {
                 <div>
                   <div className="flex items-center justify-center gap-1 text-sm font-bold text-[#003087]">
                     <Gift className="h-3.5 w-3.5" />
-                    {(stats?.totalRewards ?? 0).toFixed(2)} €
+                    {formatAmount(stats?.totalRewards ?? 0, "EUR")}
                   </div>
                   <p className="text-xs text-muted-foreground">Gains totaux</p>
                 </div>
