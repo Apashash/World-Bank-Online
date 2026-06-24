@@ -163,11 +163,13 @@ export default function AdminTransfers() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
           {
-            label: "Volume total",
-            value: `${totalVolume.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR`,
+            label: "Volume EUR",
+            value: totalVolume >= 1000
+              ? `${(totalVolume / 1000).toFixed(1)}k`
+              : totalVolume.toFixed(0),
             icon: TrendingUp,
             color: "#003087",
           },
@@ -186,18 +188,16 @@ export default function AdminTransfers() {
         ].map((s) => (
           <div
             key={s.label}
-            className="rounded-xl bg-white border border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm"
+            className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm"
           >
             <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+              className="flex h-7 w-7 items-center justify-center rounded-lg mb-2"
               style={{ background: `${s.color}15` }}
             >
-              <s.icon className="h-4 w-4" style={{ color: s.color }} />
+              <s.icon className="h-3.5 w-3.5" style={{ color: s.color }} />
             </div>
-            <div>
-              <p className="text-xl font-bold text-slate-900 leading-tight">{s.value}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
-            </div>
+            <p className="text-lg font-bold text-slate-900 leading-tight truncate">{s.value}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{s.label}</p>
           </div>
         ))}
       </div>
@@ -232,8 +232,8 @@ export default function AdminTransfers() {
         })}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <Table>
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
+        <Table className="min-w-[560px]">
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead className="text-xs font-semibold text-slate-500">Date</TableHead>

@@ -36,6 +36,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, user, setLocation]);
 
+  // One-time reload when customFetch detected a token refresh (role changed in DB)
+  useEffect(() => {
+    if (!isLoading && user) {
+      const wasRefreshed = localStorage.getItem("_token_just_refreshed");
+      if (wasRefreshed) {
+        localStorage.removeItem("_token_just_refreshed");
+        window.location.reload();
+      }
+    }
+  }, [isLoading, user]);
+
   // Close sidebar on route change (mobile)
   useEffect(() => {
     setSidebarOpen(false);

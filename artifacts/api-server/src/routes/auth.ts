@@ -146,13 +146,19 @@ router.post("/auth/logout", (_req, res) => {
 });
 
 router.get("/auth/me", requireAuth, async (req, res) => {
-  const { userId } = (req as any).user;
+  const { userId, role: jwtRole } = (req as any).user;
   const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   if (users.length === 0) {
     res.status(401).json({ error: "User not found" });
     return;
   }
-  res.json(formatUser(users[0]));
+  const user = users[0];
+  // If DB role changed since JWT was issued, issue a fresh token transparently
+  if (user.role !== jwtRole) {
+    const freshToken = signToken({ userId: user.id, role: user.role });
+    res.setHeader("X-Refresh-Token", freshToken);
+  }
+  res.json(formatUser(user));
 });
 
 export default router;

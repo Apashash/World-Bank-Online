@@ -290,8 +290,8 @@ export default function AdminUsers() {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <Table>
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
+        <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead className="text-xs font-semibold text-slate-500">Utilisateur</TableHead>
