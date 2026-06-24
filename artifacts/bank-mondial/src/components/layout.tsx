@@ -31,6 +31,7 @@ import {
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "./notification-bell";
+import { CurrencySelector } from "./currency-selector";
 
 function BanqueMondialeLogo({ size = "sm" }: { size?: "sm" | "lg" }) {
   const imgClass = size === "lg" ? "h-10 w-10" : "h-8 w-8";
@@ -134,7 +135,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/dashboard">
             <BanqueMondialeLogo size="sm" />
           </Link>
-          <NotificationBell />
+          <div className="flex items-center gap-1">
+            <CurrencySelector />
+            <NotificationBell />
+          </div>
         </div>
 
         {/* Nav */}
@@ -245,7 +249,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/dashboard">
             <BanqueMondialeLogo size="sm" />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <CurrencySelector />
             <NotificationBell />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

@@ -1,4 +1,5 @@
 import { useListTransfers } from "@workspace/api-client-react";
+import { useCurrency } from "@/contexts/currency-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ function getStatusBadge(status: string) {
 
 export default function Transfers() {
   const { data, isLoading } = useListTransfers({ page: 1, limit: 50 });
+  const { formatAmount } = useCurrency();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("tous");
 
@@ -127,7 +129,7 @@ export default function Transfers() {
                       <TableCell className="font-mono text-xs text-muted-foreground">{t.reference}</TableCell>
                       <TableCell>{getStatusBadge(t.status)}</TableCell>
                       <TableCell className="text-right font-bold">
-                        {t.amount.toFixed(2)} {t.currency}
+                        {formatAmount(t.amount, t.currency)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" asChild>

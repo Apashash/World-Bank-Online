@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import CookieConsent from "@/components/CookieConsent";
+import { CurrencyProvider } from "@/contexts/currency-context";
 
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
@@ -116,13 +117,15 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-        <CookieConsent />
-      </TooltipProvider>
+      <CurrencyProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+          <CookieConsent />
+        </TooltipProvider>
+      </CurrencyProvider>
     </QueryClientProvider>
   );
 }

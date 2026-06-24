@@ -1,6 +1,7 @@
 import { useGetDashboardSummary, useGetRecentActivity, useGetReferralStats, useListTransfers } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownRight, ArrowUpRight, Users, Euro, Bell, Wallet, Send, Download, QrCode, Landmark, Receipt, ArrowLeftRight, LayoutGrid, User } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Users, Coins, Bell, Wallet, Send, Download, QrCode, Landmark, Receipt, ArrowLeftRight, LayoutGrid, User } from "lucide-react";
+import { useCurrency } from "@/contexts/currency-context";
 import { format, subWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -48,6 +49,7 @@ export default function Dashboard() {
   const { data: referralStats } = useGetReferralStats();
   const { data: transfersData } = useListTransfers({ page: 1, limit: 100 });
   const { data: user } = useGetMe();
+  const { formatAmount, currency } = useCurrency();
   const [period, setPeriod] = useState("30");
   const [activityPage, setActivityPage] = useState(0);
   const ACTIVITY_PAGE_SIZE = 5;
@@ -95,10 +97,10 @@ export default function Dashboard() {
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-white/70 uppercase tracking-wide">Solde total</span>
-              <Euro className="h-4 w-4 text-white/50" />
+              <Coins className="h-4 w-4 text-white/50" />
             </div>
             <div className="text-2xl font-bold">
-              {isLoadingSummary ? "—" : `${(summary?.balance ?? 0).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR`}
+              {isLoadingSummary ? "—" : formatAmount(summary?.balance ?? 0, "EUR")}
             </div>
             <p className="text-[10px] text-white/50 mt-1 font-mono truncate">{summary?.iban || "IBAN non assigné"}</p>
           </CardContent>
@@ -111,7 +113,7 @@ export default function Dashboard() {
               <ArrowUpRight className="h-4 w-4 text-red-500" />
             </div>
             <div className="text-2xl font-bold text-gray-900">{summary?.totalTransfersSent ?? 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">{(summary?.totalAmountSent ?? 0).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {summary?.currency || "EUR"}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatAmount(summary?.totalAmountSent ?? 0, summary?.currency || "EUR")}</p>
           </CardContent>
         </Card>
 
@@ -122,7 +124,7 @@ export default function Dashboard() {
               <ArrowDownRight className="h-4 w-4 text-green-500" />
             </div>
             <div className="text-2xl font-bold text-gray-900">{summary?.totalTransfersReceived ?? 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">{(summary?.totalAmountReceived ?? 0).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {summary?.currency || "EUR"}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatAmount(summary?.totalAmountReceived ?? 0, summary?.currency || "EUR")}</p>
           </CardContent>
         </Card>
 
@@ -133,7 +135,7 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-blue-500" />
             </div>
             <div className="text-2xl font-bold text-gray-900">{referralStats?.totalReferrals ?? 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">{(referralStats?.totalRewards ?? 0).toFixed(2)} € gagnés</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatAmount(referralStats?.totalRewards ?? 0, "EUR")} gagnés</p>
           </CardContent>
         </Card>
       </div>
@@ -226,7 +228,7 @@ export default function Dashboard() {
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 12 }}
                   formatter={(value: any, name: string) => [
-                    `${Number(value).toLocaleString("fr-FR")} €`,
+                    formatAmount(Number(value), "EUR"),
                     name === "sent" ? "Envoyé" : "Reçu",
                   ]}
                 />
@@ -285,7 +287,7 @@ export default function Dashboard() {
                         </div>
                         {activity.amount != null && (
                           <div className={`text-xs font-bold shrink-0 ${isDebit ? "text-red-500" : "text-green-600"}`}>
-                            {isDebit ? "-" : "+"}{Number(activity.amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} {activity.currency}
+                            {isDebit ? "-" : "+"}{formatAmount(Number(activity.amount), activity.currency)}
                           </div>
                         )}
                       </div>
