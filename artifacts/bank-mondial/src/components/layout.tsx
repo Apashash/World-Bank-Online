@@ -237,9 +237,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* ── Main content ── */}
       <main className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile Header */}
+        {/* Mobile Header — fixed so it never scrolls away */}
         <header
-          className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between px-4 md:hidden"
+          className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between px-4 md:hidden"
           style={{ background: "linear-gradient(90deg, #002060 0%, #003087 100%)" }}
         >
           <Link href="/dashboard">
@@ -255,6 +255,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
+        {/* Spacer to push content below the fixed mobile header */}
+        <div className="h-14 shrink-0 md:hidden" />
 
         {/* Mobile Menu overlay */}
         {isMobileMenuOpen && (
