@@ -76059,7 +76059,7 @@ if (!hasDb) {
 }
 var publicDir = import_path3.default.join(__dirname, "public");
 app_default.use(import_express21.default.static(publicDir));
-app_default.get("*", (_req, res) => {
+app_default.get(/(.*)/, (_req, res) => {
   res.sendFile("index.html", { root: publicDir });
 });
 var rawPort = process.env["PORT"] ?? "3000";

@@ -29,7 +29,7 @@ const publicDir = path.join(__dirname, "public");
 
 app.use(express.static(publicDir));
 
-app.get("*", (_req, res) => {
+app.get(/(.*)/, (_req, res) => {
   res.sendFile("index.html", { root: publicDir });
 });
 
