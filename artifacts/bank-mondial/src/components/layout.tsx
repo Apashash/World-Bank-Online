@@ -259,7 +259,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Mobile Menu overlay */}
         {isMobileMenuOpen && (
           <div
-            className="absolute inset-0 top-14 z-50 md:hidden flex flex-col"
+            className="fixed inset-0 top-14 bottom-[62px] z-50 md:hidden flex flex-col overflow-y-auto"
             style={{ background: "linear-gradient(180deg, #002060 0%, #003087 100%)" }}
           >
             <div className="px-4 pt-4 pb-2">
