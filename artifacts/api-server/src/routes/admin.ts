@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, usersTable, transfersTable, kycTable, subAccountsTable, referralsTable } from "@workspace/db";
+import { db, usersTable, transfersTable, kycTable, subAccountsTable, referralsTable, activityTable } from "@workspace/db";
 import { eq, ilike, or, gte, sql } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { AdminBlockUserBody, AdminUpdateBalanceBody, AdminReviewKycBody } from "@workspace/api-zod";
@@ -182,6 +182,225 @@ router.get("/admin/stats", requireAuth, requireAdmin, async (req, res) => {
     pendingKyc: pendingKyc.length,
     totalSubAccounts: subAccounts.length,
     totalReferrals: referrals.length,
+  });
+});
+
+// POST /admin/users/:id/credit
+router.post("/admin/users/:id/credit", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  const { amount, reason } = req.body;
+  if (typeof amount !== "number" || amount <= 0 || typeof reason !== "string" || !reason.trim()) {
+    res.status(400).json({ error: "Montant ou motif invalide" }); return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
+  const newBalance = (Number(user.balance) + amount).toFixed(2);
+  const [updated] = await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, id)).returning();
+  await db.insert(activityTable).values({
+    userId: id,
+    type: "deposit",
+    description: `Crédit admin : +${amount} ${user.currency} — ${reason}`,
+    amount: amount.toString(),
+    currency: user.currency,
+  });
+  res.json(formatUser(updated));
+});
+
+// POST /admin/users/:id/debit
+router.post("/admin/users/:id/debit", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  const { amount, reason } = req.body;
+  if (typeof amount !== "number" || amount <= 0 || typeof reason !== "string" || !reason.trim()) {
+    res.status(400).json({ error: "Montant ou motif invalide" }); return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
+  const newBalance = Math.max(0, Number(user.balance) - amount).toFixed(2);
+  const [updated] = await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, id)).returning();
+  await db.insert(activityTable).values({
+    userId: id,
+    type: "withdrawal",
+    description: `Débit admin : -${amount} ${user.currency} — ${reason}`,
+    amount: amount.toString(),
+    currency: user.currency,
+  });
+  res.json(formatUser(updated));
+});
+
+// GET /admin/users/:id/transfers
+router.get("/admin/users/:id/transfers", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  const transfers = await db.select().from(transfersTable).where(eq(transfersTable.userId, id));
+  res.json(transfers.map((t) => ({
+    id: t.id,
+    token: t.token,
+    beneficiaryName: t.beneficiaryName,
+    amount: Number(t.amount),
+    currency: t.currency,
+    message: t.message ?? null,
+    status: t.status,
+    reference: t.reference,
+    createdAt: t.createdAt.toISOString(),
+    confirmedAt: t.confirmedAt?.toISOString() ?? null,
+  })));
+});
+
+// POST /admin/transfers/create — admin creates a direct transfer
+router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, res) => {
+  const { userId, beneficiaryName, amount, currency, message } = req.body;
+  if (!userId || !beneficiaryName || !amount || !currency) {
+    res.status(400).json({ error: "Champs requis manquants" }); return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
+  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
+
+  const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+  const reference = "ADM-" + Date.now().toString(36).toUpperCase();
+
+  const [transfer] = await db.insert(transfersTable).values({
+    userId: Number(userId),
+    token,
+    beneficiaryName,
+    amount: Number(amount).toFixed(2),
+    currency,
+    message: message ?? null,
+    status: "completed",
+    reference,
+    confirmedAt: new Date(),
+  }).returning();
+
+  const newBalance = Math.max(0, Number(user.balance) - Number(amount)).toFixed(2);
+  await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, Number(userId)));
+
+  await db.insert(activityTable).values({
+    userId: Number(userId),
+    type: "transfer_sent",
+    description: `Virement admin vers ${beneficiaryName} : ${amount} ${currency}`,
+    amount: Number(amount).toFixed(2),
+    currency,
+    referenceId: transfer.id,
+  });
+
+  res.json({
+    id: transfer.id,
+    token: transfer.token,
+    beneficiaryName: transfer.beneficiaryName,
+    amount: Number(transfer.amount),
+    currency: transfer.currency,
+    status: transfer.status,
+    reference: transfer.reference,
+    createdAt: transfer.createdAt.toISOString(),
+  });
+});
+
+// POST /admin/users/:id/credit
+router.post("/admin/users/:id/credit", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  const { amount, reason } = req.body;
+  if (typeof amount !== "number" || amount <= 0 || typeof reason !== "string" || !reason.trim()) {
+    res.status(400).json({ error: "Montant ou motif invalide" }); return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
+  const newBalance = (Number(user.balance) + amount).toFixed(2);
+  const [updated] = await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, id)).returning();
+  await db.insert(activityTable).values({
+    userId: id,
+    type: "deposit",
+    description: `Crédit admin : +${amount} ${user.currency} — ${reason}`,
+    amount: amount.toString(),
+    currency: user.currency,
+  });
+  res.json(formatUser(updated));
+});
+
+// POST /admin/users/:id/debit
+router.post("/admin/users/:id/debit", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  const { amount, reason } = req.body;
+  if (typeof amount !== "number" || amount <= 0 || typeof reason !== "string" || !reason.trim()) {
+    res.status(400).json({ error: "Montant ou motif invalide" }); return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
+  const newBalance = Math.max(0, Number(user.balance) - amount).toFixed(2);
+  const [updated] = await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, id)).returning();
+  await db.insert(activityTable).values({
+    userId: id,
+    type: "withdrawal",
+    description: `Débit admin : -${amount} ${user.currency} — ${reason}`,
+    amount: amount.toString(),
+    currency: user.currency,
+  });
+  res.json(formatUser(updated));
+});
+
+// GET /admin/users/:id/transfers
+router.get("/admin/users/:id/transfers", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  const transfers = await db.select().from(transfersTable).where(eq(transfersTable.userId, id));
+  res.json(transfers.map((t) => ({
+    id: t.id,
+    beneficiaryName: t.beneficiaryName,
+    amount: Number(t.amount),
+    currency: t.currency,
+    status: t.status,
+    reference: t.reference,
+    message: t.message ?? null,
+    createdAt: t.createdAt.toISOString(),
+    confirmedAt: t.confirmedAt?.toISOString() ?? null,
+  })));
+});
+
+// POST /admin/transfers/create
+router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, res) => {
+  const { userId, beneficiaryName, amount, currency, message } = req.body;
+  if (!userId || !beneficiaryName || !amount || !currency) {
+    res.status(400).json({ error: "Champs requis manquants" }); return;
+  }
+  const numUserId = Number(userId);
+  const numAmount = Number(amount);
+  if (isNaN(numUserId) || isNaN(numAmount) || numAmount <= 0) {
+    res.status(400).json({ error: "Valeurs invalides" }); return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, numUserId)).limit(1);
+  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
+
+  const token = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+  const reference = "ADM-" + Date.now().toString(36).toUpperCase();
+
+  const [transfer] = await db.insert(transfersTable).values({
+    userId: numUserId,
+    token,
+    beneficiaryName,
+    amount: numAmount.toString(),
+    currency,
+    message: message ?? null,
+    status: "completed",
+    reference,
+    confirmedAt: new Date(),
+  }).returning();
+
+  const newBalance = Math.max(0, Number(user.balance) - numAmount).toFixed(2);
+  await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, numUserId));
+
+  await db.insert(activityTable).values({
+    userId: numUserId,
+    type: "transfer_sent",
+    description: `Virement admin vers ${beneficiaryName} : ${numAmount} ${currency}`,
+    amount: numAmount.toString(),
+    currency,
+    referenceId: transfer.id,
+  });
+
+  res.status(201).json({
+    id: transfer.id,
+    beneficiaryName: transfer.beneficiaryName,
+    amount: Number(transfer.amount),
+    currency: transfer.currency,
+    status: transfer.status,
+    reference: transfer.reference,
+    createdAt: transfer.createdAt.toISOString(),
   });
 });
 

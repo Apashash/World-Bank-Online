@@ -8,6 +8,7 @@ import { CurrencyProvider } from "@/contexts/currency-context";
 
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
+import { AdminLayout } from "@/components/admin-layout";
 
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
@@ -99,13 +100,13 @@ function Router() {
       <Route path="/notifications"><AppLayout><Notifications /></AppLayout></Route>
 
       {/* Admin Routes */}
-      <Route path="/admin"><AppLayout><AdminDashboard /></AppLayout></Route>
-      <Route path="/admin/users"><AppLayout><AdminUsers /></AppLayout></Route>
-      <Route path="/admin/transfers"><AppLayout><AdminTransfers /></AppLayout></Route>
-      <Route path="/admin/kyc"><AppLayout><AdminKyc /></AppLayout></Route>
-      <Route path="/admin/alerts"><AppLayout><AdminAlerts /></AppLayout></Route>
-      <Route path="/admin/exchange-rates"><AppLayout><AdminExchangeRates /></AppLayout></Route>
-      <Route path="/admin/support"><AppLayout><AdminSupport /></AppLayout></Route>
+      <Route path="/admin"><AdminLayout><AdminDashboard /></AdminLayout></Route>
+      <Route path="/admin/users"><AdminLayout><AdminUsers /></AdminLayout></Route>
+      <Route path="/admin/transfers"><AdminLayout><AdminTransfers /></AdminLayout></Route>
+      <Route path="/admin/kyc"><AdminLayout><AdminKyc /></AdminLayout></Route>
+      <Route path="/admin/alerts"><AdminLayout><AdminAlerts /></AdminLayout></Route>
+      <Route path="/admin/exchange-rates"><AdminLayout><AdminExchangeRates /></AdminLayout></Route>
+      <Route path="/admin/support"><AdminLayout><AdminSupport /></AdminLayout></Route>
 
       <Route component={NotFound} />
     </Switch>
