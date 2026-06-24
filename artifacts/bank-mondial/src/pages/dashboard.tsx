@@ -148,6 +148,7 @@ export default function Dashboard() {
               { icon: Wallet, label: "Dépôt", href: "/depot" },
               { icon: Send, label: "Envoyer", href: "/transfers/new" },
               { icon: Download, label: "Recevoir", href: "/recevoir" },
+              { icon: ArrowLeftRight, label: "Virement", href: "/virements" },
               { icon: QrCode, label: "Scanner QR", href: "/scanner-qr" },
               { icon: Landmark, label: "Retrait", href: "/retrait" },
               { icon: Receipt, label: "Payer factures", href: "/payer-factures" },
