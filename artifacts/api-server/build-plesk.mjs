@@ -2,7 +2,6 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
-import esbuildPluginPino from "esbuild-plugin-pino";
 import { mkdir } from "node:fs/promises";
 
 globalThis.require = createRequire(import.meta.url);
@@ -26,6 +25,12 @@ await esbuild({
   },
   banner: {
     js: 'const __cjs_import_meta_url__ = require("url").pathToFileURL(__filename).href;',
+  },
+  // Replace pino + pino-http with simple console shims — worker threads
+  // don't work reliably in Phusion Passenger environments.
+  alias: {
+    "pino": path.resolve(artifactDir, "src/lib/shims/pino-shim.ts"),
+    "pino-http": path.resolve(artifactDir, "src/lib/shims/pino-http-shim.ts"),
   },
   external: [
     "*.node",
@@ -102,7 +107,7 @@ await esbuild({
     "electron",
   ],
   sourcemap: "linked",
-  plugins: [esbuildPluginPino({ transports: ["pino-pretty"] })],
+  // No esbuildPluginPino — pino is shimmed away entirely
 });
 
 console.log("✅ Backend built → dist/index.cjs");
