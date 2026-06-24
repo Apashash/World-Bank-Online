@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 import { apiPost } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCurrency } from "@/contexts/currency-context";
 
-const QUICK_AMOUNTS = [20, 50, 100, 200, 500];
+const QUICK_AMOUNTS_EUR = [20, 50, 100, 200, 500];
 
 const METHODS = [
   { id: "atm", label: "Retrait DAB", detail: "Générer un code de retrait sans carte" },
@@ -19,6 +20,7 @@ export default function Retrait() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: summary } = useGetDashboardSummary();
+  const { formatAmount, convertAmount, currency } = useCurrency();
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("atm");
   const [done, setDone] = useState(false);
@@ -48,7 +50,7 @@ export default function Retrait() {
       if (err.message === "Solde insuffisant") {
         toast({
           title: "Solde insuffisant",
-          description: `Votre solde est de ${balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR.`,
+          description: `Votre solde est de ${formatAmount(balance, "EUR")}.`,
           variant: "destructive",
         });
       } else {
@@ -71,7 +73,9 @@ export default function Retrait() {
             <p className="text-gray-500">Présentez-vous en agence avec votre pièce d'identité.</p>
           )}
           {newBalance !== null && (
-            <p className="text-sm text-gray-400">Nouveau solde : <span className="font-semibold text-gray-700">{newBalance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span></p>
+            <p className="text-sm text-gray-400">
+              Nouveau solde : <span className="font-semibold text-gray-700">{formatAmount(newBalance, "EUR")}</span>
+            </p>
           )}
         </div>
         {method === "atm" && (
@@ -79,7 +83,9 @@ export default function Retrait() {
             <CardContent className="pt-6 pb-6">
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Code de retrait</p>
               <p className="text-4xl font-black tracking-[0.3em] text-[#003087]">{withdrawCode}</p>
-              <p className="text-xs text-gray-400 mt-3">Valable 30 minutes · Montant : {parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</p>
+              <p className="text-xs text-gray-400 mt-3">
+                Valable 30 minutes · Montant : {formatAmount(parseFloat(amount), "EUR")}
+              </p>
             </CardContent>
           </Card>
         )}
@@ -98,7 +104,9 @@ export default function Retrait() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Retrait</h1>
-          <p className="text-sm text-gray-500">Solde disponible : <span className="font-semibold text-[#003087]">{balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR</span></p>
+          <p className="text-sm text-gray-500">
+            Solde disponible : <span className="font-semibold text-[#003087]">{formatAmount(balance, "EUR")}</span>
+          </p>
         </div>
       </div>
 
@@ -116,30 +124,45 @@ export default function Retrait() {
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="text-2xl font-bold h-14 pr-14 text-center"
+                className="text-2xl font-bold h-14 pr-16 text-center"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-gray-400">EUR</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">
+                {currency.code}
+              </span>
             </div>
+            {amount && parseFloat(amount) > 0 && currency.code !== "EUR" && (
+              <p className="text-xs text-gray-400 text-center">
+                ≈ {(parseFloat(amount) / currency.rateFromEUR).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR débité
+              </p>
+            )}
             {amount && parseFloat(amount) > balance && (
               <p className="text-xs text-red-500 font-medium flex items-center gap-1">
-                ⚠ Solde insuffisant — disponible : {balance.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR
+                ⚠ Solde insuffisant — disponible : {formatAmount(balance, "EUR")}
               </p>
             )}
             <div className="flex gap-2 flex-wrap">
-              {QUICK_AMOUNTS.map((a) => (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => setAmount(String(a))}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                    amount === String(a)
-                      ? "bg-[#003087] text-white border-[#003087]"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-[#003087] hover:text-[#003087]"
-                  }`}
-                >
-                  {a} €
-                </button>
-              ))}
+              {QUICK_AMOUNTS_EUR.map((a) => {
+                const converted = convertAmount(a, "EUR");
+                const isLarge = currency.rateFromEUR > 100;
+                const label = isLarge
+                  ? `${Math.round(converted).toLocaleString("fr-FR")} ${currency.symbol}`
+                  : `${converted.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency.symbol}`;
+                const eurValue = String(a);
+                return (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setAmount(eurValue)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                      amount === eurValue
+                        ? "bg-[#003087] text-white border-[#003087]"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-[#003087] hover:text-[#003087]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -180,7 +203,9 @@ export default function Retrait() {
           className="w-full h-12 bg-[#003087] hover:bg-[#002060] text-base font-semibold"
           disabled={loading || !amount || parseFloat(amount) > balance}
         >
-          {loading ? "Traitement..." : `Retirer ${amount ? `${parseFloat(amount).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} EUR` : ""}`}
+          {loading
+            ? "Traitement..."
+            : `Retirer ${amount ? formatAmount(parseFloat(amount), "EUR") : ""}`}
         </Button>
       </form>
     </div>
