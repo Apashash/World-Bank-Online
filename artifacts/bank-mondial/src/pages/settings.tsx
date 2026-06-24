@@ -1,4 +1,5 @@
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
+import { COUNTRIES } from "@/data/countries";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -450,16 +451,24 @@ export default function Settings() {
               <Lock className="h-3.5 w-3.5 text-gray-300 shrink-0" />
             </div>
             {/* Pays */}
-            <div className="flex items-center gap-3 py-3">
-              <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
-                <Globe className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">Pays d'inscription</p>
-                <p className="text-sm font-semibold text-gray-800">{user?.country ?? "—"}</p>
-              </div>
-              <Lock className="h-3.5 w-3.5 text-gray-300 shrink-0" />
-            </div>
+            {(() => {
+              const raw = user?.country ?? "";
+              const match = COUNTRIES.find(c => c.code === raw) ?? COUNTRIES.find(c => c.name === raw);
+              const flag = match?.flag ?? "🌍";
+              const name = match?.name ?? (raw || "—");
+              return (
+                <div className="flex items-center gap-3 py-3">
+                  <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 text-lg">
+                    {flag}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">Pays d'inscription</p>
+                    <p className="text-sm font-semibold text-gray-800">{name}</p>
+                  </div>
+                  <Lock className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                </div>
+              );
+            })()}
           </div>
           <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-gray-100 flex items-center gap-1.5">
             <Lock className="h-3 w-3" />

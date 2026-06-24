@@ -384,7 +384,7 @@ export default function Register() {
           fullName,
           email: formData.email,
           phone: h.indicatif + h.phone,
-          country: h.codePostal.startsWith("97") ? "DOM" : "FR",
+          country: COUNTRIES.find(c => c.dial === h.indicatif)?.name ?? h.indicatif,
           password: formData.password,
           referralCode: formData.referralCode || undefined,
         },
