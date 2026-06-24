@@ -363,11 +363,11 @@ export async function customFetch<T = unknown>(
   const response = await fetch(input, { ...init, method, headers });
 
   // Auto-save refreshed token when server detects a role change
-  if (typeof localStorage !== "undefined") {
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
     const refreshedToken = response.headers.get("X-Refresh-Token");
     if (refreshedToken) {
       localStorage.setItem("auth_token", refreshedToken);
-      localStorage.setItem("_token_just_refreshed", "1");
+      window.dispatchEvent(new CustomEvent("tokenRefreshed"));
     }
   }
 

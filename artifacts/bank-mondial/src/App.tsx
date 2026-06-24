@@ -62,6 +62,11 @@ const queryClient = new QueryClient({
   },
 });
 
+// When server issues a new token after a role change, re-fetch all queries
+window.addEventListener("tokenRefreshed", () => {
+  queryClient.invalidateQueries();
+});
+
 function Router() {
   return (
     <Switch>
