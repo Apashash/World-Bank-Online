@@ -356,7 +356,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               { icon: Home,          label: "Accueil",  href: "/dashboard" },
               { icon: Wallet,        label: "Dépôt",    href: "/depot" },
               { icon: Landmark,      label: "Retrait",  href: "/retrait" },
-              { icon: ArrowLeftRight,label: "Échanger", href: "/echanger" },
+              { icon: Receipt,        label: "Facture",  href: "/payer-factures" },
             ].map(({ icon: Icon, label, href }) => {
               const active = location === href || (href !== "/dashboard" && location.startsWith(href));
               return (
