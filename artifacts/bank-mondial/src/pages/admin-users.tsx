@@ -387,7 +387,7 @@ export default function AdminUsers() {
       </div>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="w-[500px] sm:max-w-[500px] p-0 flex flex-col overflow-hidden">
+        <SheetContent className="w-full sm:w-[500px] sm:max-w-[500px] p-0 flex flex-col overflow-hidden">
           {localUser && (
             <>
               <SheetHeader
@@ -431,9 +431,9 @@ export default function AdminUsers() {
               </SheetHeader>
 
               <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
-                <TabsList className="w-full rounded-none bg-white border-b border-slate-100 px-2 justify-start h-11 gap-0 shrink-0">
+                <TabsList className="w-full rounded-none bg-white border-b border-slate-100 px-1 justify-start h-10 gap-0 shrink-0 overflow-x-auto flex-nowrap">
                   {[
-                    { value: "info", label: "Informations" },
+                    { value: "info", label: "Infos" },
                     { value: "solde", label: "Solde" },
                     { value: "virements", label: "Virements" },
                     { value: "actions", label: "Actions" },
@@ -441,7 +441,7 @@ export default function AdminUsers() {
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="rounded-none h-full px-4 text-xs font-medium data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#003087] data-[state=active]:text-[#003087]"
+                      className="rounded-none h-full px-3 text-xs font-medium whitespace-nowrap shrink-0 data-[state=active]:shadow-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#003087] data-[state=active]:text-[#003087]"
                     >
                       {tab.label}
                     </TabsTrigger>
