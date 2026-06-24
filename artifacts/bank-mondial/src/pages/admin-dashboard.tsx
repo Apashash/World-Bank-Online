@@ -112,9 +112,19 @@ export default function AdminDashboard() {
     fetch(`/api/admin/charts?days=${range}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-      .then((r) => r.json())
-      .then((d) => { setCharts(d); setChartsLoading(false); })
-      .catch(() => setChartsLoading(false));
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d) => {
+        if (d && Array.isArray(d.days)) {
+          setCharts(d);
+        } else {
+          setCharts(null);
+        }
+        setChartsLoading(false);
+      })
+      .catch(() => { setCharts(null); setChartsLoading(false); });
   }, [range]);
 
   const statCards = [
