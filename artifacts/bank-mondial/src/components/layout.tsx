@@ -350,7 +350,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               { icon: Wallet,        label: "Dépôt",    href: "/depot" },
               { icon: Landmark,      label: "Retrait",  href: "/retrait" },
               { icon: ArrowLeftRight,label: "Échanger", href: "/echanger" },
-              { icon: LayoutGrid,    label: "Plus",     href: "/plus" },
             ].map(({ icon: Icon, label, href }) => {
               const active = location === href || (href !== "/dashboard" && location.startsWith(href));
               return (
@@ -392,6 +391,40 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {/* Bouton Plus → ouvre le menu latéral */}
+            <button
+              className="flex flex-col items-center justify-center h-full gap-0.5 relative w-full"
+              onClick={() => setIsMobileMenuOpen(v => !v)}
+            >
+              {isMobileMenuOpen && (
+                <span
+                  className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-full"
+                  style={{ width: 28, height: 3, background: "#6DC142" }}
+                />
+              )}
+              <div
+                className="flex items-center justify-center rounded-xl transition-all duration-200"
+                style={{
+                  width: 38, height: 28,
+                  background: isMobileMenuOpen ? "rgba(109,193,66,0.18)" : "transparent",
+                }}
+              >
+                <LayoutGrid
+                  className="transition-all duration-200"
+                  style={{
+                    width: 18, height: 18,
+                    color: isMobileMenuOpen ? "#6DC142" : "rgba(255,255,255,0.5)",
+                    strokeWidth: isMobileMenuOpen ? 2.2 : 1.6,
+                  }}
+                />
+              </div>
+              <span
+                className="text-[9px] font-semibold leading-none tracking-wide transition-all duration-200"
+                style={{ color: isMobileMenuOpen ? "#6DC142" : "rgba(255,255,255,0.45)" }}
+              >
+                Plus
+              </span>
+            </button>
           </div>
         </nav>
       </main>
