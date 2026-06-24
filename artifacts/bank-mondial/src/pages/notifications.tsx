@@ -119,13 +119,13 @@ export default function Notifications() {
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#003087]/10">
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#003087]/10">
             <Bell className="h-5 w-5 text-[#003087]" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">Notifications</h1>
             {unreadCount > 0 && (
               <p className="text-sm text-muted-foreground">
                 {unreadCount} non lue{unreadCount > 1 ? "s" : ""}
@@ -133,7 +133,7 @@ export default function Notifications() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -146,12 +146,13 @@ export default function Notifications() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs gap-1.5"
+              className="text-xs gap-1.5 shrink-0"
               onClick={handleMarkAllRead}
               disabled={markingRead}
+              title="Tout marquer comme lu"
             >
               <CheckCheck className="h-3.5 w-3.5" />
-              Tout marquer comme lu
+              <span className="hidden sm:inline">Tout marquer comme lu</span>
             </Button>
           )}
         </div>
