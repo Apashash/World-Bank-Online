@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, usersTable, transfersTable, kycTable, subAccountsTable, referralsTable, activityTable } from "@workspace/db";
-import { eq, ilike, or, gte, sql } from "drizzle-orm";
+import { eq, ilike, or, gte, sql, desc } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { AdminBlockUserBody, AdminUpdateBalanceBody, AdminReviewKycBody } from "@workspace/api-zod";
 import { formatUser } from "./auth";
