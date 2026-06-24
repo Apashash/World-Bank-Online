@@ -255,7 +255,8 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
   if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
 
   const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  const reference = "ADM-" + Date.now().toString(36).toUpperCase();
+  const _refChars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const reference = "BMDW" + Array.from({ length: 25 }, () => _refChars[Math.floor(Math.random() * _refChars.length)]).join("");
 
   const [transfer] = await db.insert(transfersTable).values({
     userId: Number(userId),
@@ -367,7 +368,8 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
   if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
 
   const token = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
-  const reference = "ADM-" + Date.now().toString(36).toUpperCase();
+  const _refChars2 = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const reference = "BMDW" + Array.from({ length: 25 }, () => _refChars2[Math.floor(Math.random() * _refChars2.length)]).join("");
 
   const [transfer] = await db.insert(transfersTable).values({
     userId: numUserId,

@@ -14,7 +14,10 @@ function generateToken(): string {
 }
 
 function generateReference(): string {
-  return "TRX" + Date.now().toString(36).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let suffix = "";
+  for (let i = 0; i < 25; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  return "BMDW" + suffix;
 }
 
 function formatTransfer(t: typeof transfersTable.$inferSelect) {
