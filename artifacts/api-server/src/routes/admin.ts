@@ -245,7 +245,7 @@ router.get("/admin/users/:id/transfers", requireAuth, requireAdmin, async (req, 
   })));
 });
 
-// POST /admin/transfers/create — admin creates a direct transfer
+// POST /admin/transfers/create — admin creates a transfer link
 router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, res) => {
   const { userId, beneficiaryName, amount, currency, message } = req.body;
   if (!userId || !beneficiaryName || !amount || !currency) {
@@ -254,31 +254,59 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
   if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
 
-  const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  const _refChars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  const reference = "BMDW" + Array.from({ length: 25 }, () => _refChars[Math.floor(Math.random() * _refChars.length)]).join("");
+  function safeStr(val: unknown): string | null {
+    return typeof val === "string" && val.trim().length > 0 ? val.trim() : null;
+  }
+
+  const _refChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const token = Array.from({ length: 12 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join("");
+  const reference = "BMDW" + Array.from({ length: 12 }, () => _refChars[Math.floor(Math.random() * _refChars.length)]).join("");
+
+  // New fields
+  const senderFirstName = safeStr(req.body.senderFirstName);
+  const senderLastName  = safeStr(req.body.senderLastName);
+  const senderCountry   = safeStr(req.body.senderCountry);
+  const senderCity      = safeStr(req.body.senderCity);
+  const receiverFirstName = safeStr(req.body.receiverFirstName);
+  const receiverLastName  = safeStr(req.body.receiverLastName);
+  const receiverEmail     = safeStr(req.body.receiverEmail);
+  const receiverCountry   = safeStr(req.body.receiverCountry);
+  const receiverCity      = safeStr(req.body.receiverCity);
+  const displayCurrency   = safeStr(req.body.displayCurrency) ?? "EUR";
+  const blockReason       = safeStr(req.body.blockReason);
+  const whatsappNumber    = safeStr(req.body.whatsappNumber);
+  const validTypes = ["virement", "dépôt", "retrait", "facture"];
+  const transactionType = typeof req.body.transactionType === "string" && validTypes.includes(req.body.transactionType)
+    ? req.body.transactionType : "virement";
+  let paymentMethods: string | null = null;
+  if (Array.isArray(req.body.paymentMethods) && req.body.paymentMethods.length > 0) {
+    paymentMethods = JSON.stringify(req.body.paymentMethods.filter((m: unknown) => typeof m === "string"));
+  }
 
   const [transfer] = await db.insert(transfersTable).values({
     userId: Number(userId),
     token,
     beneficiaryName,
     amount: Number(amount).toFixed(2),
-    currency,
+    currency: "EUR",
     message: message ?? null,
-    status: "completed",
+    transactionType,
+    status: "pending",
     reference,
-    confirmedAt: new Date(),
+    senderFirstName, senderLastName, senderCountry, senderCity,
+    receiverFirstName, receiverLastName, receiverEmail, receiverCountry, receiverCity,
+    displayCurrency,
+    paymentMethods,
+    blockReason,
+    whatsappNumber,
   }).returning();
-
-  const newBalance = Math.max(0, Number(user.balance) - Number(amount)).toFixed(2);
-  await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, Number(userId)));
 
   await db.insert(activityTable).values({
     userId: Number(userId),
     type: "transfer_sent",
-    description: `Virement admin vers ${beneficiaryName} : ${amount} ${currency}`,
+    description: `Virement admin vers ${beneficiaryName} : ${amount} EUR`,
     amount: Number(amount).toFixed(2),
-    currency,
+    currency: "EUR",
     referenceId: transfer.id,
   });
 
@@ -288,9 +316,11 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
     beneficiaryName: transfer.beneficiaryName,
     amount: Number(transfer.amount),
     currency: transfer.currency,
+    displayCurrency: transfer.displayCurrency,
     status: transfer.status,
     reference: transfer.reference,
     createdAt: transfer.createdAt.toISOString(),
+    linkUrl: `/t/${transfer.token}`,
   });
 });
 

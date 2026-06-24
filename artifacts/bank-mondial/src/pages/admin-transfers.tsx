@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useAdminListTransfers, useAdminListUsers } from "@workspace/api-client-react";
-import { useToast } from "@/hooks/use-toast";
+import { useAdminListTransfers } from "@workspace/api-client-react";
 import {
   Table,
   TableBody,
@@ -9,37 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Send, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-
-function authFetch(url: string, options: RequestInit = {}) {
-  const token = localStorage.getItem("auth_token");
-  return fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as Record<string, string> ?? {}),
-    },
-  });
-}
+import { Link } from "wouter";
 
 const STATUS_TABS = [
   { label: "Tous", value: "all" },
@@ -63,75 +36,20 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Expiré",
 };
 
-type AdminUser = {
-  id: number;
-  fullName: string;
-  email: string;
-  currency: string;
-  balance: number;
-  clientId: string;
-};
-
-const CURRENCIES = ["EUR", "USD", "GBP", "XOF", "MAD", "CHF", "CAD"];
-
 export default function AdminTransfers() {
   const [statusFilter, setStatusFilter] = useState("all");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({
-    userId: "",
-    beneficiaryName: "",
-    amount: "",
-    currency: "EUR",
-    message: "",
-  });
-  const [creating, setCreating] = useState(false);
 
   const { data, isLoading, refetch } = useAdminListTransfers({ page: 1, limit: 500 });
-  const { data: usersData } = useAdminListUsers({ page: 1, limit: 500 });
-  const { toast } = useToast();
 
   const allTransfers = Array.isArray(data?.transfers) ? data.transfers : [];
   const filtered =
     statusFilter === "all"
       ? allTransfers
       : allTransfers.filter((t) => t.status === statusFilter);
-  const users: AdminUser[] = Array.isArray(usersData?.users)
-    ? (usersData.users as AdminUser[])
-    : [];
 
   const totalVolume = allTransfers.reduce((s, t) => s + t.amount, 0);
   const pendingCount = allTransfers.filter((t) => t.status === "pending").length;
   const completedCount = allTransfers.filter((t) => t.status === "completed").length;
-
-  const selectedUserObj = users.find((u) => String(u.id) === form.userId);
-
-  const handleCreate = async () => {
-    if (!form.userId || !form.beneficiaryName || !form.amount) return;
-    setCreating(true);
-    try {
-      const r = await authFetch("/api/admin/transfers/create", {
-        method: "POST",
-        body: JSON.stringify({
-          userId: Number(form.userId),
-          beneficiaryName: form.beneficiaryName,
-          amount: Number(form.amount),
-          currency: form.currency,
-          message: form.message || undefined,
-        }),
-      });
-      const result = await r.json();
-      if (!r.ok) throw new Error(result.error ?? "Erreur lors de la création");
-      toast({
-        title: `Virement créé : ${form.amount} ${form.currency} → ${form.beneficiaryName}`,
-      });
-      setCreateOpen(false);
-      setForm({ userId: "", beneficiaryName: "", amount: "", currency: "EUR", message: "" });
-      refetch();
-    } catch (e: any) {
-      toast({ title: e.message, variant: "destructive" });
-    }
-    setCreating(false);
-  };
 
   return (
     <div className="space-y-6">
@@ -153,12 +71,14 @@ export default function AdminTransfers() {
           </Button>
           <Button
             size="sm"
-            onClick={() => setCreateOpen(true)}
+            asChild
             className="gap-1.5 text-white"
             style={{ background: "#003087" }}
           >
-            <Plus className="h-4 w-4" />
-            Nouveau virement
+            <Link href="/admin/transfers/new">
+              <Plus className="h-4 w-4" />
+              Nouveau virement
+            </Link>
           </Button>
         </div>
       </div>
@@ -233,7 +153,7 @@ export default function AdminTransfers() {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
-        <Table className="min-w-[560px]">
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead className="text-xs font-semibold text-slate-500">Date</TableHead>
@@ -241,21 +161,20 @@ export default function AdminTransfers() {
               <TableHead className="text-xs font-semibold text-slate-500">Bénéficiaire</TableHead>
               <TableHead className="text-xs font-semibold text-slate-500">Référence</TableHead>
               <TableHead className="text-xs font-semibold text-slate-500">Statut</TableHead>
-              <TableHead className="text-xs font-semibold text-slate-500 text-right">
-                Montant
-              </TableHead>
+              <TableHead className="text-xs font-semibold text-slate-500 text-right">Montant</TableHead>
+              <TableHead className="text-xs font-semibold text-slate-500 text-center">Lien</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-16">
+                <TableCell colSpan={7} className="text-center py-16">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto text-slate-300" />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-16 text-slate-400 text-sm">
+                <TableCell colSpan={7} className="text-center py-16 text-slate-400 text-sm">
                   Aucun virement dans cette catégorie
                 </TableCell>
               </TableRow>
@@ -285,137 +204,25 @@ export default function AdminTransfers() {
                     <span className="font-bold text-slate-900">{t.amount.toFixed(2)}</span>
                     <span className="text-xs text-slate-400 ml-1">{t.currency}</span>
                   </TableCell>
+                  <TableCell className="text-center">
+                    {t.token && (
+                      <a
+                        href={`/t/${t.token}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-slate-400 hover:text-[#003087] hover:bg-blue-50 transition-colors"
+                        title="Ouvrir le lien de virement"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
-
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-[460px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-slate-900">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                style={{ background: "#003087" }}
-              >
-                <Send className="h-4 w-4 text-white" />
-              </div>
-              Créer un virement administrateur
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
-                Compte émetteur
-              </label>
-              <Select
-                value={form.userId}
-                onValueChange={(v) => setForm((f) => ({ ...f, userId: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un utilisateur..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((u) => (
-                    <SelectItem key={u.id} value={String(u.id)}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{u.fullName}</span>
-                        <span className="text-xs text-slate-400">
-                          {u.balance.toFixed(2)} {u.currency} · {u.clientId}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedUserObj && (
-                <p className="text-xs text-slate-400">
-                  Solde disponible :{" "}
-                  <span className="font-semibold text-slate-700">
-                    {selectedUserObj.balance.toFixed(2)} {selectedUserObj.currency}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
-                Nom du bénéficiaire
-              </label>
-              <Input
-                placeholder="Jean Dupont"
-                value={form.beneficiaryName}
-                onChange={(e) => setForm((f) => ({ ...f, beneficiaryName: e.target.value }))}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Montant</label>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  min="0.01"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Devise</label>
-                <Select
-                  value={form.currency}
-                  onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
-                Message <span className="text-slate-400">(optionnel)</span>
-              </label>
-              <Input
-                placeholder="Objet du virement..."
-                value={form.message}
-                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>
-              Annuler
-            </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={!form.userId || !form.beneficiaryName || !form.amount || creating}
-              style={{ background: "#003087" }}
-              className="text-white hover:opacity-90"
-            >
-              {creating ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Send className="h-4 w-4 mr-2" />
-              )}
-              Créer le virement
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
