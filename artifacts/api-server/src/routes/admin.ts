@@ -529,7 +529,7 @@ router.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) =
   }).returning();
 
   await db.insert(activityTable).values({
-    userId: user.id, type: "login", description: "Compte créé par l'administrateur",
+    userId: user.id, type: "login", description: "Compte créé par le service bancaire Banque mondiale",
   });
 
   res.status(201).json(formatUser(user));

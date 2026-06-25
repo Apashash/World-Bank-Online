@@ -75445,7 +75445,7 @@ router9.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) 
   await db.insert(activityTable).values({
     userId: user.id,
     type: "login",
-    description: "Compte cr\xE9\xE9 par l'administrateur"
+    description: "Compte cr\xE9\xE9 par le service bancaire Banque mondiale"
   });
   res.status(201).json(formatUser(user));
 });
