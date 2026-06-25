@@ -62526,6 +62526,7 @@ __export(schema_exports, {
   subAccountStatusEnum: () => subAccountStatusEnum,
   subAccountsTable: () => subAccountsTable,
   supportMessagesTable: () => supportMessagesTable,
+  systemSettingsTable: () => systemSettingsTable,
   transferStatusEnum: () => transferStatusEnum,
   transfersTable: () => transfersTable,
   userRoleEnum: () => userRoleEnum,
@@ -74118,6 +74119,14 @@ var fundRequestsTable = pgTable("fund_requests", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 
+// ../../lib/db/src/schema/system-settings.ts
+var systemSettingsTable = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+});
+
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
 var connectionString = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
@@ -74908,6 +74917,19 @@ var dashboard_default = router8;
 
 // src/routes/admin.ts
 var import_express9 = __toESM(require_express2(), 1);
+function generateClientId2() {
+  return "CLT-" + Math.floor(1e5 + Math.random() * 9e5);
+}
+function generateReferralCode2() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "REF-";
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+function generateIban2() {
+  const digits = Array.from({ length: 20 }, () => Math.floor(Math.random() * 10)).join("");
+  return `FR76 ${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 12)} ${digits.slice(12, 16)} ${digits.slice(16, 20)}`;
+}
 var router9 = (0, import_express9.Router)();
 router9.get("/admin/users", requireAuth, requireAdmin, async (req, res) => {
   const { page = "1", limit = "20", search, status } = req.query;
@@ -75389,6 +75411,84 @@ router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, r
     reference: transfer.reference,
     createdAt: transfer.createdAt.toISOString()
   });
+});
+router9.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) => {
+  const { fullName, email: email3, phone, country, password, initialBalance, currency } = req.body;
+  if (!fullName || !email3 || !phone || !country || !password) {
+    res.status(400).json({ error: "Tous les champs obligatoires doivent \xEAtre remplis" });
+    return;
+  }
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email3)).limit(1);
+  if (existing.length > 0) {
+    res.status(400).json({ error: "Cet email est d\xE9j\xE0 utilis\xE9" });
+    return;
+  }
+  const passwordHash = await bcryptjs_default.hash(password, 10);
+  const clientId = generateClientId2();
+  const refCode = generateReferralCode2();
+  const iban = generateIban2();
+  const bal = initialBalance && Number(initialBalance) > 0 ? Number(initialBalance).toFixed(2) : "0.00";
+  const [user] = await db.insert(usersTable).values({
+    clientId,
+    fullName,
+    email: email3,
+    phone,
+    country,
+    passwordHash,
+    referralCode: refCode,
+    iban,
+    balance: bal,
+    currency: currency || "EUR",
+    status: "active",
+    role: "user",
+    kycStatus: "none"
+  }).returning();
+  await db.insert(activityTable).values({
+    userId: user.id,
+    type: "login",
+    description: "Compte cr\xE9\xE9 par l'administrateur"
+  });
+  res.status(201).json(formatUser(user));
+});
+router9.get("/system/withdrawal-block", async (_req, res) => {
+  const [setting] = await db.select().from(systemSettingsTable).where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+  if (!setting) {
+    res.json({ blocked: false, reason: null, whatsapp: null });
+    return;
+  }
+  try {
+    const parsed = JSON.parse(setting.value);
+    res.json(parsed);
+  } catch {
+    res.json({ blocked: false, reason: null, whatsapp: null });
+  }
+});
+router9.get("/admin/settings/withdrawal-block", requireAuth, requireAdmin, async (_req, res) => {
+  const [setting] = await db.select().from(systemSettingsTable).where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+  if (!setting) {
+    res.json({ blocked: false, reason: "", whatsapp: "" });
+    return;
+  }
+  try {
+    res.json(JSON.parse(setting.value));
+  } catch {
+    res.json({ blocked: false, reason: "", whatsapp: "" });
+  }
+});
+router9.post("/admin/settings/withdrawal-block", requireAuth, requireAdmin, async (req, res) => {
+  const { blocked, reason, whatsapp } = req.body;
+  if (typeof blocked !== "boolean") {
+    res.status(400).json({ error: "Champ 'blocked' requis (boolean)" });
+    return;
+  }
+  const value = JSON.stringify({ blocked, reason: reason ?? "", whatsapp: whatsapp ?? "" });
+  const existing = await db.select().from(systemSettingsTable).where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+  if (existing.length > 0) {
+    await db.update(systemSettingsTable).set({ value, updatedAt: /* @__PURE__ */ new Date() }).where(eq(systemSettingsTable.key, "withdrawal_block"));
+  } else {
+    await db.insert(systemSettingsTable).values({ key: "withdrawal_block", value });
+  }
+  res.json({ blocked, reason: reason ?? "", whatsapp: whatsapp ?? "" });
 });
 var admin_default = router9;
 

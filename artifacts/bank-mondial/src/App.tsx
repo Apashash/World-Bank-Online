@@ -35,6 +35,7 @@ import AdminKyc from "@/pages/admin-kyc";
 import AdminAlerts from "@/pages/admin-alerts";
 import AdminExchangeRates from "@/pages/admin-exchange-rates";
 import AdminSupport from "@/pages/admin-support";
+import AdminWithdrawalBlock from "@/pages/admin-withdrawal-block";
 
 import Depot from "@/pages/depot";
 import Recevoir from "@/pages/recevoir";
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/admin/alerts"><AdminLayout><AdminAlerts /></AdminLayout></Route>
       <Route path="/admin/exchange-rates"><AdminLayout><AdminExchangeRates /></AdminLayout></Route>
       <Route path="/admin/support"><AdminLayout><AdminSupport /></AdminLayout></Route>
+      <Route path="/admin/withdrawal-block"><AdminLayout><AdminWithdrawalBlock /></AdminLayout></Route>
 
       <Route component={NotFound} />
     </Switch>

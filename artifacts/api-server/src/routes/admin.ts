@@ -1,10 +1,25 @@
 import { Router } from "express";
-import { db, usersTable, transfersTable, kycTable, subAccountsTable, referralsTable, activityTable, beneficiariesTable, supportMessagesTable, scheduledTransfersTable, fundRequestsTable } from "@workspace/db";
+import bcrypt from "bcryptjs";
+import { db, usersTable, transfersTable, kycTable, subAccountsTable, referralsTable, activityTable, beneficiariesTable, supportMessagesTable, scheduledTransfersTable, fundRequestsTable, systemSettingsTable } from "@workspace/db";
 import { eq, ilike, or, gte, sql, desc } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { AdminBlockUserBody, AdminUpdateBalanceBody, AdminReviewKycBody } from "@workspace/api-zod";
 import { formatUser } from "./auth";
 import { formatKyc } from "./kyc";
+
+function generateClientId(): string {
+  return "CLT-" + Math.floor(100000 + Math.random() * 900000);
+}
+function generateReferralCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "REF-";
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+function generateIban(): string {
+  const digits = Array.from({ length: 20 }, () => Math.floor(Math.random() * 10)).join("");
+  return `FR76 ${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 12)} ${digits.slice(12, 16)} ${digits.slice(16, 20)}`;
+}
 
 const router = Router();
 
@@ -490,6 +505,72 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
     reference: transfer.reference,
     createdAt: transfer.createdAt.toISOString(),
   });
+});
+
+// POST /admin/users/create — admin crée un compte utilisateur
+router.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) => {
+  const { fullName, email, phone, country, password, initialBalance, currency } = req.body;
+  if (!fullName || !email || !phone || !country || !password) {
+    res.status(400).json({ error: "Tous les champs obligatoires doivent être remplis" }); return;
+  }
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+  if (existing.length > 0) { res.status(400).json({ error: "Cet email est déjà utilisé" }); return; }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const clientId = generateClientId();
+  const refCode = generateReferralCode();
+  const iban = generateIban();
+  const bal = initialBalance && Number(initialBalance) > 0 ? Number(initialBalance).toFixed(2) : "0.00";
+
+  const [user] = await db.insert(usersTable).values({
+    clientId, fullName, email, phone, country, passwordHash,
+    referralCode: refCode, iban, balance: bal,
+    currency: currency || "EUR", status: "active", role: "user", kycStatus: "none",
+  }).returning();
+
+  await db.insert(activityTable).values({
+    userId: user.id, type: "login", description: "Compte créé par l'administrateur",
+  });
+
+  res.status(201).json(formatUser(user));
+});
+
+// GET /system/withdrawal-block — public: état du blocage des retraits
+router.get("/system/withdrawal-block", async (_req, res) => {
+  const [setting] = await db.select().from(systemSettingsTable)
+    .where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+  if (!setting) { res.json({ blocked: false, reason: null, whatsapp: null }); return; }
+  try {
+    const parsed = JSON.parse(setting.value);
+    res.json(parsed);
+  } catch {
+    res.json({ blocked: false, reason: null, whatsapp: null });
+  }
+});
+
+// GET /admin/settings/withdrawal-block — admin: lire la config
+router.get("/admin/settings/withdrawal-block", requireAuth, requireAdmin, async (_req, res) => {
+  const [setting] = await db.select().from(systemSettingsTable)
+    .where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+  if (!setting) { res.json({ blocked: false, reason: "", whatsapp: "" }); return; }
+  try { res.json(JSON.parse(setting.value)); }
+  catch { res.json({ blocked: false, reason: "", whatsapp: "" }); }
+});
+
+// POST /admin/settings/withdrawal-block — admin: modifier la config
+router.post("/admin/settings/withdrawal-block", requireAuth, requireAdmin, async (req, res) => {
+  const { blocked, reason, whatsapp } = req.body;
+  if (typeof blocked !== "boolean") { res.status(400).json({ error: "Champ 'blocked' requis (boolean)" }); return; }
+  const value = JSON.stringify({ blocked, reason: reason ?? "", whatsapp: whatsapp ?? "" });
+  const existing = await db.select().from(systemSettingsTable)
+    .where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+  if (existing.length > 0) {
+    await db.update(systemSettingsTable).set({ value, updatedAt: new Date() })
+      .where(eq(systemSettingsTable.key, "withdrawal_block"));
+  } else {
+    await db.insert(systemSettingsTable).values({ key: "withdrawal_block", value });
+  }
+  res.json({ blocked, reason: reason ?? "", whatsapp: whatsapp ?? "" });
 });
 
 export default router;
