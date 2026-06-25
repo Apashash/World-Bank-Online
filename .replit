@@ -1,4 +1,4 @@
-modules = ["web", "bash", "postgresql-16", "nodejs-24"]
+modules = ["web", "bash", "postgresql-16", "nodejs-24", "python-3.11"]
 
 [deployment]
 router = "application"
@@ -82,4 +82,3 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-SUPABASE_DATABASE_URL = "postgresql://postgres.wnwektrbkqbiodfnlprm:Apashash687194830@aws-1-eu-central-1.pooler.supabase.com:6543/postgres"
