@@ -113,14 +113,16 @@ function BMTransferForm({ onBack }: { onBack: () => void }) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<BMResult | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const formatIBAN = (v: string) => v.replace(/\s/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/(.{4})/g, "$1 ").trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     const num = parseFloat(amount);
-    if (!num || num <= 0) { toast({ title: "Montant invalide", variant: "destructive" }); return; }
-    if (!email.trim() || !iban.trim() || !clientId.trim()) { toast({ title: "Tous les champs sont requis", variant: "destructive" }); return; }
+    if (!num || num <= 0) { setErrorMsg("Veuillez entrer un montant valide."); return; }
+    if (!email.trim() || !iban.trim() || !clientId.trim()) { setErrorMsg("Tous les champs sont requis."); return; }
     setLoading(true);
     try {
       const res = await apiPost<BMResult>("/api/wallet/bm-transfer", {
@@ -132,7 +134,7 @@ function BMTransferForm({ onBack }: { onBack: () => void }) {
       setResult(res);
       queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
     } catch (err: any) {
-      toast({ title: err.message || "Erreur lors du transfert", variant: "destructive" });
+      setErrorMsg(err.message || "Erreur lors du transfert");
     }
     setLoading(false);
   };
@@ -249,6 +251,13 @@ function BMTransferForm({ onBack }: { onBack: () => void }) {
             ))}
           </div>
         </div>
+
+        {errorMsg && (
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <span className="text-red-500 text-lg leading-none mt-0.5">⚠</span>
+            <p className="text-sm text-red-700 font-medium">{errorMsg}</p>
+          </div>
+        )}
 
         <Button type="submit" disabled={loading || !email || !iban || !clientId || !amount}
           className="w-full h-12 bg-[#003087] hover:bg-[#002060] text-base font-semibold gap-2">
