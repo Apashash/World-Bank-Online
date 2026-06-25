@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, UserPlus, Loader2 } from "lucide-react";
+import { ArrowLeft, UserPlus, Loader2, ChevronDown, Search, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,76 @@ const COUNTRIES = [
   "Somalie","Soudan","Sri Lanka","Suède","Suisse","Syrie","Tanzanie","Tchad","Thaïlande",
   "Togo","Tunisie","Turquie","Ukraine","Uruguay","Venezuela","Vietnam","Yémen","Zambie","Zimbabwe",
 ];
+
+function CountrySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = COUNTRIES.filter((c) =>
+    c.toLowerCase().includes(search.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => { setOpen((o) => !o); setSearch(""); }}
+        className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-[#003087]"
+      >
+        <span>{value}</span>
+        <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-md shadow-lg">
+          {/* Search input */}
+          <div className="p-2 border-b border-slate-100">
+            <div className="flex items-center gap-2 px-2 h-9 rounded-md border border-slate-200 bg-slate-50 focus-within:ring-2 focus-within:ring-[#003087]">
+              <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Rechercher un pays..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+          {/* List */}
+          <ul className="max-h-52 overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-slate-400">Aucun résultat</li>
+            ) : (
+              filtered.map((c) => (
+                <li
+                  key={c}
+                  onMouseDown={() => { onChange(c); setOpen(false); setSearch(""); }}
+                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-slate-50"
+                >
+                  {c === value && <Check className="h-3.5 w-3.5 text-[#003087] shrink-0" />}
+                  <span className={c === value ? "font-medium text-[#003087]" : ""}>{c}</span>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminCreateUser() {
   const [, navigate] = useLocation();
@@ -124,15 +194,10 @@ export default function AdminCreateUser() {
 
         <div className="space-y-2">
           <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Pays *</label>
-          <select
-            className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+          <CountrySelect
             value={form.country}
-            onChange={set("country")}
-          >
-            {COUNTRIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            onChange={(v) => setForm((f) => ({ ...f, country: v }))}
+          />
         </div>
 
         <div className="space-y-2">
