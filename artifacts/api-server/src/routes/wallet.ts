@@ -5,6 +5,29 @@ import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
+// Public endpoint — no auth required — returns block status for withdrawals
+router.get("/wallet/block-status", async (_req, res) => {
+  try {
+    const [setting] = await db
+      .select()
+      .from(systemSettingsTable)
+      .where(eq(systemSettingsTable.key, "withdrawal_block"))
+      .limit(1);
+    if (!setting) {
+      res.json({ blocked: false });
+      return;
+    }
+    const val = JSON.parse(setting.value);
+    res.json({
+      blocked: !!val.blocked,
+      reason: val.reason || "",
+      whatsapp: val.whatsapp || "",
+    });
+  } catch {
+    res.json({ blocked: false });
+  }
+});
+
 async function getUser(userId: number) {
   const rows = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   return rows[0] ?? null;

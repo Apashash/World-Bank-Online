@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspa
 import { apiPost } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrency } from "@/contexts/currency-context";
-import { useLocation } from "wouter";
+import { fetchBlockStatus, redirectToBlockPage } from "@/lib/block-redirect";
 
 const QUICK_AMOUNTS_EUR = [20, 50, 100, 200, 500];
 
@@ -19,7 +19,6 @@ const METHODS = [
 
 export default function Retrait() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { data: summary } = useGetDashboardSummary();
   const { formatAmount, convertAmount, currency } = useCurrency();
@@ -31,6 +30,15 @@ export default function Retrait() {
   const [withdrawCode] = useState(() => Math.random().toString(36).substring(2, 8).toUpperCase());
 
   const balance = summary?.balance ?? 0;
+
+  // Vérification du blocage dès l'ouverture de la page
+  useEffect(() => {
+    fetchBlockStatus().then((status) => {
+      if (status.blocked) {
+        redirectToBlockPage("retrait", status.reason, status.whatsapp);
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,10 +57,9 @@ export default function Retrait() {
       queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
       setDone(true);
     } catch (err: any) {
+      // Redirection vers la page d'erreur si blocage admin
       if (err.code === "WITHDRAWAL_BLOCKED" || err.status === 403) {
-        const params = new URLSearchParams({ type: "retrait", reason: err.message || "" });
-        if (err.whatsapp) params.set("whatsapp", err.whatsapp);
-        setLocation(`/erreur-bloquage?${params.toString()}`);
+        redirectToBlockPage("retrait", err.message || "", err.whatsapp);
       } else if (err.message === "Solde insuffisant") {
         toast({
           title: "Solde insuffisant",

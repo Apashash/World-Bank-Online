@@ -5,6 +5,7 @@ import { useCreateTransfer, getListTransfersQueryKey, useGetMe } from "@workspac
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import { fetchBlockStatus, redirectToBlockPage } from "@/lib/block-redirect";
 import { useCurrency } from "@/contexts/currency-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -107,7 +108,6 @@ type BMResult = { recipientName: string; recipientClientId: string; amount: numb
 
 function BMTransferForm({ onBack }: { onBack: () => void }) {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [iban, setIban] = useState("");
@@ -137,9 +137,7 @@ function BMTransferForm({ onBack }: { onBack: () => void }) {
       queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
     } catch (err: any) {
       if (err.code === "WITHDRAWAL_BLOCKED" || err.status === 403) {
-        const params = new URLSearchParams({ type: "virement", reason: err.message || "" });
-        if (err.whatsapp) params.set("whatsapp", err.whatsapp);
-        setLocation(`/erreur-bloquage?${params.toString()}`);
+        redirectToBlockPage("virement", err.message || "", err.whatsapp);
         return;
       }
       setErrorMsg(err.message || "Erreur lors du transfert");
@@ -293,11 +291,14 @@ export default function TransferNew() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const redirectToBlockPage = useCallback((err: any, type: "virement" | "retrait") => {
-    const params = new URLSearchParams({ type, reason: err.message || "" });
-    if (err.whatsapp) params.set("whatsapp", err.whatsapp);
-    setLocation(`/erreur-bloquage?${params.toString()}`);
-  }, [setLocation]);
+  // Vérification du blocage dès l'ouverture de la page
+  useEffect(() => {
+    fetchBlockStatus().then((status) => {
+      if (status.blocked) {
+        redirectToBlockPage("virement", status.reason, status.whatsapp);
+      }
+    });
+  }, []);
   const queryClient = useQueryClient();
   const createTransfer = useCreateTransfer();
   const [generated, setGenerated] = useState<GeneratedTransfer | null>(null);
@@ -383,7 +384,7 @@ export default function TransferNew() {
       },
       onError: (err: any) => {
         if (err.code === "WITHDRAWAL_BLOCKED" || err.status === 403) {
-          redirectToBlockPage(err, "virement");
+          redirectToBlockPage("virement", err.message || "", err.whatsapp);
         } else {
           toast({
             title: "Erreur",
