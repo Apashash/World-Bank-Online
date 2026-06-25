@@ -40,7 +40,20 @@ export default function AdminSupport() {
     if (r.ok) setMessages(await r.json());
   }, []);
 
-  useEffect(() => { loadConvs(); }, [loadConvs]);
+  // Load conversations on mount + poll every 8s for new messages
+  useEffect(() => {
+    loadConvs();
+    const id = setInterval(loadConvs, 8000);
+    return () => clearInterval(id);
+  }, [loadConvs]);
+
+  // Poll active conversation messages every 5s
+  useEffect(() => {
+    if (!selected) return;
+    const id = setInterval(() => loadMessages(selected.user.id), 5000);
+    return () => clearInterval(id);
+  }, [selected, loadMessages]);
+
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const openConv = async (conv: Conversation) => {
