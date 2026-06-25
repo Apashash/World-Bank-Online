@@ -1,6 +1,11 @@
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  code?: string;
+  whatsapp?: string | null;
+
+  constructor(public status: number, message: string, extra?: { code?: string; whatsapp?: string | null }) {
     super(message);
+    this.code = extra?.code;
+    this.whatsapp = extra?.whatsapp;
   }
 }
 
@@ -22,7 +27,10 @@ export async function apiPost<T = unknown>(
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new ApiError(res.status, data?.error || "Erreur inattendue");
+    throw new ApiError(res.status, data?.error || "Erreur inattendue", {
+      code: data?.code,
+      whatsapp: data?.whatsapp,
+    });
   }
 
   return data as T;

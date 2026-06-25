@@ -54,6 +54,7 @@ router.post("/wallet/retrait", requireAuth, async (req, res) => {
         res.status(403).json({
           error: val.reason || "Les retraits sont temporairement bloqués. Veuillez contacter le support.",
           code: "WITHDRAWAL_BLOCKED",
+          whatsapp: val.whatsapp || null,
         });
         return;
       }

@@ -47,6 +47,7 @@ import Notifications from "@/pages/notifications";
 
 import Beneficiaries from "@/pages/beneficiaries";
 import Support from "@/pages/support";
+import ErreurBloquage from "@/pages/erreur-bloquage";
 import ScheduledTransfers from "@/pages/scheduled-transfers";
 import FundRequests from "@/pages/fund-requests";
 import Onboarding from "@/pages/onboarding";
@@ -104,6 +105,7 @@ function Router() {
       <Route path="/retrait"><AppLayout><Retrait /></AppLayout></Route>
       <Route path="/payer-factures"><AppLayout><PayerFactures /></AppLayout></Route>
       <Route path="/notifications"><AppLayout><Notifications /></AppLayout></Route>
+      <Route path="/erreur-bloquage" component={ErreurBloquage} />
 
       {/* Admin Routes */}
       <Route path="/admin"><AdminLayout><AdminDashboard /></AdminLayout></Route>

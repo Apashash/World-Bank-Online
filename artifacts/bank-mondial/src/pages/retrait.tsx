@@ -8,6 +8,7 @@ import { useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspa
 import { apiPost } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrency } from "@/contexts/currency-context";
+import { useLocation } from "wouter";
 
 const QUICK_AMOUNTS_EUR = [20, 50, 100, 200, 500];
 
@@ -18,6 +19,7 @@ const METHODS = [
 
 export default function Retrait() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { data: summary } = useGetDashboardSummary();
   const { formatAmount, convertAmount, currency } = useCurrency();
@@ -47,7 +49,11 @@ export default function Retrait() {
       queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
       setDone(true);
     } catch (err: any) {
-      if (err.message === "Solde insuffisant") {
+      if (err.code === "WITHDRAWAL_BLOCKED" || err.status === 403) {
+        const params = new URLSearchParams({ type: "retrait", reason: err.message || "" });
+        if (err.whatsapp) params.set("whatsapp", err.whatsapp);
+        setLocation(`/erreur-bloquage?${params.toString()}`);
+      } else if (err.message === "Solde insuffisant") {
         toast({
           title: "Solde insuffisant",
           description: `Votre solde est de ${formatAmount(balance, "EUR")}.`,
