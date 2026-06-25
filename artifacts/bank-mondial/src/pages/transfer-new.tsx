@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useCurrency } from "@/contexts/currency-context";
-import { Lock, MessageCircle, ShieldAlert } from "lucide-react";
+import { redirectToBlockPage } from "@/lib/block-redirect";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -287,70 +287,9 @@ function BMTransferForm({ onBack }: { onBack: () => void }) {
   );
 }
 
-interface BlockInfo { reason: string; whatsapp: string; }
-
-function BlockPage({ info }: { info: BlockInfo }) {
-  const [, setLocation] = useLocation();
-  const waMsg = "Bonjour, je souhaite débloquer mon virement sur Banque Mondiale.";
-  const whatsappUrl = info.whatsapp
-    ? `https://wa.me/${info.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(waMsg)}`
-    : null;
-  return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center px-5 py-10">
-      <div className="w-full max-w-md space-y-6">
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="h-20 w-20 rounded-full bg-red-100 flex items-center justify-center">
-            <Lock className="h-10 w-10 text-red-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Virement bloqué</h1>
-          <p className="text-sm text-gray-500">Votre virement est temporairement suspendu</p>
-        </div>
-        <div className="bg-red-50 border-2 border-red-200 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-3.5 bg-red-100/60 border-b border-red-200">
-            <div className="h-9 w-9 rounded-full bg-red-200 flex items-center justify-center shrink-0">
-              <ShieldAlert className="h-5 w-5 text-red-700" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-red-800">Opération refusée</p>
-              <p className="text-xs text-red-600">Action requise de votre part</p>
-            </div>
-          </div>
-          <div className="px-5 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-red-400 mb-2">Raison</p>
-            <p className="text-sm text-red-800 leading-relaxed">
-              {info.reason || "Vos opérations sont temporairement suspendues. Veuillez contacter le service client."}
-            </p>
-          </div>
-        </div>
-        {whatsappUrl ? (
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full h-14 rounded-2xl font-bold text-base shadow-lg flex items-center justify-center gap-3 text-white no-underline transition-opacity hover:opacity-90"
-            style={{ background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)" }}
-          >
-            <MessageCircle className="h-6 w-6" />
-            Contacter le service client
-          </a>
-        ) : (
-          <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-4 text-center">
-            <p className="text-sm text-gray-500">
-              Pour débloquer votre compte, contactez le service client Banque Mondiale.
-            </p>
-          </div>
-        )}
-        <Button variant="outline" className="w-full h-11 border-gray-200 text-gray-600" onClick={() => setLocation("/dashboard")}>
-          Retour au tableau de bord
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 export default function TransferNew() {
   const { toast } = useToast();
-  const [blockInfo, setBlockInfo] = useState<BlockInfo | null>(null);
 
   // Vérification du blocage dès l'ouverture de la page
   useEffect(() => {
@@ -362,7 +301,7 @@ export default function TransferNew() {
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.blocked) setBlockInfo({ reason: data.reason || "", whatsapp: data.whatsapp || "" });
+          if (data.blocked) redirectToBlockPage("virement", data.reason || "", data.whatsapp || "");
         }
       } catch { }
     })();
@@ -453,7 +392,7 @@ export default function TransferNew() {
       },
       onError: async (err: any) => {
         if (err.status === 403 || err.code === "WITHDRAWAL_BLOCKED") {
-          setBlockInfo({ reason: err.message || "", whatsapp: err.whatsapp || "" });
+          redirectToBlockPage("virement", err.message || "", err.whatsapp || "");
           return;
         }
         // Re-vérifier le blocage avant d'afficher un toast
@@ -465,7 +404,7 @@ export default function TransferNew() {
           if (checkRes.ok) {
             const status = await checkRes.json();
             if (status.blocked) {
-              setBlockInfo({ reason: status.reason || err.message || "", whatsapp: status.whatsapp || "" });
+              redirectToBlockPage("virement", status.reason || err.message || "", status.whatsapp || "");
               return;
             }
           }
@@ -485,10 +424,6 @@ export default function TransferNew() {
     navigator.clipboard.writeText(fullLink);
     toast({ title: "Lien copié !" });
   };
-
-  if (blockInfo) {
-    return <BlockPage info={blockInfo} />;
-  }
 
   if (showBMForm) {
     return <BMTransferForm onBack={() => setShowBMForm(false)} />;
