@@ -12,8 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, Copy, Share2, ArrowLeft, User, Users, CreditCard, Smartphone, Wallet } from "lucide-react";
+import { CheckCircle2, Copy, Share2, ArrowLeft, User, Users, CreditCard, Smartphone, Wallet, Building2, Hash, Mail, Zap, Shield } from "lucide-react";
 import { useState } from "react";
+import { apiPost } from "@/lib/api";
+import { getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "wouter";
@@ -100,12 +102,183 @@ function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: s
   );
 }
 
+type BMResult = { recipientName: string; recipientClientId: string; amount: number; newBalance: number };
+
+function BMTransferForm({ onBack }: { onBack: () => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [email, setEmail] = useState("");
+  const [iban, setIban] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<BMResult | null>(null);
+
+  const formatIBAN = (v: string) => v.replace(/\s/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/(.{4})/g, "$1 ").trim();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = parseFloat(amount);
+    if (!num || num <= 0) { toast({ title: "Montant invalide", variant: "destructive" }); return; }
+    if (!email.trim() || !iban.trim() || !clientId.trim()) { toast({ title: "Tous les champs sont requis", variant: "destructive" }); return; }
+    setLoading(true);
+    try {
+      const res = await apiPost<BMResult>("/api/wallet/bm-transfer", {
+        email: email.trim().toLowerCase(),
+        iban: iban.replace(/\s/g, ""),
+        clientId: clientId.trim(),
+        amount: num,
+      });
+      setResult(res);
+      queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
+    } catch (err: any) {
+      toast({ title: err.message || "Erreur lors du transfert", variant: "destructive" });
+    }
+    setLoading(false);
+  };
+
+  if (result) {
+    return (
+      <div className="space-y-6 max-w-md">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="h-5 w-5" /></Button>
+          <h1 className="text-2xl font-bold">Transfert effectué</h1>
+        </div>
+        <div className="rounded-2xl bg-gradient-to-br from-[#003087] to-[#004ab3] p-6 text-white text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="h-16 w-16 rounded-full bg-[#6DC142] flex items-center justify-center">
+              <CheckCircle2 className="h-9 w-9 text-white" />
+            </div>
+          </div>
+          <p className="text-xl font-bold">Virement instantané !</p>
+          <p className="text-blue-200 text-sm">Le compte de {result.recipientName} a été crédité</p>
+          <div className="bg-white/10 rounded-xl px-4 py-3">
+            <p className="text-xs text-blue-200 mb-1">Montant transféré</p>
+            <p className="text-3xl font-black">{result.amount.toFixed(2)} <span className="text-lg opacity-60">EUR</span></p>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm divide-y divide-gray-100">
+          {[
+            { label: "Bénéficiaire", value: result.recipientName },
+            { label: "Client ID", value: result.recipientClientId },
+            { label: "IBAN", value: formatIBAN(iban) },
+            { label: "Votre nouveau solde", value: `${result.newBalance.toFixed(2)} EUR` },
+          ].map(r => (
+            <div key={r.label} className="flex justify-between items-center px-5 py-3">
+              <span className="text-xs text-gray-400 font-medium">{r.label}</span>
+              <span className="text-sm font-semibold text-gray-900 font-mono">{r.value}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-400 justify-center">
+          <Shield className="h-3.5 w-3.5" /><Zap className="h-3.5 w-3.5 text-[#6DC142]" />
+          Transfert instantané sécurisé — Banque Mondiale
+        </div>
+        <Button className="w-full bg-[#003087] hover:bg-[#002060]" onClick={onBack}>Retour</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-md">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="h-5 w-5" /></Button>
+        <div>
+          <h1 className="text-2xl font-bold">Transfert Banque Mondiale</h1>
+          <p className="text-sm text-gray-500">Virement instantané entre comptes BM</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+        <Zap className="h-4 w-4 text-[#6DC142] shrink-0" />
+        <p className="text-xs text-[#003087] font-medium">Le montant sera crédité instantanément sur le compte du bénéficiaire.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+          <p className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-1">
+            <User className="h-4 w-4 text-[#003087]" /> Identification du compte destinataire
+          </p>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5 block">
+              <Mail className="h-3.5 w-3.5" /> Adresse email <span className="text-red-500">*</span>
+            </label>
+            <Input type="email" placeholder="email@exemple.com" value={email}
+              onChange={e => setEmail(e.target.value)} className="h-11" autoComplete="off" />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5 block">
+              <Hash className="h-3.5 w-3.5" /> IBAN du compte <span className="text-red-500">*</span>
+            </label>
+            <Input placeholder="FR76 3000 6000 0112 3456 7890 189"
+              value={iban}
+              onChange={e => setIban(formatIBAN(e.target.value))}
+              className="h-11 font-mono tracking-widest uppercase"
+              maxLength={42} autoComplete="off" />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5 block">
+              <Building2 className="h-3.5 w-3.5" /> Client ID <span className="text-red-500">*</span>
+            </label>
+            <Input placeholder="Ex : BMDWB-123456" value={clientId}
+              onChange={e => setClientId(e.target.value)} className="h-11 font-mono" autoComplete="off" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-3">
+          <p className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-1">
+            <Wallet className="h-4 w-4 text-[#003087]" /> Montant à transférer
+          </p>
+          <div className="relative">
+            <Input type="number" min="0.01" step="0.01" placeholder="0.00"
+              value={amount} onChange={e => setAmount(e.target.value)}
+              className="h-14 text-2xl font-bold text-center pr-16" />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">EUR</span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {[50, 100, 200, 500, 1000].map(a => (
+              <button key={a} type="button" onClick={() => setAmount(String(a))}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                  amount === String(a) ? "bg-[#003087] text-white border-[#003087]" : "bg-white text-gray-600 border-gray-200 hover:border-[#003087]"
+                }`}>
+                {a} €
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button type="submit" disabled={loading || !email || !iban || !clientId || !amount}
+          className="w-full h-12 bg-[#003087] hover:bg-[#002060] text-base font-semibold gap-2">
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40" strokeDashoffset="15"/>
+              </svg>
+              Vérification en cours...
+            </span>
+          ) : (
+            <><Zap className="h-4 w-4" />Transférer instantanément</>
+          )}
+        </Button>
+
+        <div className="flex items-center gap-2 text-xs text-gray-400 justify-center">
+          <Shield className="h-3 w-3" /> Transfert sécurisé — les 3 informations doivent correspondre au même compte
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function TransferNew() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createTransfer = useCreateTransfer();
   const [generated, setGenerated] = useState<GeneratedTransfer | null>(null);
+  const [showBMForm, setShowBMForm] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(transferSchema),
@@ -136,6 +309,7 @@ export default function TransferNew() {
   const watchedCurrency = form.watch("displayCurrency");
   const watchedMethods = form.watch("paymentMethods");
   const messageValue = form.watch("message") || "";
+  const watchedType = form.watch("transactionType");
 
   const convertedAmount = watchedAmount && watchedCurrency
     ? convertFromEur(Number(watchedAmount), watchedCurrency)
@@ -188,6 +362,10 @@ export default function TransferNew() {
     navigator.clipboard.writeText(fullLink);
     toast({ title: "Lien copié !" });
   };
+
+  if (showBMForm) {
+    return <BMTransferForm onBack={() => setShowBMForm(false)} />;
+  }
 
   if (generated) {
     const convAmount = convertFromEur(generated.amount, generated.displayCurrency);
@@ -589,13 +767,23 @@ export default function TransferNew() {
             </CardContent>
           </Card>
 
-          <Button
-            type="submit"
-            className="w-full bg-[#003087] hover:bg-[#002060] text-white h-12 text-base font-semibold"
-            disabled={createTransfer.isPending}
-          >
-            {createTransfer.isPending ? "Génération en cours…" : "Générer le lien de virement"}
-          </Button>
+          {watchedType === "compte_bm" ? (
+            <Button
+              type="button"
+              onClick={() => setShowBMForm(true)}
+              className="w-full bg-[#003087] hover:bg-[#002060] text-white h-12 text-base font-semibold gap-2"
+            >
+              <Zap className="h-4 w-4" />Continuer vers le transfert BM
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              className="w-full bg-[#003087] hover:bg-[#002060] text-white h-12 text-base font-semibold"
+              disabled={createTransfer.isPending}
+            >
+              {createTransfer.isPending ? "Génération en cours…" : "Générer le lien de virement"}
+            </Button>
+          )}
         </form>
       </Form>
     </div>

@@ -75466,6 +75466,69 @@ router10.post("/wallet/payer-factures", requireAuth, async (req, res) => {
   });
   res.json({ balance: Number(updated.balance), paid: num });
 });
+router10.post("/wallet/bm-transfer", requireAuth, async (req, res) => {
+  const { userId } = req.user;
+  const { email: email3, iban, clientId, amount } = req.body;
+  const num = Number(amount);
+  if (!num || num <= 0 || !isFinite(num)) {
+    res.status(400).json({ error: "Montant invalide" });
+    return;
+  }
+  if (!email3 || !iban || !clientId) {
+    res.status(400).json({ error: "Email, IBAN et Client ID requis" });
+    return;
+  }
+  const normalizedIban = String(iban).replace(/\s/g, "").toUpperCase();
+  const [recipient] = await db.select().from(usersTable).where(and(
+    eq(usersTable.email, String(email3).trim().toLowerCase()),
+    eq(usersTable.clientId, String(clientId).trim())
+  )).limit(1);
+  if (!recipient) {
+    res.status(404).json({ error: "Aucun compte Banque Mondiale trouv\xE9 avec ces informations. V\xE9rifiez l'email et le Client ID." });
+    return;
+  }
+  if (recipient.iban && recipient.iban.replace(/\s/g, "").toUpperCase() !== normalizedIban) {
+    res.status(404).json({ error: "L'IBAN fourni ne correspond pas au compte trouv\xE9." });
+    return;
+  }
+  if (recipient.id === userId) {
+    res.status(400).json({ error: "Vous ne pouvez pas vous transf\xE9rer \xE0 vous-m\xEAme." });
+    return;
+  }
+  const sender = await getUser(userId);
+  if (!sender) {
+    res.status(404).json({ error: "Exp\xE9diteur introuvable" });
+    return;
+  }
+  const senderBalance = Number(sender.balance);
+  if (senderBalance < num) {
+    res.status(400).json({ error: `Solde insuffisant. Votre solde : ${senderBalance.toFixed(2)} EUR` });
+    return;
+  }
+  const [updatedSender] = await db.update(usersTable).set({ balance: sql`${usersTable.balance} - ${num.toFixed(2)}` }).where(eq(usersTable.id, userId)).returning({ balance: usersTable.balance });
+  const [updatedRecipient] = await db.update(usersTable).set({ balance: sql`${usersTable.balance} + ${num.toFixed(2)}` }).where(eq(usersTable.id, recipient.id)).returning({ balance: usersTable.balance });
+  await db.insert(activityTable).values({
+    userId,
+    type: "transfer_sent",
+    description: `Virement BM vers ${recipient.fullName} (${recipient.clientId}) \u2014 ${num.toFixed(2)} EUR`,
+    amount: num.toFixed(2),
+    currency: "EUR"
+  });
+  await db.insert(activityTable).values({
+    userId: recipient.id,
+    type: "transfer_received",
+    description: `Virement re\xE7u de ${sender.fullName} (${sender.clientId}) \u2014 ${num.toFixed(2)} EUR`,
+    amount: num.toFixed(2),
+    currency: "EUR"
+  });
+  res.json({
+    ok: true,
+    recipientName: recipient.fullName,
+    recipientClientId: recipient.clientId,
+    amount: num,
+    newBalance: Number(updatedSender.balance)
+  });
+});
 var wallet_default = router10;
 
 // src/routes/notifications.ts
