@@ -4,11 +4,11 @@ import * as schema from "./schema";
 
 const { Pool } = pg;
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
 
 if (!connectionString) {
   console.error(
-    "[db] FATAL: DATABASE_URL is missing. " +
+    "[db] FATAL: DATABASE_URL (or SUPABASE_DATABASE_URL) is missing. " +
     "The server will start but all database operations will fail."
   );
 }

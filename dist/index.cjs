@@ -74129,10 +74129,10 @@ var systemSettingsTable = pgTable("system_settings", {
 
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
-var connectionString = process.env.DATABASE_URL;
+var connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
 if (!connectionString) {
   console.error(
-    "[db] FATAL: DATABASE_URL is missing. The server will start but all database operations will fail."
+    "[db] FATAL: DATABASE_URL (or SUPABASE_DATABASE_URL) is missing. The server will start but all database operations will fail."
   );
 }
 var pool = new Pool3({
