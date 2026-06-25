@@ -189,7 +189,7 @@ export default function AdminCreateUser() {
 
         <div className="space-y-2">
           <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Téléphone *</label>
-          <Input type="tel" placeholder="+33 6 12 34 56 78" value={form.phone} onChange={set("phone")} />
+          <Input type="tel" placeholder="06 12 34 56 78" value={form.phone} onChange={set("phone")} />
         </div>
 
         <div className="space-y-2">
