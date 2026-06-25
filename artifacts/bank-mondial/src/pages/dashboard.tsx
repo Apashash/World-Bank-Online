@@ -152,7 +152,6 @@ export default function Dashboard() {
               { icon: QrCode, label: "Scanner QR", href: "/scanner-qr" },
               { icon: Landmark, label: "Retrait", href: "/retrait" },
               { icon: Receipt, label: "Payer factures", href: "/payer-factures" },
-              { icon: LayoutGrid, label: "Plus", href: "/plus" },
             ].map(({ icon: Icon, label, href }) => (
               <Link key={label} href={href}>
                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
@@ -163,6 +162,16 @@ export default function Dashboard() {
                 </div>
               </Link>
             ))}
+            <button
+              key="plus"
+              onClick={() => window.dispatchEvent(new CustomEvent("openMobileMenu"))}
+              className="flex flex-col items-center gap-2 group cursor-pointer"
+            >
+              <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <LayoutGrid className="h-6 w-6 text-[#003087]" strokeWidth={1.5} />
+              </div>
+              <span className="text-xs text-gray-600 font-medium text-center leading-tight">Plus</span>
+            </button>
           </div>
         </CardContent>
       </Card>

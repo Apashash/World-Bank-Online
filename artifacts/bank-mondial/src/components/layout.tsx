@@ -58,7 +58,6 @@ const quickActions = [
   { icon: QrCode, label: "QR", href: "/scanner-qr" },
   { icon: Landmark, label: "Retrait", href: "/retrait" },
   { icon: Receipt, label: "Factures", href: "/payer-factures" },
-  { icon: LayoutGrid, label: "Plus", href: "/plus" },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -66,6 +65,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useGetMe();
   const logoutMutation = useLogout();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsMobileMenuOpen(true);
+    window.addEventListener("openMobileMenu", handler);
+    return () => window.removeEventListener("openMobileMenu", handler);
+  }, []);
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
