@@ -46,6 +46,9 @@ import {
   UserX,
   Clock,
   X,
+  ShieldAlert,
+  Trash2,
+  Crown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -124,6 +127,7 @@ export default function AdminUsers() {
 
   const [userTransfers, setUserTransfers] = useState<UserTransfer[]>([]);
   const [transfersLoading, setTransfersLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const { data, isLoading, refetch } = useAdminListUsers({
     page: 1,
@@ -152,6 +156,7 @@ export default function AdminUsers() {
     setDebitAmount("");
     setDebitReason("");
     setUserTransfers([]);
+    setDeleteConfirm(false);
   };
 
   useEffect(() => {
@@ -205,6 +210,43 @@ export default function AdminUsers() {
       setDebitReason("");
       queryClient.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
       toast({ title: `✅ -${debitAmount} ${localUser.currency} débité du compte` });
+    } catch (e: any) {
+      toast({ title: e.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
+
+  const handleToggleRole = async () => {
+    if (!localUser) return;
+    setActionLoading(true);
+    try {
+      const newRole = localUser.role === "admin" ? "user" : "admin";
+      const r = await authFetch(`/api/admin/users/${localUser.id}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role: newRole }),
+      });
+      const updated = await r.json();
+      if (!r.ok) throw new Error(updated.error ?? "Erreur");
+      setLocalUser(updated);
+      queryClient.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
+      toast({ title: newRole === "admin" ? "✅ Utilisateur promu Admin" : "✅ Droits admin retirés" });
+    } catch (e: any) {
+      toast({ title: e.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!localUser) return;
+    setActionLoading(true);
+    try {
+      const r = await authFetch(`/api/admin/users/${localUser.id}`, { method: "DELETE" });
+      const result = await r.json();
+      if (!r.ok) throw new Error(result.error ?? "Erreur");
+      setSheetOpen(false);
+      setDeleteConfirm(false);
+      queryClient.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
+      toast({ title: `✅ Compte de ${localUser.fullName} supprimé` });
     } catch (e: any) {
       toast({ title: e.message, variant: "destructive" });
     }
@@ -623,16 +665,18 @@ export default function AdminUsers() {
                   value="actions"
                   className="flex-1 overflow-y-auto px-6 py-5 space-y-3 m-0"
                 >
-                  <p className="text-xs text-slate-400 mb-4">
+                  <p className="text-xs text-slate-400 mb-1">
                     Ces actions prennent effet immédiatement sur le compte de l'utilisateur.
                   </p>
+
+                  {/* Accès */}
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-3">
                     <p className="text-sm font-semibold text-slate-700">Accès au compte</p>
                     <Button
                       variant={localUser.status === "blocked" ? "default" : "destructive"}
                       className="w-full font-semibold"
                       onClick={() => handleToggleBlock(localUser)}
-                      disabled={blockUser.isPending}
+                      disabled={blockUser.isPending || actionLoading}
                     >
                       {blockUser.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -643,6 +687,81 @@ export default function AdminUsers() {
                       )}
                       {localUser.status === "blocked" ? "Débloquer le compte" : "Bloquer le compte"}
                     </Button>
+                  </div>
+
+                  {/* Rôle admin */}
+                  <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-amber-700 flex items-center gap-2">
+                      <Crown className="h-4 w-4" /> Rôle administrateur
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      {localUser.role === "admin"
+                        ? "Cet utilisateur est actuellement administrateur."
+                        : "Cet utilisateur est un client standard."}
+                    </p>
+                    <Button
+                      className={`w-full font-semibold ${localUser.role === "admin" ? "bg-slate-600 hover:bg-slate-700 text-white" : "bg-amber-500 hover:bg-amber-600 text-white"}`}
+                      onClick={handleToggleRole}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : localUser.role === "admin" ? (
+                        <ShieldAlert className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Crown className="h-4 w-4 mr-2" />
+                      )}
+                      {localUser.role === "admin" ? "Retirer les droits Admin" : "Nommer Administrateur"}
+                    </Button>
+                  </div>
+
+                  {/* Suppression */}
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-red-700 flex items-center gap-2">
+                      <Trash2 className="h-4 w-4" /> Supprimer le compte
+                    </p>
+                    <p className="text-xs text-red-500">
+                      Supprime définitivement l'utilisateur, ses virements et toutes ses données. Action irréversible.
+                    </p>
+                    {!deleteConfirm ? (
+                      <Button
+                        variant="destructive"
+                        className="w-full font-semibold"
+                        onClick={() => setDeleteConfirm(true)}
+                        disabled={actionLoading}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Supprimer le compte
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-red-700 text-center">
+                          Confirmer la suppression de {localUser.fullName} ?
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1 text-sm"
+                            onClick={() => setDeleteConfirm(false)}
+                            disabled={actionLoading}
+                          >
+                            Annuler
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="flex-1 text-sm font-bold"
+                            onClick={handleDeleteUser}
+                            disabled={actionLoading}
+                          >
+                            {actionLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Oui, supprimer"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>

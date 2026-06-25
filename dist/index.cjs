@@ -75153,6 +75153,39 @@ router9.get("/admin/users/:id/transfers", requireAuth, requireAdmin, async (req,
     confirmedAt: t.confirmedAt?.toISOString() ?? null
   })));
 });
+router9.patch("/admin/users/:id/role", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"]);
+  const { role } = req.body;
+  if (role !== "admin" && role !== "user") {
+    res.status(400).json({ error: "R\xF4le invalide (admin ou user)" });
+    return;
+  }
+  const [updated] = await db.update(usersTable).set({ role }).where(eq(usersTable.id, id)).returning();
+  if (!updated) {
+    res.status(404).json({ error: "Utilisateur introuvable" });
+    return;
+  }
+  res.json(formatUser(updated));
+});
+router9.delete("/admin/users/:id", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"]);
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!user) {
+    res.status(404).json({ error: "Utilisateur introuvable" });
+    return;
+  }
+  if (user.role === "admin") {
+    res.status(403).json({ error: "Impossible de supprimer un compte admin" });
+    return;
+  }
+  await db.delete(activityTable).where(eq(activityTable.userId, id));
+  await db.delete(transfersTable).where(eq(transfersTable.userId, id));
+  await db.delete(referralsTable).where(eq(referralsTable.referrerId, id));
+  await db.delete(referralsTable).where(eq(referralsTable.referredId, id));
+  await db.delete(subAccountsTable).where(eq(subAccountsTable.parentUserId, id));
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+  res.json({ ok: true });
+});
 router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, res) => {
   const { userId, beneficiaryName, amount, currency, message } = req.body;
   if (!userId || !beneficiaryName || !amount || !currency) {
