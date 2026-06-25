@@ -451,16 +451,30 @@ export default function TransferNew() {
         queryClient.invalidateQueries({ queryKey: getListTransfersQueryKey() });
         setGenerated(res as GeneratedTransfer);
       },
-      onError: (err: any) => {
+      onError: async (err: any) => {
         if (err.status === 403 || err.code === "WITHDRAWAL_BLOCKED") {
           setBlockInfo({ reason: err.message || "", whatsapp: err.whatsapp || "" });
-        } else {
-          toast({
-            title: "Erreur",
-            description: err.message || "Impossible de créer le virement",
-            variant: "destructive",
-          });
+          return;
         }
+        // Re-vérifier le blocage avant d'afficher un toast
+        try {
+          const token = localStorage.getItem("auth_token");
+          const checkRes = await fetch("/api/wallet/block-status", {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (checkRes.ok) {
+            const status = await checkRes.json();
+            if (status.blocked) {
+              setBlockInfo({ reason: status.reason || err.message || "", whatsapp: status.whatsapp || "" });
+              return;
+            }
+          }
+        } catch {}
+        toast({
+          title: "Erreur",
+          description: err.message || "Impossible de créer le virement",
+          variant: "destructive",
+        });
       }
     });
   };

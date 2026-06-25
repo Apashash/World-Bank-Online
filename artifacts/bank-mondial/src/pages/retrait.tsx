@@ -137,17 +137,36 @@ export default function Retrait() {
       queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
       setDone(true);
     } catch (err: any) {
+      // Priorité 1 : erreur de blocage identifiée directement
       if (err.status === 403 || err.code === "WITHDRAWAL_BLOCKED") {
         setBlockInfo({ reason: err.message || "", whatsapp: err.whatsapp || "" });
-      } else if (err.message === "Solde insuffisant") {
+        return;
+      }
+      // Priorité 2 : erreur de solde
+      if (err.message === "Solde insuffisant") {
         toast({
           title: "Solde insuffisant",
           description: `Votre solde est de ${formatAmount(balance, "EUR")}.`,
           variant: "destructive",
         });
-      } else {
-        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+        return;
       }
+      // Priorité 3 : re-vérifier le blocage (au cas où le serveur retourne un code inattendu)
+      try {
+        const token = localStorage.getItem("auth_token");
+        const checkRes = await fetch("/api/wallet/block-status", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (checkRes.ok) {
+          const status = await checkRes.json();
+          if (status.blocked) {
+            setBlockInfo({ reason: status.reason || err.message || "", whatsapp: status.whatsapp || "" });
+            return;
+          }
+        }
+      } catch {}
+      // Priorité 4 : toast générique
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

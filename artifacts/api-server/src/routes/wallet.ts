@@ -5,26 +5,47 @@ import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
-// Public endpoint — no auth required — returns block status for withdrawals
-router.get("/wallet/block-status", async (_req, res) => {
+// Endpoint block-status — vérifie le blocage global ET le statut utilisateur si token fourni
+router.get("/wallet/block-status", async (req, res) => {
   try {
+    // 1. Vérifier le blocage global (withdrawal_block system setting)
     const [setting] = await db
       .select()
       .from(systemSettingsTable)
       .where(eq(systemSettingsTable.key, "withdrawal_block"))
       .limit(1);
-    if (!setting) {
-      res.json({ blocked: false });
-      return;
+
+    if (setting) {
+      try {
+        const val = JSON.parse(setting.value);
+        if (val.blocked) {
+          res.json({ blocked: true, reason: val.reason || "", whatsapp: val.whatsapp || "" });
+          return;
+        }
+      } catch {}
     }
-    const val = JSON.parse(setting.value);
-    res.json({
-      blocked: !!val.blocked,
-      reason: val.reason || "",
-      whatsapp: val.whatsapp || "",
-    });
+
+    // 2. Vérifier si l'utilisateur est bloqué individuellement (si token présent)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const jwt = await import("jsonwebtoken");
+        const JWT_SECRET = process.env.SESSION_SECRET || "bank_mondial_secret_key_2024";
+        const payload = jwt.default.verify(authHeader.slice(7), JWT_SECRET) as { userId: number };
+        const [user] = await db.select({ status: usersTable.status })
+          .from(usersTable)
+          .where(eq(usersTable.id, payload.userId))
+          .limit(1);
+        if (user?.status === "blocked") {
+          res.json({ blocked: true, reason: "Votre compte est temporairement restreint. Contactez le service client.", whatsapp: "" });
+          return;
+        }
+      } catch {}
+    }
+
+    res.json({ blocked: false, reason: "", whatsapp: "" });
   } catch {
-    res.json({ blocked: false });
+    res.json({ blocked: false, reason: "", whatsapp: "" });
   }
 });
 
