@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, usersTable, activityTable } from "@workspace/db";
+import { db, usersTable, activityTable, systemSettingsTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
@@ -40,6 +40,25 @@ router.post("/wallet/depot", requireAuth, async (req, res) => {
 router.post("/wallet/retrait", requireAuth, async (req, res) => {
   const { userId } = (req as any).user;
   const { amount, method } = req.body;
+
+  // Vérifier si les retraits sont bloqués globalement
+  const [setting] = await db
+    .select()
+    .from(systemSettingsTable)
+    .where(eq(systemSettingsTable.key, "withdrawal_block"))
+    .limit(1);
+  if (setting) {
+    try {
+      const val = JSON.parse(setting.value);
+      if (val.blocked) {
+        res.status(403).json({
+          error: val.reason || "Les retraits sont temporairement bloqués. Veuillez contacter le support.",
+          code: "WITHDRAWAL_BLOCKED",
+        });
+        return;
+      }
+    } catch {}
+  }
 
   const num = Number(amount);
   if (!num || num <= 0 || !isFinite(num)) {

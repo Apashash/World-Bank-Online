@@ -75519,6 +75519,20 @@ router10.post("/wallet/depot", requireAuth, async (req, res) => {
 router10.post("/wallet/retrait", requireAuth, async (req, res) => {
   const { userId } = req.user;
   const { amount, method } = req.body;
+  const [setting] = await db.select().from(systemSettingsTable).where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+  if (setting) {
+    try {
+      const val = JSON.parse(setting.value);
+      if (val.blocked) {
+        res.status(403).json({
+          error: val.reason || "Les retraits sont temporairement bloqu\xE9s. Veuillez contacter le support.",
+          code: "WITHDRAWAL_BLOCKED"
+        });
+        return;
+      }
+    } catch {
+    }
+  }
   const num = Number(amount);
   if (!num || num <= 0 || !isFinite(num)) {
     res.status(400).json({ error: "Montant invalide" });
