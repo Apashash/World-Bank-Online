@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db, usersTable, transfersTable, kycTable, subAccountsTable, referralsTable, activityTable, beneficiariesTable, supportMessagesTable, scheduledTransfersTable, fundRequestsTable, systemSettingsTable } from "@workspace/db";
-import { eq, ilike, or, gte, sql, desc } from "drizzle-orm";
+import { eq, ilike, or, gte, sql, desc, and, count } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { AdminBlockUserBody, AdminUpdateBalanceBody, AdminReviewKycBody } from "@workspace/api-zod";
 import { formatUser } from "./auth";
@@ -25,20 +25,23 @@ const router = Router();
 
 router.get("/admin/users", requireAuth, requireAdmin, async (req, res) => {
   const { page = "1", limit = "20", search, status } = req.query as Record<string, string>;
-
-  let allUsers = await db.select().from(usersTable);
-
-  if (search) {
-    const s = search.toLowerCase();
-    allUsers = allUsers.filter(u => u.fullName.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || u.clientId.toLowerCase().includes(s));
-  }
-  if (status) {
-    allUsers = allUsers.filter(u => u.status === status);
-  }
-
   const p = parseInt(page), l = parseInt(limit);
-  const paginated = allUsers.slice((p - 1) * l, p * l);
-  res.json({ users: paginated.map(formatUser), total: allUsers.length, page: p, limit: l });
+
+  const conditions: any[] = [];
+  if (search) {
+    const s = `%${search}%`;
+    conditions.push(or(ilike(usersTable.fullName, s), ilike(usersTable.email, s), ilike(usersTable.clientId, s)));
+  }
+  if (status) conditions.push(eq(usersTable.status, status as any));
+
+  const where = conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : and(...conditions)) : undefined;
+
+  const [rows, [{ total }]] = await Promise.all([
+    db.select().from(usersTable).where(where).limit(l).offset((p - 1) * l),
+    db.select({ total: count() }).from(usersTable).where(where),
+  ]);
+
+  res.json({ users: rows.map(formatUser), total, page: p, limit: l });
 });
 
 router.patch("/admin/users/:id/block", requireAuth, requireAdmin, async (req, res) => {
@@ -63,12 +66,15 @@ router.patch("/admin/users/:id/balance", requireAuth, requireAdmin, async (req, 
 
 router.get("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
   const { page = "1", limit = "20" } = req.query as Record<string, string>;
-  const allTransfers = await db.select().from(transfersTable);
   const p = parseInt(page), l = parseInt(limit);
-  const paginated = allTransfers.slice((p - 1) * l, p * l);
+
+  const [rows, [{ total }]] = await Promise.all([
+    db.select().from(transfersTable).orderBy(desc(transfersTable.createdAt)).limit(l).offset((p - 1) * l),
+    db.select({ total: count() }).from(transfersTable),
+  ]);
 
   res.json({
-    transfers: paginated.map(t => ({
+    transfers: rows.map(t => ({
       id: t.id,
       userId: t.userId,
       token: t.token,
@@ -87,7 +93,7 @@ router.get("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
       adminUnlocked: t.adminUnlocked ?? false,
       adminUnlockedAt: t.adminUnlockedAt?.toISOString() ?? null,
     })),
-    total: allTransfers.length,
+    total,
     page: p,
     limit: l,
   });
@@ -203,23 +209,32 @@ router.get("/admin/charts", requireAuth, requireAdmin, async (req, res) => {
 });
 
 router.get("/admin/stats", requireAuth, requireAdmin, async (req, res) => {
-  const allUsers = await db.select().from(usersTable);
-  const allTransfers = await db.select().from(transfersTable);
-  const pendingKyc = await db.select().from(kycTable).where(eq(kycTable.status, "pending"));
-  const subAccounts = await db.select().from(subAccountsTable);
-  const referrals = await db.select().from(referralsTable);
+  const [userStats, transferStats, [{ pendingKyc }], [{ totalSubAccounts }], [{ totalReferrals }]] = await Promise.all([
+    db.select({
+      total:   sql<number>`count(*)::int`,
+      active:  sql<number>`count(*) filter (where ${usersTable.status} = 'active')::int`,
+      blocked: sql<number>`count(*) filter (where ${usersTable.status} = 'blocked')::int`,
+    }).from(usersTable),
 
-  const totalVolume = allTransfers.reduce((s, t) => s + Number(t.amount), 0);
+    db.select({
+      total:  sql<number>`count(*)::int`,
+      volume: sql<number>`coalesce(sum(${transfersTable.amount}::numeric), 0)::float`,
+    }).from(transfersTable),
+
+    db.select({ pendingKyc: sql<number>`count(*)::int` }).from(kycTable).where(eq(kycTable.status, "pending")),
+    db.select({ totalSubAccounts: sql<number>`count(*)::int` }).from(subAccountsTable),
+    db.select({ totalReferrals: sql<number>`count(*)::int` }).from(referralsTable),
+  ]);
 
   res.json({
-    totalUsers: allUsers.length,
-    activeUsers: allUsers.filter(u => u.status === "active").length,
-    blockedUsers: allUsers.filter(u => u.status === "blocked").length,
-    totalTransfers: allTransfers.length,
-    totalVolume,
-    pendingKyc: pendingKyc.length,
-    totalSubAccounts: subAccounts.length,
-    totalReferrals: referrals.length,
+    totalUsers: userStats[0].total,
+    activeUsers: userStats[0].active,
+    blockedUsers: userStats[0].blocked,
+    totalTransfers: transferStats[0].total,
+    totalVolume: transferStats[0].volume,
+    pendingKyc,
+    totalSubAccounts,
+    totalReferrals,
   });
 });
 
