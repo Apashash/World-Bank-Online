@@ -48,7 +48,7 @@ const COUNTRIES = [
 ];
 
 const transferSchema = z.object({
-  transactionType: z.enum(["virement", "dépôt", "retrait", "facture"]).default("virement"),
+  transactionType: z.enum(["virement", "compte_bm"]).default("virement"),
   // Sender
   senderFirstName: z.string().min(1, "Prénom requis"),
   senderLastName: z.string().min(1, "Nom requis"),
@@ -294,21 +294,22 @@ export default function TransferNew() {
               <FormField control={form.control} name="transactionType" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-semibold">Type d'opération</FormLabel>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="grid grid-cols-1 gap-2 mt-2">
                     {[
-                      { value: "virement", label: "↗ Virement" },
-                      { value: "dépôt", label: "⬇ Dépôt" },
-                      { value: "retrait", label: "⬆ Retrait" },
-                      { value: "facture", label: "📄 Facture" },
+                      { value: "virement", label: "↗ Virement", sub: "Envoi vers un compte bancaire externe" },
+                      { value: "compte_bm", label: "🌍 Via un compte Banque Mondiale", sub: "Transfert entre comptes Banque Mondiale" },
                     ].map((opt) => (
                       <label key={opt.value}
-                        className={`flex items-center gap-2 cursor-pointer text-xs px-3 py-2.5 rounded-lg border transition-all ${
+                        className={`flex items-center gap-3 cursor-pointer px-4 py-3 rounded-xl border-2 transition-all ${
                           field.value === opt.value
-                            ? "border-[#003087] bg-[#003087]/5 text-[#003087] font-semibold"
+                            ? "border-[#003087] bg-[#003087]/5 text-[#003087]"
                             : "border-gray-200 text-gray-600 hover:border-gray-300"
                         }`}>
-                        <input type="radio" className="accent-[#003087]" value={opt.value} checked={field.value === opt.value} onChange={() => field.onChange(opt.value)} />
-                        {opt.label}
+                        <input type="radio" className="accent-[#003087] h-4 w-4 shrink-0" value={opt.value} checked={field.value === opt.value} onChange={() => field.onChange(opt.value)} />
+                        <div>
+                          <p className={`text-sm font-semibold ${field.value === opt.value ? "text-[#003087]" : "text-gray-800"}`}>{opt.label}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{opt.sub}</p>
+                        </div>
                       </label>
                     ))}
                   </div>
