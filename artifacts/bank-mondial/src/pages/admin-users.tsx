@@ -12,12 +12,6 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -157,12 +151,6 @@ export default function AdminUsers() {
   const [transfersLoading, setTransfersLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    fullName: "", email: "", phone: "", country: "France",
-    password: "", initialBalance: "", currency: "EUR",
-  });
 
   const { data, isLoading, refetch } = useAdminListUsers({
     page: 1,
@@ -288,36 +276,6 @@ export default function AdminUsers() {
     setActionLoading(false);
   };
 
-  const handleCreateUser = async () => {
-    const { fullName, email, phone, country, password } = createForm;
-    if (!fullName || !email || !phone || !country || !password) {
-      toast({ title: "Tous les champs obligatoires doivent être remplis", variant: "destructive" }); return;
-    }
-    setCreateLoading(true);
-    try {
-      const r = await authFetch("/api/admin/users/create", {
-        method: "POST",
-        body: JSON.stringify({
-          fullName: createForm.fullName,
-          email: createForm.email,
-          phone: createForm.phone,
-          country: createForm.country,
-          password: createForm.password,
-          initialBalance: createForm.initialBalance || undefined,
-          currency: createForm.currency,
-        }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error ?? "Erreur lors de la création");
-      setCreateOpen(false);
-      setCreateForm({ fullName: "", email: "", phone: "", country: "France", password: "", initialBalance: "", currency: "EUR" });
-      queryClient.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
-      toast({ title: `✅ Compte créé pour ${data.fullName} — ID: ${data.clientId}` });
-    } catch (e: any) {
-      toast({ title: e.message, variant: "destructive" });
-    }
-    setCreateLoading(false);
-  };
 
   const handleToggleBlock = (u: AdminUser, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -361,14 +319,15 @@ export default function AdminUsers() {
               Bloquer les retraits
             </Button>
           </Link>
-          <Button
-            size="sm"
-            className="gap-1.5 bg-[#003087] hover:bg-[#002066] text-white"
-            onClick={() => setCreateOpen(true)}
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Créer un compte
-          </Button>
+          <Link href="/admin/users/new">
+            <Button
+              size="sm"
+              className="gap-1.5 bg-[#003087] hover:bg-[#002066] text-white"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Créer un compte
+            </Button>
+          </Link>
           <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
             <RefreshCw className="h-3.5 w-3.5" />
             Actualiser
@@ -516,110 +475,6 @@ export default function AdminUsers() {
         </Table>
       </div>
 
-      {/* Dialog — Créer un compte */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[#003087]">
-              <UserPlus className="h-5 w-5" />
-              Créer un compte utilisateur
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Nom complet *</label>
-              <Input
-                placeholder="Jean Dupont"
-                value={createForm.fullName}
-                onChange={(e) => setCreateForm((f) => ({ ...f, fullName: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Email *</label>
-              <Input
-                type="email"
-                placeholder="jean.dupont@email.com"
-                value={createForm.email}
-                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Téléphone *</label>
-              <Input
-                type="tel"
-                placeholder="+33 6 12 34 56 78"
-                value={createForm.phone}
-                onChange={(e) => setCreateForm((f) => ({ ...f, phone: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Pays *</label>
-              <select
-                className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
-                value={createForm.country}
-                onChange={(e) => setCreateForm((f) => ({ ...f, country: e.target.value }))}
-              >
-                {COUNTRIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Mot de passe *</label>
-              <Input
-                type="password"
-                placeholder="Mot de passe sécurisé"
-                value={createForm.password}
-                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Solde initial</label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={createForm.initialBalance}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, initialBalance: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Devise</label>
-                <select
-                  className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
-                  value={createForm.currency}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, currency: e.target.value }))}
-                >
-                  {["EUR","USD","GBP","CHF","CAD","MAD","XOF","XAF","DZD","TND"].map((cur) => (
-                    <option key={cur} value={cur}>{cur}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)} disabled={createLoading}>
-                Annuler
-              </Button>
-              <Button
-                className="flex-1 bg-[#003087] hover:bg-[#002066] text-white font-bold"
-                onClick={handleCreateUser}
-                disabled={createLoading}
-              >
-                {createLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Créer le compte
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="w-full sm:w-[500px] sm:max-w-[500px] p-0 flex flex-col overflow-hidden">

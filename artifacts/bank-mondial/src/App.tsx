@@ -29,6 +29,7 @@ import OpenAccountOffer from "@/pages/open-account-offer";
 import OpenAccountSteps from "@/pages/open-account-steps";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminUsers from "@/pages/admin-users";
+import AdminCreateUser from "@/pages/admin-create-user";
 import AdminTransfers from "@/pages/admin-transfers";
 import AdminTransferNew from "@/pages/admin-transfer-new";
 import AdminKyc from "@/pages/admin-kyc";
@@ -107,6 +108,7 @@ function Router() {
       {/* Admin Routes */}
       <Route path="/admin"><AdminLayout><AdminDashboard /></AdminLayout></Route>
       <Route path="/admin/users"><AdminLayout><AdminUsers /></AdminLayout></Route>
+      <Route path="/admin/users/new"><AdminLayout><AdminCreateUser /></AdminLayout></Route>
       <Route path="/admin/transfers"><AdminLayout><AdminTransfers /></AdminLayout></Route>
       <Route path="/admin/transfers/new"><AdminLayout><AdminTransferNew /></AdminLayout></Route>
       <Route path="/admin/kyc"><AdminLayout><AdminKyc /></AdminLayout></Route>
