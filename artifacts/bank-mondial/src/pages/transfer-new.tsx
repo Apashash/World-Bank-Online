@@ -290,6 +290,7 @@ function BMTransferForm({ onBack }: { onBack: () => void }) {
 
 export default function TransferNew() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Vérification du blocage dès l'ouverture de la page
   useEffect(() => {
