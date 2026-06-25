@@ -197,7 +197,7 @@ function CardForm({ amount, currency: cur, onSuccess, onBack }: {
         </button>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Carte bancaire</h1>
-          <p className="text-sm text-gray-500">Dépôt de {amount.toFixed(2)} {currency}</p>
+          <p className="text-sm text-gray-500">Dépôt de {amount.toFixed(2)} {cur}</p>
         </div>
       </div>
 
