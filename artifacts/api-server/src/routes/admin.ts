@@ -153,7 +153,7 @@ router.get("/admin/charts", requireAuth, requireAdmin, async (req, res) => {
     if (transfersByDay[k]) {
       transfersByDay[k].count++;
       transfersByDay[k].amount += Number(t.amount);
-      if (t.status === "confirmed") transfersByDay[k].confirmed++;
+      if (t.status === "completed") transfersByDay[k].confirmed++;
     }
   }
   for (const u of allUsers) {
@@ -288,14 +288,14 @@ router.delete("/admin/users/:id", requireAuth, requireAdmin, async (req, res) =>
   if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
   if (user.role === "admin") { res.status(403).json({ error: "Impossible de supprimer un compte admin" }); return; }
   await db.delete(activityTable).where(eq(activityTable.userId, id));
-  await db.delete(fundRequestsTable).where(eq(fundRequestsTable.userId, id));
+  await db.delete(fundRequestsTable).where(eq(fundRequestsTable.fromUserId, id));
   await db.delete(scheduledTransfersTable).where(eq(scheduledTransfersTable.userId, id));
   await db.delete(supportMessagesTable).where(eq(supportMessagesTable.userId, id));
   await db.delete(beneficiariesTable).where(eq(beneficiariesTable.userId, id));
   await db.delete(kycTable).where(eq(kycTable.userId, id));
   await db.delete(transfersTable).where(eq(transfersTable.userId, id));
   await db.delete(referralsTable).where(eq(referralsTable.referrerId, id));
-  await db.delete(referralsTable).where(eq(referralsTable.referredId, id));
+  await db.delete(referralsTable).where(eq(referralsTable.referredUserId, id));
   await db.delete(subAccountsTable).where(eq(subAccountsTable.parentUserId, id));
   await db.delete(usersTable).where(eq(usersTable.id, id));
   res.json({ ok: true });

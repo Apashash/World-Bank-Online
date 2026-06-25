@@ -53,7 +53,7 @@ const STEPS: Step[] = [
   },
 ];
 
-function authHeaders() {
+function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("auth_token");
   return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 }

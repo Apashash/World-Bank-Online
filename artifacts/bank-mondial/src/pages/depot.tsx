@@ -312,7 +312,7 @@ function CardForm({ amount, currency: cur, onSuccess, onBack }: {
           ) : (
             <>
               <Lock className="h-4 w-4" />
-              Payer {amount.toFixed(2)} {currency}
+              Payer {amount.toFixed(2)} {cur}
             </>
           )}
         </Button>
@@ -764,7 +764,7 @@ export default function Depot() {
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("card");
   const [description, setDescription] = useState("");
-  const [step, setStep] = useState<"form" | "card" | "done">("form");
+  const [step, setStep] = useState<"form" | "card" | "bank" | "done">("form");
   const [loading, setLoading] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
 

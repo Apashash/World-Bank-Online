@@ -55,6 +55,8 @@ export interface User {
   kycStatus: UserKycStatus;
   /** @nullable */
   iban?: string | null;
+  /** @nullable */
+  balanceAlertThreshold?: number | null;
   createdAt: string;
 }
 
@@ -320,6 +322,10 @@ export const ActivityItemType = {
   kyc_updated: 'kyc_updated',
   login: 'login',
   referral_joined: 'referral_joined',
+  withdrawal: 'withdrawal',
+  deposit: 'deposit',
+  scheduled_transfer_executed: 'scheduled_transfer_executed',
+  fund_request_paid: 'fund_request_paid',
 } as const;
 
 export interface ActivityItem {

@@ -24,5 +24,7 @@ export interface User {
   kycStatus: UserKycStatus;
   /** @nullable */
   iban?: string | null;
+  /** @nullable */
+  balanceAlertThreshold?: number | null;
   createdAt: string;
 }

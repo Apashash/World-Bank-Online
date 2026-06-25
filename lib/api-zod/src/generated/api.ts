@@ -52,6 +52,7 @@ export const LoginResponse = zod.object({
   "referralCode": zod.string(),
   "kycStatus": zod.enum(['none', 'pending', 'verified', 'rejected']),
   "iban": zod.string().nullish(),
+  "balanceAlertThreshold": zod.number().nullish(),
   "createdAt": zod.string()
 }),
   "token": zod.string()
@@ -83,6 +84,7 @@ export const GetMeResponse = zod.object({
   "referralCode": zod.string(),
   "kycStatus": zod.enum(['none', 'pending', 'verified', 'rejected']),
   "iban": zod.string().nullish(),
+  "balanceAlertThreshold": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -108,6 +110,7 @@ export const GetUserResponse = zod.object({
   "referralCode": zod.string(),
   "kycStatus": zod.enum(['none', 'pending', 'verified', 'rejected']),
   "iban": zod.string().nullish(),
+  "balanceAlertThreshold": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -139,6 +142,7 @@ export const UpdateUserResponse = zod.object({
   "referralCode": zod.string(),
   "kycStatus": zod.enum(['none', 'pending', 'verified', 'rejected']),
   "iban": zod.string().nullish(),
+  "balanceAlertThreshold": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -459,7 +463,7 @@ export const GetDashboardSummaryResponse = zod.object({
  */
 export const GetRecentActivityResponseItem = zod.object({
   "id": zod.number(),
-  "type": zod.enum(['transfer_sent', 'transfer_received', 'transfer_confirmed', 'sub_account_created', 'kyc_updated', 'login', 'referral_joined']),
+  "type": zod.enum(['transfer_sent', 'transfer_received', 'transfer_confirmed', 'sub_account_created', 'kyc_updated', 'login', 'referral_joined', 'withdrawal', 'deposit', 'scheduled_transfer_executed', 'fund_request_paid']),
   "description": zod.string(),
   "amount": zod.number().nullish(),
   "currency": zod.string().nullish(),
@@ -493,6 +497,7 @@ export const AdminListUsersResponse = zod.object({
   "referralCode": zod.string(),
   "kycStatus": zod.enum(['none', 'pending', 'verified', 'rejected']),
   "iban": zod.string().nullish(),
+  "balanceAlertThreshold": zod.number().nullish(),
   "createdAt": zod.string()
 })),
   "total": zod.number(),
@@ -526,6 +531,7 @@ export const AdminBlockUserResponse = zod.object({
   "referralCode": zod.string(),
   "kycStatus": zod.enum(['none', 'pending', 'verified', 'rejected']),
   "iban": zod.string().nullish(),
+  "balanceAlertThreshold": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -556,6 +562,7 @@ export const AdminUpdateBalanceResponse = zod.object({
   "referralCode": zod.string(),
   "kycStatus": zod.enum(['none', 'pending', 'verified', 'rejected']),
   "iban": zod.string().nullish(),
+  "balanceAlertThreshold": zod.number().nullish(),
   "createdAt": zod.string()
 })
 

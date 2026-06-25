@@ -279,7 +279,7 @@ export default function Dashboard() {
                   .slice(activityPage * ACTIVITY_PAGE_SIZE, (activityPage + 1) * ACTIVITY_PAGE_SIZE)
                   .map((activity) => {
                     const cfg = getActivityConfig(activity.type);
-                    const isDebit = activity.type === "transfer_sent" || activity.type === "withdrawal";
+                    const isDebit = (activity.type as string) === "transfer_sent" || (activity.type as string) === "withdrawal";
                     return (
                       <div key={activity.id} className="flex gap-3 items-start">
                         {getActivityIcon(activity.type)}
@@ -296,7 +296,7 @@ export default function Dashboard() {
                         </div>
                         {activity.amount != null && (
                           <div className={`text-xs font-bold shrink-0 ${isDebit ? "text-red-500" : "text-green-600"}`}>
-                            {isDebit ? "-" : "+"}{formatAmount(Number(activity.amount), activity.currency)}
+                            {isDebit ? "-" : "+"}{formatAmount(Number(activity.amount), activity.currency ?? undefined)}
                           </div>
                         )}
                       </div>

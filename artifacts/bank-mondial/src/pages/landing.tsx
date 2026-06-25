@@ -115,7 +115,7 @@ function StaggerList({ items, renderItem, className = "", itemClass = "", baseDe
 }) {
   const { ref, visible } = useInView(0.1);
   return (
-    <ul ref={ref} className={className}>
+    <ul ref={ref as unknown as React.RefObject<HTMLUListElement>} className={className}>
       {items.map((item, i) => (
         <li key={i} className={itemClass} style={{
           opacity: visible ? 1 : 0,

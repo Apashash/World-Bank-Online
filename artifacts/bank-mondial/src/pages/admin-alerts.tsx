@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow, differenceInHours } from "date-fns";
 import { fr } from "date-fns/locale";
 
-function authHeaders() {
+function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("auth_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }

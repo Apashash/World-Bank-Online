@@ -722,6 +722,8 @@ components:
           enum: [none, pending, verified, rejected]
         iban:
           type: ["string", "null"]
+        balanceAlertThreshold:
+          type: ["number", "null"]
         createdAt:
           type: string
       required:
@@ -1047,7 +1049,7 @@ components:
           type: integer
         type:
           type: string
-          enum: [transfer_sent, transfer_received, transfer_confirmed, sub_account_created, kyc_updated, login, referral_joined]
+          enum: [transfer_sent, transfer_received, transfer_confirmed, sub_account_created, kyc_updated, login, referral_joined, withdrawal, deposit, scheduled_transfer_executed, fund_request_paid]
         description:
           type: string
         amount:

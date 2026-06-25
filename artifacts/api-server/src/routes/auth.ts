@@ -121,10 +121,7 @@ router.post("/auth/login", async (req, res) => {
     res.status(403).json({ error: "Account blocked", code: "ACCOUNT_BLOCKED" });
     return;
   }
-  if (user.status === "suspended") {
-    res.status(403).json({ error: "Account suspended", code: "ACCOUNT_SUSPENDED" });
-    return;
-  }
+
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     res.status(401).json({ error: "Invalid credentials", code: "INVALID_CREDENTIALS" });
