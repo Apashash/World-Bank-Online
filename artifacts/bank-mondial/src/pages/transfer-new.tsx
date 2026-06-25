@@ -1,8 +1,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateTransfer, getListTransfersQueryKey } from "@workspace/api-client-react";
+import { useCreateTransfer, getListTransfersQueryKey, useGetMe } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useCurrency } from "@/contexts/currency-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -288,6 +289,7 @@ export default function TransferNew() {
   const createTransfer = useCreateTransfer();
   const [generated, setGenerated] = useState<GeneratedTransfer | null>(null);
   const [showBMForm, setShowBMForm] = useState(false);
+  const { data: me } = useGetMe();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(transferSchema),
@@ -313,6 +315,17 @@ export default function TransferNew() {
       category: "",
     },
   });
+
+  // Pré-remplir les champs expéditeur avec les infos du compte connecté
+  useEffect(() => {
+    if (!me) return;
+    const parts = (me.fullName ?? "").trim().split(" ");
+    const firstName = parts[0] ?? "";
+    const lastName = parts.slice(1).join(" ");
+    form.setValue("senderFirstName", firstName, { shouldDirty: false });
+    form.setValue("senderLastName", lastName, { shouldDirty: false });
+    if (me.country) form.setValue("senderCountry", me.country, { shouldDirty: false });
+  }, [me, form]);
 
   const watchedAmount = form.watch("amountEur");
   const watchedCurrency = form.watch("displayCurrency");
