@@ -160,30 +160,30 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <Card className="border shadow-sm">
-        <CardContent className="pt-5 pb-5">
-          <div className="grid grid-cols-4 gap-4">
+        <CardContent className="pt-4 pb-4 px-3">
+          <div className="grid grid-cols-4 gap-x-1 gap-y-4">
             {[
               { icon: Wallet, label: "Dépôt", href: "/depot" },
               { icon: Send, label: "Envoyer", href: "/transfers/new" },
               { icon: Download, label: "Recevoir", href: "/recevoir" },
               { icon: ArrowLeftRight, label: "Virement", href: "/transfers" },
-              { icon: QrCode, label: "Scanner QR", href: "/scanner-qr" },
+              { icon: QrCode, label: "Scanner", href: "/scanner-qr" },
               { icon: Landmark, label: "Retrait", href: "/retrait" },
-              { icon: Receipt, label: "Payer factures", href: "/payer-factures" },
+              { icon: Receipt, label: "Factures", href: "/payer-factures" },
             ].map(({ icon: Icon, label, href }) => {
               const isEnvoyer = label === "Envoyer";
               const inner = (
-                <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                  <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <Icon className="h-6 w-6 text-[#003087]" strokeWidth={1.5} />
+                <div className="flex flex-col items-center gap-1.5 group cursor-pointer">
+                  <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <Icon className="h-5 w-5 text-[#003087]" strokeWidth={1.5} />
                   </div>
-                  <span className="text-xs text-gray-600 font-medium text-center leading-tight">
+                  <span className="text-[11px] text-gray-600 font-medium text-center leading-tight w-full px-0.5 truncate">
                     {isEnvoyer && checkingBlock ? "..." : label}
                   </span>
                 </div>
               );
               return isEnvoyer ? (
-                <button key={label} onClick={handleEnvoyer} className="w-full text-left">
+                <button key={label} onClick={handleEnvoyer} className="w-full">
                   {inner}
                 </button>
               ) : (
@@ -192,12 +192,12 @@ export default function Dashboard() {
             })}
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("openMobileMenu"))}
-              className="flex flex-col items-center gap-2 group cursor-pointer"
+              className="flex flex-col items-center gap-1.5 group cursor-pointer"
             >
-              <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                <LayoutGrid className="h-6 w-6 text-[#003087]" strokeWidth={1.5} />
+              <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <LayoutGrid className="h-5 w-5 text-[#003087]" strokeWidth={1.5} />
               </div>
-              <span className="text-xs text-gray-600 font-medium text-center leading-tight">Plus</span>
+              <span className="text-[11px] text-gray-600 font-medium text-center leading-tight truncate w-full px-0.5">Plus</span>
             </button>
           </div>
         </CardContent>
