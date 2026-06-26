@@ -7,8 +7,9 @@ import { fr } from "date-fns/locale";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { fetchBlockStatus, redirectToBlockPage } from "@/lib/block-redirect";
 
 type Beneficiary = { id: number; name: string; iban?: string | null };
 type WeeklyPoint = { label: string; sent: number; received: number };
@@ -57,7 +58,22 @@ export default function Dashboard() {
   const { formatAmount } = useCurrency();
   const [period, setPeriod] = useState("30");
   const [activityPage, setActivityPage] = useState(0);
+  const [checkingBlock, setCheckingBlock] = useState(false);
+  const [, setLocation] = useLocation();
   const ACTIVITY_PAGE_SIZE = 5;
+
+  const handleEnvoyer = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (checkingBlock) return;
+    setCheckingBlock(true);
+    const status = await fetchBlockStatus();
+    setCheckingBlock(false);
+    if (status.blocked) {
+      redirectToBlockPage("operation", status.reason, status.whatsapp);
+      return;
+    }
+    setLocation("/transfers/new");
+  };
 
   const ACTIVITY_TYPE_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
     transfer_sent:         { label: "Virement envoyé", className: "bg-red-100 text-red-700 border-red-200",       dot: "bg-red-500" },
@@ -154,16 +170,26 @@ export default function Dashboard() {
               { icon: QrCode, label: "Scanner QR", href: "/scanner-qr" },
               { icon: Landmark, label: "Retrait", href: "/retrait" },
               { icon: Receipt, label: "Payer factures", href: "/payer-factures" },
-            ].map(({ icon: Icon, label, href }) => (
-              <Link key={label} href={href}>
+            ].map(({ icon: Icon, label, href }) => {
+              const isEnvoyer = label === "Envoyer";
+              const inner = (
                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
                   <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                     <Icon className="h-6 w-6 text-[#003087]" strokeWidth={1.5} />
                   </div>
-                  <span className="text-xs text-gray-600 font-medium text-center leading-tight">{label}</span>
+                  <span className="text-xs text-gray-600 font-medium text-center leading-tight">
+                    {isEnvoyer && checkingBlock ? "..." : label}
+                  </span>
                 </div>
-              </Link>
-            ))}
+              );
+              return isEnvoyer ? (
+                <button key={label} onClick={handleEnvoyer} className="w-full text-left">
+                  {inner}
+                </button>
+              ) : (
+                <Link key={label} href={href}>{inner}</Link>
+              );
+            })}
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("openMobileMenu"))}
               className="flex flex-col items-center gap-2 group cursor-pointer"

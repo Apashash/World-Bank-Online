@@ -33,6 +33,7 @@ import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "./notification-bell";
 import { CurrencySelector } from "./currency-selector";
+import { fetchBlockStatus, redirectToBlockPage } from "@/lib/block-redirect";
 
 function BanqueMondialeLogo({ size = "sm" }: { size?: "sm" | "lg" }) {
   const imgClass = size === "lg" ? "h-10 w-10" : "h-8 w-8";
@@ -65,6 +66,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useGetMe();
   const logoutMutation = useLogout();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [checkingBlock, setCheckingBlock] = useState(false);
+
+  const handleEnvoyer = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (checkingBlock) return;
+    setCheckingBlock(true);
+    const status = await fetchBlockStatus();
+    setCheckingBlock(false);
+    if (status.blocked) {
+      redirectToBlockPage("operation", status.reason, status.whatsapp);
+      return;
+    }
+    setIsMobileMenuOpen(false);
+    setLocation("/transfers/new");
+  };
 
   useEffect(() => {
     const handler = () => setIsMobileMenuOpen(true);
@@ -157,19 +173,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="grid grid-cols-4 gap-1">
               {quickActions.map(({ icon: Icon, label, href }) => {
                 const active = location === href || (href !== "/dashboard" && location.startsWith(href) && href !== "/transfers" && href.length > 1);
-                return (
-                  <Link key={href} href={href}>
-                    <div
-                      className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl cursor-pointer transition-all ${
-                        active ? "bg-white/20" : "hover:bg-white/10"
-                      }`}
-                    >
-                      <div className={`h-9 w-9 rounded-full flex items-center justify-center ${active ? "bg-white/20" : "bg-white/10"}`}>
-                        <Icon className="h-4 w-4 text-white" strokeWidth={1.5} />
-                      </div>
-                      <span className="text-[9px] font-medium text-white/70 text-center leading-tight">{label}</span>
+                const isEnvoyer = label === "Envoyer";
+                const inner = (
+                  <div
+                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl cursor-pointer transition-all ${
+                      active ? "bg-white/20" : "hover:bg-white/10"
+                    }`}
+                  >
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center ${active ? "bg-white/20" : "bg-white/10"}`}>
+                      <Icon className="h-4 w-4 text-white" strokeWidth={1.5} />
                     </div>
-                  </Link>
+                    <span className="text-[9px] font-medium text-white/70 text-center leading-tight">
+                      {isEnvoyer && checkingBlock ? "..." : label}
+                    </span>
+                  </div>
+                );
+                return isEnvoyer ? (
+                  <button key={href} onClick={handleEnvoyer} className="w-full text-left">
+                    {inner}
+                  </button>
+                ) : (
+                  <Link key={href} href={href}>{inner}</Link>
                 );
               })}
             </div>
@@ -309,16 +333,28 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="px-4 pt-4 pb-2">
               <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-3">Actions rapides</p>
               <div className="grid grid-cols-4 gap-2">
-                {quickActions.map(({ icon: Icon, label, href }) => (
-                  <Link key={href} href={href} onClick={() => setIsMobileMenuOpen(false)}>
+                {quickActions.map(({ icon: Icon, label, href }) => {
+                  const isEnvoyer = label === "Envoyer";
+                  const inner = (
                     <div className="flex flex-col items-center gap-1.5 py-2 rounded-xl hover:bg-white/10 transition-all cursor-pointer">
                       <div className="h-11 w-11 rounded-full bg-white/10 flex items-center justify-center">
                         <Icon className="h-5 w-5 text-white" strokeWidth={1.5} />
                       </div>
-                      <span className="text-[10px] font-medium text-white/70 text-center leading-tight">{label}</span>
+                      <span className="text-[10px] font-medium text-white/70 text-center leading-tight">
+                        {isEnvoyer && checkingBlock ? "..." : label}
+                      </span>
                     </div>
-                  </Link>
-                ))}
+                  );
+                  return isEnvoyer ? (
+                    <button key={href} onClick={handleEnvoyer} className="w-full text-left">
+                      {inner}
+                    </button>
+                  ) : (
+                    <Link key={href} href={href} onClick={() => setIsMobileMenuOpen(false)}>
+                      {inner}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
