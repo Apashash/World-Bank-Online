@@ -53,9 +53,12 @@ function formatTransfer(t: typeof transfersTable.$inferSelect) {
     receiverEmail: t.receiverEmail ?? null,
     receiverCountry: t.receiverCountry ?? null,
     receiverCity: t.receiverCity ?? null,
+    // Receiver account
+    receiverAccountNumber: t.receiverAccountNumber ?? null,
     // Display currency and payment config
     displayCurrency: t.displayCurrency ?? "EUR",
     paymentMethods: t.paymentMethods ?? null,
+    paymentMethodLabels: t.paymentMethodLabels ?? null,
     blockReason: t.blockReason ?? null,
     whatsappNumber: t.whatsappNumber ?? null,
     adminUnlocked: t.adminUnlocked ?? false,

@@ -364,9 +364,14 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
   const validTypes = ["virement", "dépôt", "retrait", "facture"];
   const transactionType = typeof req.body.transactionType === "string" && validTypes.includes(req.body.transactionType)
     ? req.body.transactionType : "virement";
+  const receiverAccountNumber = safeStr(req.body.receiverAccountNumber);
   let paymentMethods: string | null = null;
   if (Array.isArray(req.body.paymentMethods) && req.body.paymentMethods.length > 0) {
     paymentMethods = JSON.stringify(req.body.paymentMethods.filter((m: unknown) => typeof m === "string"));
+  }
+  let paymentMethodLabels: string | null = null;
+  if (Array.isArray(req.body.paymentMethodLabels) && req.body.paymentMethodLabels.length > 0) {
+    paymentMethodLabels = JSON.stringify(req.body.paymentMethodLabels.filter((m: unknown) => typeof m === "string"));
   }
 
   const [transfer] = await db.insert(transfersTable).values({
@@ -381,8 +386,10 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
     reference,
     senderFirstName, senderLastName, senderCountry, senderCity,
     receiverFirstName, receiverLastName, receiverEmail, receiverCountry, receiverCity,
+    receiverAccountNumber,
     displayCurrency,
     paymentMethods,
+    paymentMethodLabels,
     blockReason,
     whatsappNumber,
   }).returning();

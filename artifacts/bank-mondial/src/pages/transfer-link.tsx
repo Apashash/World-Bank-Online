@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { CheckCircle2, ShieldCheck, ShieldAlert, AlertCircle, Clock, User, Users, CreditCard, Smartphone, Wallet, Lock, MessageCircle, Unlock, MapPin, Mail, Phone } from "lucide-react";
+import { CheckCircle2, ShieldCheck, ShieldAlert, AlertCircle, Clock, User, Users, CreditCard, Smartphone, Wallet, Lock, MessageCircle, Unlock, Building2, Hash } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useEffect, useState } from "react";
@@ -28,7 +28,9 @@ type TransferData = {
   receiverEmail: string | null;
   receiverCountry: string | null;
   receiverCity: string | null;
+  receiverAccountNumber: string | null;
   paymentMethods: string | null;
+  paymentMethodLabels: string | null;
   blockReason: string | null;
   whatsappNumber: string | null;
   adminUnlocked: boolean;
@@ -276,6 +278,11 @@ export default function TransferLink() {
     if (transfer.paymentMethods) parsedMethods = JSON.parse(transfer.paymentMethods);
   } catch {}
 
+  let parsedMethodLabels: string[] = [];
+  try {
+    if (transfer.paymentMethodLabels) parsedMethodLabels = JSON.parse(transfer.paymentMethodLabels);
+  } catch {}
+
   // Converted amount
   const displayCurrency = transfer.displayCurrency || "EUR";
   const convertedAmount = displayCurrency !== "EUR"
@@ -380,28 +387,62 @@ export default function TransferLink() {
           ]}
         />
 
+        {/* Receiver account number / RIB */}
+        {transfer.receiverAccountNumber && (
+          <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100" style={{ backgroundColor: "#7c3aed08" }}>
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#7c3aed15" }}>
+                <Hash className="h-4 w-4" style={{ color: "#7c3aed" }} />
+              </div>
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-600">Numéro de compte / RIB</p>
+            </div>
+            <div className="px-5 py-4">
+              <p className="font-mono text-sm font-semibold text-gray-900 break-all tracking-wide select-all">
+                {transfer.receiverAccountNumber}
+              </p>
+              <p className="text-[11px] text-gray-400 mt-1.5">Numéro de compte ou RIB du receveur</p>
+            </div>
+          </div>
+        )}
+
         {/* Payment methods */}
-        {parsedMethods.length > 0 && (
+        {(parsedMethods.length > 0 || parsedMethodLabels.length > 0) && (
           <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/80">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-gray-100">
-                <CreditCard className="h-4 w-4 text-gray-600" />
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-amber-100">
+                <Building2 className="h-4 w-4 text-amber-600" />
               </div>
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-600">Moyens de paiement</p>
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-600">Moyens de paiement acceptés</p>
             </div>
             <div className="px-5 py-3 flex flex-wrap gap-2">
-              {parsedMethods.map((method) => {
-                const meta = PAYMENT_METHOD_META[method];
-                if (!meta) return null;
-                const Icon = meta.icon;
-                return (
-                  <div key={method} className="flex items-center gap-2 px-4 py-2 rounded-xl border"
-                    style={{ borderColor: meta.color + "40", backgroundColor: meta.bg }}>
-                    <Icon className="h-4 w-4" style={{ color: meta.color }} />
-                    <span className="text-xs font-semibold" style={{ color: meta.color }}>{meta.label}</span>
-                  </div>
-                );
-              })}
+              {/* Use labels if available, otherwise fall back to ID-based meta */}
+              {parsedMethodLabels.length > 0
+                ? parsedMethodLabels.map((label, i) => (
+                    <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-200 bg-amber-50">
+                      <Building2 className="h-4 w-4 text-amber-600 shrink-0" />
+                      <span className="text-xs font-semibold text-amber-800">{label}</span>
+                    </div>
+                  ))
+                : parsedMethods.map((method) => {
+                    const meta = PAYMENT_METHOD_META[method];
+                    if (!meta) {
+                      return (
+                        <div key={method} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-200 bg-amber-50">
+                          <CreditCard className="h-4 w-4 text-amber-600" />
+                          <span className="text-xs font-semibold text-amber-800">{method}</span>
+                        </div>
+                      );
+                    }
+                    const Icon = meta.icon;
+                    return (
+                      <div key={method} className="flex items-center gap-2 px-4 py-2 rounded-xl border"
+                        style={{ borderColor: meta.color + "40", backgroundColor: meta.bg }}>
+                        <Icon className="h-4 w-4" style={{ color: meta.color }} />
+                        <span className="text-xs font-semibold" style={{ color: meta.color }}>{meta.label}</span>
+                      </div>
+                    );
+                  })
+              }
             </div>
           </div>
         )}

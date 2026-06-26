@@ -38,8 +38,14 @@ export const transfersTable = pgTable("transfers", {
   // Display currency (amount stored in EUR, displayed in this currency)
   displayCurrency: text("display_currency").notNull().default("EUR"),
 
-  // Payment methods (JSON array: ["card","paypal","mobile_money"])
+  // Receiver bank account number / RIB / IBAN
+  receiverAccountNumber: text("receiver_account_number"),
+
+  // Payment methods (JSON array of IDs: ["carte_bancaire","paypal",…])
   paymentMethods: text("payment_methods"),
+
+  // Payment method labels (JSON array of display names: ["BNP Paribas","PayPal",…])
+  paymentMethodLabels: text("payment_method_labels"),
 
   // Withdrawal block reason (configured by admin at creation)
   blockReason: text("block_reason"),
