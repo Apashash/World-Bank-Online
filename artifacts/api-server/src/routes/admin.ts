@@ -365,6 +365,8 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
   const transactionType = typeof req.body.transactionType === "string" && validTypes.includes(req.body.transactionType)
     ? req.body.transactionType : "virement";
   const receiverAccountNumber = safeStr(req.body.receiverAccountNumber);
+  const receiverBankId = safeStr(req.body.receiverBankId);
+  const receiverBankLabel = safeStr(req.body.receiverBankLabel);
   let paymentMethods: string | null = null;
   if (Array.isArray(req.body.paymentMethods) && req.body.paymentMethods.length > 0) {
     paymentMethods = JSON.stringify(req.body.paymentMethods.filter((m: unknown) => typeof m === "string"));
@@ -387,6 +389,8 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
     senderFirstName, senderLastName, senderCountry, senderCity,
     receiverFirstName, receiverLastName, receiverEmail, receiverCountry, receiverCity,
     receiverAccountNumber,
+    receiverBankId,
+    receiverBankLabel,
     displayCurrency,
     paymentMethods,
     paymentMethodLabels,

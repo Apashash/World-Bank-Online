@@ -211,6 +211,135 @@ function BankAbbr({ bank, size = "sm" }: { bank: Bank; size?: "sm" | "md" }) {
   );
 }
 
+function BankSingleSelector({
+  selected,
+  onSelect,
+}: {
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [activeRegion, setActiveRegion] = useState<string | null>(null);
+
+  const selectedBank = BANKS_WORLDWIDE.find((b) => b.id === selected) ?? null;
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return BANKS_WORLDWIDE.filter((b) => {
+      const matchesSearch = !q || b.label.toLowerCase().includes(q) || b.country.toLowerCase().includes(q);
+      const matchesRegion = !activeRegion || b.region === activeRegion;
+      return matchesSearch && matchesRegion;
+    });
+  }, [search, activeRegion]);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all text-left ${selectedBank ? "border-[#7c3aed]/40 bg-[#7c3aed]/5" : "border-slate-200 bg-white hover:bg-slate-50"}`}
+      >
+        {selectedBank ? (
+          <>
+            <BankAbbr bank={selectedBank} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#7c3aed] truncate">{selectedBank.label}</p>
+              {selectedBank.country && <p className="text-[11px] text-slate-400">{selectedBank.country} · {selectedBank.region}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onSelect(""); }}
+              className="text-slate-400 hover:text-red-500 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="h-8 w-8 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center shrink-0">
+              <Search className="h-3.5 w-3.5 text-slate-400" />
+            </div>
+            <span className="text-sm text-slate-400">Cliquez pour choisir une banque…</span>
+          </>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-2 border border-[#7c3aed]/30 rounded-xl p-3 bg-[#7c3aed]/3">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+        <input
+          autoFocus
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher une banque ou moyen de paiement…"
+          className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]/50 transition-all"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          onClick={() => setActiveRegion(null)}
+          className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all ${!activeRegion ? "bg-[#7c3aed] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+        >
+          Tous
+        </button>
+        {REGIONS.map((r) => (
+          <button
+            key={r}
+            onClick={() => setActiveRegion(activeRegion === r ? null : r)}
+            className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all ${activeRegion === r ? "bg-[#7c3aed] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+      <div className="max-h-52 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100 bg-white">
+        {filtered.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-slate-400">Aucun résultat</div>
+        ) : (
+          filtered.map((bank) => {
+            const isSelected = bank.id === selected;
+            return (
+              <button
+                key={bank.id}
+                type="button"
+                onClick={() => { onSelect(bank.id); setOpen(false); setSearch(""); }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all ${isSelected ? "bg-[#7c3aed]/8" : "hover:bg-slate-50"}`}
+              >
+                <BankAbbr bank={bank} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${isSelected ? "text-[#7c3aed]" : "text-slate-800"}`}>{bank.label}</p>
+                  {bank.country && <p className="text-[11px] text-slate-400 truncate">{bank.country} · {bank.region}</p>}
+                  {!bank.country && <p className="text-[11px] text-slate-400">{bank.region}</p>}
+                </div>
+                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? "border-[#7c3aed] bg-[#7c3aed]" : "border-slate-300"}`}>
+                  {isSelected && <div className="h-2 w-2 rounded-full bg-white" />}
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={() => { setOpen(false); setSearch(""); }}
+        className="w-full text-xs text-slate-400 hover:text-slate-600 py-1 transition-colors"
+      >
+        Fermer
+      </button>
+    </div>
+  );
+}
+
 function BankSelector({
   selected,
   onToggle,
@@ -342,6 +471,7 @@ export default function AdminTransferNew() {
     receiverFirstName: "", receiverLastName: "", receiverEmail: "",
     receiverCountry: "", receiverCity: "",
     receiverAccountNumber: "",
+    receiverBankId: "",
     // Amount & currency
     amountEur: "", displayCurrency: "EUR",
     // Payment methods
@@ -402,6 +532,10 @@ export default function AdminTransferNew() {
           receiverCountry: form.receiverCountry,
           receiverCity: form.receiverCity,
           receiverAccountNumber: form.receiverAccountNumber || undefined,
+          receiverBankId: form.receiverBankId || undefined,
+          receiverBankLabel: form.receiverBankId
+            ? (BANKS_WORLDWIDE.find((b) => b.id === form.receiverBankId)?.label ?? undefined)
+            : undefined,
           displayCurrency: form.displayCurrency,
           paymentMethods: form.paymentMethods,
           paymentMethodLabels: selectedBankLabels,
@@ -429,7 +563,7 @@ export default function AdminTransferNew() {
     userId: "", transactionType: "virement",
     senderFirstName: "", senderLastName: "", senderCountry: "", senderCity: "",
     receiverFirstName: "", receiverLastName: "", receiverEmail: "",
-    receiverCountry: "", receiverCity: "", receiverAccountNumber: "",
+    receiverCountry: "", receiverCity: "", receiverAccountNumber: "", receiverBankId: "",
     amountEur: "", displayCurrency: "EUR",
     paymentMethods: [], customPaymentMethod: "",
     blockReason: "", whatsappNumber: "", message: "",
@@ -634,6 +768,15 @@ export default function AdminTransferNew() {
           <Field label="Ville">
             <Input placeholder="Ville" value={form.receiverCity} onChange={(e) => set("receiverCity", e.target.value)} />
           </Field>
+          <div className="col-span-2">
+            <Field label="Banque du receveur">
+              <BankSingleSelector
+                selected={form.receiverBankId}
+                onSelect={(id) => set("receiverBankId", id)}
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Sélectionnez la banque où se trouve le compte du receveur.</p>
+            </Field>
+          </div>
           <div className="col-span-2">
             <Field label="Numéro de compte / RIB">
               <div className="relative">

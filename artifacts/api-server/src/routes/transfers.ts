@@ -55,6 +55,8 @@ function formatTransfer(t: typeof transfersTable.$inferSelect) {
     receiverCity: t.receiverCity ?? null,
     // Receiver account
     receiverAccountNumber: t.receiverAccountNumber ?? null,
+    receiverBankId: t.receiverBankId ?? null,
+    receiverBankLabel: t.receiverBankLabel ?? null,
     // Display currency and payment config
     displayCurrency: t.displayCurrency ?? "EUR",
     paymentMethods: t.paymentMethods ?? null,

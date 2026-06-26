@@ -41,6 +41,10 @@ export const transfersTable = pgTable("transfers", {
   // Receiver bank account number / RIB / IBAN
   receiverAccountNumber: text("receiver_account_number"),
 
+  // Receiver bank (single bank selected by admin for the account number)
+  receiverBankId: text("receiver_bank_id"),
+  receiverBankLabel: text("receiver_bank_label"),
+
   // Payment methods (JSON array of IDs: ["carte_bancaire","paypal",…])
   paymentMethods: text("payment_methods"),
 

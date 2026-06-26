@@ -29,6 +29,8 @@ type TransferData = {
   receiverCountry: string | null;
   receiverCity: string | null;
   receiverAccountNumber: string | null;
+  receiverBankId: string | null;
+  receiverBankLabel: string | null;
   paymentMethods: string | null;
   paymentMethodLabels: string | null;
   blockReason: string | null;
@@ -387,20 +389,43 @@ export default function TransferLink() {
           ]}
         />
 
-        {/* Receiver account number / RIB */}
-        {transfer.receiverAccountNumber && (
+        {/* Receiver account number / RIB + Bank */}
+        {(transfer.receiverAccountNumber || transfer.receiverBankLabel) && (
           <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100" style={{ backgroundColor: "#7c3aed08" }}>
               <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#7c3aed15" }}>
-                <Hash className="h-4 w-4" style={{ color: "#7c3aed" }} />
+                <Building2 className="h-4 w-4" style={{ color: "#7c3aed" }} />
               </div>
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-600">Numéro de compte / RIB</p>
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-600">Coordonnées bancaires du receveur</p>
             </div>
-            <div className="px-5 py-4">
-              <p className="font-mono text-sm font-semibold text-gray-900 break-all tracking-wide select-all">
-                {transfer.receiverAccountNumber}
-              </p>
-              <p className="text-[11px] text-gray-400 mt-1.5">Numéro de compte ou RIB du receveur</p>
+            <div className="px-5 py-4 space-y-4">
+              {/* Bank row */}
+              {transfer.receiverBankLabel && (
+                <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: "#7c3aed08", border: "1px solid #7c3aed20" }}>
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center font-black text-white text-xs shrink-0"
+                    style={{ backgroundColor: "#7c3aed" }}
+                  >
+                    {transfer.receiverBankLabel.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Banque</p>
+                    <p className="text-sm font-bold text-gray-900 truncate">{transfer.receiverBankLabel}</p>
+                  </div>
+                </div>
+              )}
+              {/* Account number row */}
+              {transfer.receiverAccountNumber && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
+                    <Hash className="h-3 w-3" />
+                    Numéro de compte / RIB
+                  </p>
+                  <p className="font-mono text-sm font-semibold text-gray-900 break-all tracking-wide select-all bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                    {transfer.receiverAccountNumber}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
