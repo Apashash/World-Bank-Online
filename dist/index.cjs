@@ -13,11 +13,11 @@ var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __copyProps = (to, from, except2, desc3) => {
+var __copyProps = (to, from, except2, desc2) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except2)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc3 = __getOwnPropDesc(from, key)) || desc3.enumerable });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc2 = __getOwnPropDesc(from, key)) || desc2.enumerable });
   }
   return to;
 };
@@ -748,8 +748,8 @@ var require_depd = __commonJS({
       return deprecate;
     }
     function eehaslisteners(emitter, type) {
-      var count2 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
-      return count2 > 0;
+      var count3 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
+      return count3 > 0;
     }
     function isignored(namespace) {
       if (process.noDeprecation) {
@@ -1339,10 +1339,10 @@ var require_http_errors = __commonJS({
       return ServerError;
     }
     function nameFunc(func, name) {
-      var desc3 = Object.getOwnPropertyDescriptor(func, "name");
-      if (desc3 && desc3.configurable) {
-        desc3.value = name;
-        Object.defineProperty(func, "name", desc3);
+      var desc2 = Object.getOwnPropertyDescriptor(func, "name");
+      if (desc2 && desc2.configurable) {
+        desc2.value = name;
+        Object.defineProperty(func, "name", desc2);
       }
     }
     function populateConstructorExports(exports3, codes, HttpError) {
@@ -16786,14 +16786,14 @@ var require_get = __commonJS({
         throw e;
       }
     }
-    var desc3 = !!hasProtoAccessor && gOPD && gOPD(
+    var desc2 = !!hasProtoAccessor && gOPD && gOPD(
       Object.prototype,
       /** @type {keyof typeof Object.prototype} */
       "__proto__"
     );
     var $Object = Object;
     var $getPrototypeOf = $Object.getPrototypeOf;
-    module2.exports = desc3 && typeof desc3.get === "function" ? callBind([desc3.get]) : typeof $getPrototypeOf === "function" ? (
+    module2.exports = desc2 && typeof desc2.get === "function" ? callBind([desc2.get]) : typeof $getPrototypeOf === "function" ? (
       /** @type {import('./get')} */
       function getDunder(value) {
         return $getPrototypeOf(value == null ? value : $Object(value));
@@ -17143,10 +17143,10 @@ var require_get_intrinsic = __commonJS({
             return void undefined2;
           }
           if ($gOPD && i + 1 >= parts.length) {
-            var desc3 = $gOPD(value, part);
-            isOwn = !!desc3;
-            if (isOwn && "get" in desc3 && !("originalValue" in desc3.get)) {
-              value = desc3.get;
+            var desc2 = $gOPD(value, part);
+            isOwn = !!desc2;
+            if (isOwn && "get" in desc2 && !("originalValue" in desc2.get)) {
+              value = desc2.get;
             } else {
               value = value[part];
             }
@@ -18318,14 +18318,14 @@ var require_urlencoded = __commonJS({
       };
     }
     function parameterCount(body, limit) {
-      let count2 = 0;
+      let count3 = 0;
       let index = -1;
       do {
-        count2++;
-        if (count2 > limit) return void 0;
+        count3++;
+        if (count3 > limit) return void 0;
         index = body.indexOf("&", index + 1);
       } while (index !== -1);
-      return count2;
+      return count3;
     }
   }
 });
@@ -21538,13 +21538,13 @@ var require_mediaType = __commonJS({
       return spec.q > 0;
     }
     function quoteCount(string4) {
-      var count2 = 0;
+      var count3 = 0;
       var index = 0;
       while ((index = string4.indexOf('"', index)) !== -1) {
-        count2++;
+        count3++;
         index++;
       }
-      return count2;
+      return count3;
     }
     function splitKeyValuePair(str) {
       var index = str.indexOf("=");
@@ -22849,8 +22849,8 @@ var require_send = __commonJS({
       }
     }
     function hasListeners(emitter, type) {
-      var count2 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
-      return count2 > 0;
+      var count3 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
+      return count3 > 0;
     }
     function normalizeList(val, name) {
       var list = [].concat(val || []);
@@ -24653,11 +24653,11 @@ var require_binaryParsers = __commonJS({
         var array2 = [];
         var i2;
         if (dimension.length > 1) {
-          var count2 = dimension.shift();
-          for (i2 = 0; i2 < count2; i2++) {
+          var count3 = dimension.shift();
+          for (i2 = 0; i2 < count3; i2++) {
             array2[i2] = parse3(dimension, elementType2);
           }
-          dimension.unshift(count2);
+          dimension.unshift(count3);
         } else {
           for (i2 = 0; i2 < dimension[0]; i2++) {
             array2[i2] = parseElement(elementType2);
@@ -25851,12 +25851,12 @@ var require_result = __commonJS({
         }
         const row = {};
         for (let i = 0; i < fieldDescriptions.length; i++) {
-          const desc3 = fieldDescriptions[i];
-          row[desc3.name] = null;
+          const desc2 = fieldDescriptions[i];
+          row[desc2.name] = null;
           if (this._types) {
-            this._parsers[i] = this._types.getTypeParser(desc3.dataTypeID, desc3.format || "text");
+            this._parsers[i] = this._types.getTypeParser(desc2.dataTypeID, desc2.format || "text");
           } else {
-            this._parsers[i] = types3.getTypeParser(desc3.dataTypeID, desc3.format || "text");
+            this._parsers[i] = types3.getTypeParser(desc2.dataTypeID, desc2.format || "text");
           }
         }
         this._prebuiltEmptyResultObject = { ...row };
@@ -46726,13 +46726,13 @@ var require_stream_writable = __commonJS({
         var buffer = new Array(l);
         var holder = state.corkedRequestsFree;
         holder.entry = entry;
-        var count2 = 0;
+        var count3 = 0;
         var allBuffers = true;
         while (entry) {
-          buffer[count2] = entry;
+          buffer[count3] = entry;
           if (!entry.isBuf) allBuffers = false;
           entry = entry.next;
-          count2 += 1;
+          count3 += 1;
         }
         buffer.allBuffers = allBuffers;
         doWrite(stream, state, true, state.length, buffer, "", holder.finish);
@@ -48675,16 +48675,16 @@ var require_typedarray = __commonJS({
     })()) {
       defineProp = Object.defineProperty;
     } else {
-      defineProp = function(o, p, desc3) {
+      defineProp = function(o, p, desc2) {
         if (!o === Object(o)) throw new TypeError("Object.defineProperty called on non-object");
-        if (ECMAScript.HasProperty(desc3, "get") && Object.prototype.__defineGetter__) {
-          Object.prototype.__defineGetter__.call(o, p, desc3.get);
+        if (ECMAScript.HasProperty(desc2, "get") && Object.prototype.__defineGetter__) {
+          Object.prototype.__defineGetter__.call(o, p, desc2.get);
         }
-        if (ECMAScript.HasProperty(desc3, "set") && Object.prototype.__defineSetter__) {
-          Object.prototype.__defineSetter__.call(o, p, desc3.set);
+        if (ECMAScript.HasProperty(desc2, "set") && Object.prototype.__defineSetter__) {
+          Object.prototype.__defineSetter__.call(o, p, desc2.set);
         }
-        if (ECMAScript.HasProperty(desc3, "value")) {
-          o[p] = desc3.value;
+        if (ECMAScript.HasProperty(desc2, "value")) {
+          o[p] = desc2.value;
         }
         return o;
       };
@@ -56217,10 +56217,10 @@ function pgEnumObjectWithSchema(enumName, values, schema) {
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/subquery.js
 var Subquery = class {
   static [entityKind] = "Subquery";
-  constructor(sql3, fields, alias, isWith = false, usedTables = []) {
+  constructor(sql2, fields, alias, isWith = false, usedTables = []) {
     this._ = {
       brand: "Subquery",
-      sql: sql3,
+      sql: sql2,
       selectedFields: fields,
       alias,
       isWith,
@@ -56621,19 +56621,19 @@ function sql(strings, ...params) {
   }
   return new SQL(queryChunks);
 }
-((sql22) => {
+((sql2) => {
   function empty() {
     return new SQL([]);
   }
-  sql22.empty = empty;
+  sql2.empty = empty;
   function fromList(list) {
     return new SQL(list);
   }
-  sql22.fromList = fromList;
+  sql2.fromList = fromList;
   function raw(str) {
     return new SQL([new StringChunk(str)]);
   }
-  sql22.raw = raw;
+  sql2.raw = raw;
   function join(chunks, separator) {
     const result = [];
     for (const [i, chunk] of chunks.entries()) {
@@ -56644,24 +56644,24 @@ function sql(strings, ...params) {
     }
     return new SQL(result);
   }
-  sql22.join = join;
+  sql2.join = join;
   function identifier(value) {
     return new Name(value);
   }
-  sql22.identifier = identifier;
+  sql2.identifier = identifier;
   function placeholder2(name2) {
     return new Placeholder(name2);
   }
-  sql22.placeholder = placeholder2;
+  sql2.placeholder = placeholder2;
   function param2(value, encoder) {
     return new Param(value, encoder);
   }
-  sql22.param = param2;
+  sql2.param = param2;
 })(sql || (sql = {}));
 ((SQL2) => {
   class Aliased {
-    constructor(sql22, fieldAlias) {
-      this.sql = sql22;
+    constructor(sql2, fieldAlias) {
+      this.sql = sql2;
       this.fieldAlias = fieldAlias;
     }
     static [entityKind] = "SQL.Aliased";
@@ -58961,6 +58961,11 @@ function mapRelationalRow(tablesConfig, tableConfig, row, buildQueryResultSelect
   return result;
 }
 
+// ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js
+function count(expression) {
+  return sql`count(${expression || sql.raw("*")})`.mapWith(Number);
+}
+
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/view-base.js
 var PgViewBase = class extends View {
   static [entityKind] = "PgViewBase";
@@ -59358,8 +59363,8 @@ var PgDialect = class {
       return "none";
     }
   }
-  sqlToQuery(sql22, invokeSource) {
-    return sql22.toQuery({
+  sqlToQuery(sql2, invokeSource) {
+    return sql2.toQuery({
       casing: this.casing,
       escapeName: this.escapeName,
       escapeParam: this.escapeParam,
@@ -61718,10 +61723,10 @@ var PgRelationalQuery = class extends QueryPromise {
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/pg-core/query-builders/raw.js
 var PgRaw = class extends QueryPromise {
-  constructor(execute, sql3, query, mapBatchResult) {
+  constructor(execute, sql2, query, mapBatchResult) {
     super();
     this.execute = execute;
-    this.sql = sql3;
+    this.sql = sql2;
     this.query = query;
     this.mapBatchResult = mapBatchResult;
   }
@@ -62041,8 +62046,8 @@ var NoopCache = class extends Cache {
   async onMutate(_params) {
   }
 };
-async function hashQuery(sql3, params) {
-  const dataToHash = `${sql3}-${JSON.stringify(params)}`;
+async function hashQuery(sql2, params) {
+  const dataToHash = `${sql2}-${JSON.stringify(params)}`;
   const encoder = new TextEncoder();
   const data = encoder.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -62175,8 +62180,8 @@ var PgSession = class {
     ).all();
   }
   /** @internal */
-  async count(sql22, token) {
-    const res = await this.execute(sql22, token);
+  async count(sql2, token) {
+    const res = await this.execute(sql2, token);
     return Number(
       res[0]["count"]
     );
@@ -62398,8 +62403,8 @@ var NodePgSession = class _NodePgSession extends PgSession {
       if (isPool) session.client.release();
     }
   }
-  async count(sql22) {
-    const res = await this.execute(sql22);
+  async count(sql2) {
+    const res = await this.execute(sql2);
     return Number(
       res["rows"][0]["count"]
     );
@@ -66369,8 +66374,8 @@ function az_default() {
 }
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count2, one, few, many) {
-  const absCount = Math.abs(count2);
+function getBelarusianPlural(count3, one, few, many) {
+  const absCount = Math.abs(count3);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
   if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
@@ -69515,8 +69520,8 @@ function pt_default() {
 }
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count2, one, few, many) {
-  const absCount = Math.abs(count2);
+function getRussianPlural(count3, one, few, many) {
+  const absCount = Math.abs(count3);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
   if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
@@ -74870,34 +74875,40 @@ var import_express8 = __toESM(require_express2(), 1);
 var router8 = (0, import_express8.Router)();
 router8.get("/dashboard/summary", requireAuth, async (req, res) => {
   const { userId } = req.user;
-  const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  const [users, transferStats, subAccountStats, referralStats] = await Promise.all([
+    db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+    db.select({
+      total: sql`count(*)::int`,
+      completed: sql`count(*) filter (where ${transfersTable.status} = 'completed')::int`,
+      pending: sql`count(*) filter (where ${transfersTable.status} = 'pending')::int`,
+      sumAll: sql`coalesce(sum(${transfersTable.amount}::numeric), 0)::float`,
+      sumCompleted: sql`coalesce(sum(${transfersTable.amount}::numeric) filter (where ${transfersTable.status} = 'completed'), 0)::float`
+    }).from(transfersTable).where(eq(transfersTable.userId, userId)),
+    db.select({
+      active: sql`count(*) filter (where ${subAccountsTable.status} = 'active')::int`
+    }).from(subAccountsTable).where(eq(subAccountsTable.parentUserId, userId)),
+    db.select({
+      count: sql`count(*)::int`
+    }).from(referralsTable).where(eq(referralsTable.referrerId, userId))
+  ]);
   if (users.length === 0) {
     res.status(404).json({ error: "User not found" });
     return;
   }
   const user = users[0];
-  const allTransfers = await db.select().from(transfersTable).where(eq(transfersTable.userId, userId));
-  const sentTransfers = allTransfers;
-  const completedTransfers = allTransfers.filter((t) => t.status === "completed");
-  const totalAmountSent = sentTransfers.reduce((s, t) => s + Number(t.amount), 0);
-  const totalAmountReceived = completedTransfers.reduce((s, t) => s + Number(t.amount), 0);
-  const pendingTransfers = sentTransfers.filter((t) => t.status === "pending").length;
-  const subAccounts = await db.select().from(subAccountsTable).where(eq(subAccountsTable.parentUserId, userId));
-  const activeSubAccounts = subAccounts.filter((s) => s.status === "active").length;
-  const referrals = await db.select().from(referralsTable).where(eq(referralsTable.referrerId, userId));
-  const referralsCount = referrals.length;
+  const t = transferStats[0];
   res.json({
     balance: Number(user.balance),
     currency: user.currency,
-    totalTransfersSent: sentTransfers.length,
-    totalTransfersReceived: completedTransfers.length,
-    totalAmountSent,
-    totalAmountReceived,
-    pendingTransfers,
-    activeSubAccounts,
+    totalTransfersSent: t.total,
+    totalTransfersReceived: t.completed,
+    totalAmountSent: t.sumAll,
+    totalAmountReceived: t.sumCompleted,
+    pendingTransfers: t.pending,
+    activeSubAccounts: subAccountStats[0].active,
     kycStatus: user.kycStatus,
     iban: user.iban ?? null,
-    referralsCount
+    referralsCount: referralStats[0].count
   });
 });
 router8.get("/dashboard/activity", requireAuth, async (req, res) => {
@@ -74932,17 +74943,19 @@ function generateIban2() {
 var router9 = (0, import_express9.Router)();
 router9.get("/admin/users", requireAuth, requireAdmin, async (req, res) => {
   const { page = "1", limit = "20", search, status } = req.query;
-  let allUsers = await db.select().from(usersTable);
-  if (search) {
-    const s = search.toLowerCase();
-    allUsers = allUsers.filter((u) => u.fullName.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || u.clientId.toLowerCase().includes(s));
-  }
-  if (status) {
-    allUsers = allUsers.filter((u) => u.status === status);
-  }
   const p = parseInt(page), l = parseInt(limit);
-  const paginated = allUsers.slice((p - 1) * l, p * l);
-  res.json({ users: paginated.map(formatUser), total: allUsers.length, page: p, limit: l });
+  const conditions = [];
+  if (search) {
+    const s = `%${search}%`;
+    conditions.push(or(ilike(usersTable.fullName, s), ilike(usersTable.email, s), ilike(usersTable.clientId, s)));
+  }
+  if (status) conditions.push(eq(usersTable.status, status));
+  const where = conditions.length > 0 ? conditions.length === 1 ? conditions[0] : and(...conditions) : void 0;
+  const [rows, [{ total }]] = await Promise.all([
+    db.select().from(usersTable).where(where).limit(l).offset((p - 1) * l),
+    db.select({ total: count() }).from(usersTable).where(where)
+  ]);
+  res.json({ users: rows.map(formatUser), total, page: p, limit: l });
 });
 router9.patch("/admin/users/:id/block", requireAuth, requireAdmin, async (req, res) => {
   const id = parseInt(req.params["id"]);
@@ -74974,11 +74987,13 @@ router9.patch("/admin/users/:id/balance", requireAuth, requireAdmin, async (req,
 });
 router9.get("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
   const { page = "1", limit = "20" } = req.query;
-  const allTransfers = await db.select().from(transfersTable);
   const p = parseInt(page), l = parseInt(limit);
-  const paginated = allTransfers.slice((p - 1) * l, p * l);
+  const [rows, [{ total }]] = await Promise.all([
+    db.select().from(transfersTable).orderBy(desc(transfersTable.createdAt)).limit(l).offset((p - 1) * l),
+    db.select({ total: count() }).from(transfersTable)
+  ]);
   res.json({
-    transfers: paginated.map((t) => ({
+    transfers: rows.map((t) => ({
       id: t.id,
       userId: t.userId,
       token: t.token,
@@ -74997,7 +75012,7 @@ router9.get("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
       adminUnlocked: t.adminUnlocked ?? false,
       adminUnlockedAt: t.adminUnlockedAt?.toISOString() ?? null
     })),
-    total: allTransfers.length,
+    total,
     page: p,
     limit: l
   });
@@ -75093,26 +75108,34 @@ router9.get("/admin/charts", requireAuth, requireAdmin, async (req, res) => {
       confirmedTransfers: transfersByDay[date6].confirmed,
       newUsers: usersByDay[date6]
     })),
-    statusBreakdown: Object.entries(statusMap).map(([status, count2]) => ({ status, count: count2 })),
+    statusBreakdown: Object.entries(statusMap).map(([status, count3]) => ({ status, count: count3 })),
     currencyVolume: Object.entries(currencyVol).map(([currency, volume]) => ({ currency, volume: Math.round(volume * 100) / 100 }))
   });
 });
 router9.get("/admin/stats", requireAuth, requireAdmin, async (req, res) => {
-  const allUsers = await db.select().from(usersTable);
-  const allTransfers = await db.select().from(transfersTable);
-  const pendingKyc = await db.select().from(kycTable).where(eq(kycTable.status, "pending"));
-  const subAccounts = await db.select().from(subAccountsTable);
-  const referrals = await db.select().from(referralsTable);
-  const totalVolume = allTransfers.reduce((s, t) => s + Number(t.amount), 0);
+  const [userStats, transferStats, [{ pendingKyc }], [{ totalSubAccounts }], [{ totalReferrals }]] = await Promise.all([
+    db.select({
+      total: sql`count(*)::int`,
+      active: sql`count(*) filter (where ${usersTable.status} = 'active')::int`,
+      blocked: sql`count(*) filter (where ${usersTable.status} = 'blocked')::int`
+    }).from(usersTable),
+    db.select({
+      total: sql`count(*)::int`,
+      volume: sql`coalesce(sum(${transfersTable.amount}::numeric), 0)::float`
+    }).from(transfersTable),
+    db.select({ pendingKyc: sql`count(*)::int` }).from(kycTable).where(eq(kycTable.status, "pending")),
+    db.select({ totalSubAccounts: sql`count(*)::int` }).from(subAccountsTable),
+    db.select({ totalReferrals: sql`count(*)::int` }).from(referralsTable)
+  ]);
   res.json({
-    totalUsers: allUsers.length,
-    activeUsers: allUsers.filter((u) => u.status === "active").length,
-    blockedUsers: allUsers.filter((u) => u.status === "blocked").length,
-    totalTransfers: allTransfers.length,
-    totalVolume,
-    pendingKyc: pendingKyc.length,
-    totalSubAccounts: subAccounts.length,
-    totalReferrals: referrals.length
+    totalUsers: userStats[0].total,
+    activeUsers: userStats[0].active,
+    blockedUsers: userStats[0].blocked,
+    totalTransfers: transferStats[0].total,
+    totalVolume: transferStats[0].volume,
+    pendingKyc,
+    totalSubAccounts,
+    totalReferrals
   });
 });
 router9.post("/admin/users/:id/credit", requireAuth, requireAdmin, async (req, res) => {
@@ -75494,6 +75517,38 @@ var admin_default = router9;
 // src/routes/wallet.ts
 var import_express10 = __toESM(require_express2(), 1);
 var router10 = (0, import_express10.Router)();
+router10.get("/wallet/block-status", async (req, res) => {
+  try {
+    const [setting] = await db.select().from(systemSettingsTable).where(eq(systemSettingsTable.key, "withdrawal_block")).limit(1);
+    if (setting) {
+      try {
+        const val = JSON.parse(setting.value);
+        if (val.blocked) {
+          res.json({ blocked: true, reason: val.reason || "", whatsapp: val.whatsapp || "" });
+          return;
+        }
+      } catch {
+      }
+    }
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const jwt3 = await Promise.resolve().then(() => __toESM(require_jsonwebtoken(), 1));
+        const JWT_SECRET2 = process.env.SESSION_SECRET || "bank_mondial_secret_key_2024";
+        const payload = jwt3.default.verify(authHeader.slice(7), JWT_SECRET2);
+        const [user] = await db.select({ status: usersTable.status }).from(usersTable).where(eq(usersTable.id, payload.userId)).limit(1);
+        if (user?.status === "blocked") {
+          res.json({ blocked: true, reason: "Votre compte est temporairement restreint. Contactez le service client.", whatsapp: "" });
+          return;
+        }
+      } catch {
+      }
+    }
+    res.json({ blocked: false, reason: "", whatsapp: "" });
+  } catch {
+    res.json({ blocked: false, reason: "", whatsapp: "" });
+  }
+});
 async function getUser(userId) {
   const rows = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   return rows[0] ?? null;
@@ -75526,7 +75581,8 @@ router10.post("/wallet/retrait", requireAuth, async (req, res) => {
       if (val.blocked) {
         res.status(403).json({
           error: val.reason || "Les retraits sont temporairement bloqu\xE9s. Veuillez contacter le support.",
-          code: "WITHDRAWAL_BLOCKED"
+          code: "WITHDRAWAL_BLOCKED",
+          whatsapp: val.whatsapp || null
         });
         return;
       }
