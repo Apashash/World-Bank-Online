@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, numeric, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, integer, boolean, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -50,7 +50,12 @@ export const transfersTable = pgTable("transfers", {
   // Admin must explicitly unlock the withdrawal before receiver can proceed
   adminUnlocked: boolean("admin_unlocked").notNull().default(false),
   adminUnlockedAt: timestamp("admin_unlocked_at", { withTimezone: true }),
-});
+}, (table) => [
+  index("transfers_user_id_idx").on(table.userId),
+  index("transfers_created_at_idx").on(table.createdAt),
+  index("transfers_status_idx").on(table.status),
+  index("transfers_user_id_created_at_idx").on(table.userId, table.createdAt),
+]);
 
 export const insertTransferSchema = createInsertSchema(transfersTable).omit({ id: true, createdAt: true });
 export type InsertTransfer = z.infer<typeof insertTransferSchema>;

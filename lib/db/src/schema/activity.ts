@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, pgEnum, boolean, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -25,7 +25,10 @@ export const activityTable = pgTable("activity", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   isRead: boolean("is_read").notNull().default(false),
   referenceId: integer("reference_id"),
-});
+}, (table) => [
+  index("activity_user_id_idx").on(table.userId),
+  index("activity_user_id_created_at_idx").on(table.userId, table.createdAt),
+]);
 
 export const insertActivitySchema = createInsertSchema(activityTable).omit({ id: true, createdAt: true });
 export type InsertActivity = z.infer<typeof insertActivitySchema>;

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, index } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 export const beneficiariesTable = pgTable("beneficiaries", {
@@ -10,6 +10,8 @@ export const beneficiariesTable = pgTable("beneficiaries", {
   phone: text("phone"),
   note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("beneficiaries_user_id_idx").on(table.userId),
+]);
 
 export type Beneficiary = typeof beneficiariesTable.$inferSelect;

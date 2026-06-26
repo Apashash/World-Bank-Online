@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -13,7 +13,9 @@ export const subAccountsTable = pgTable("sub_accounts", {
   permissions: text("permissions").array().notNull().default([]),
   status: subAccountStatusEnum("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("sub_accounts_parent_user_id_idx").on(table.parentUserId),
+]);
 
 export const insertSubAccountSchema = createInsertSchema(subAccountsTable).omit({ id: true, createdAt: true });
 export type InsertSubAccount = z.infer<typeof insertSubAccountSchema>;

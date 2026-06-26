@@ -1,61 +1,63 @@
-import { useGetDashboardSummary, useGetRecentActivity, useGetReferralStats, useListTransfers } from "@workspace/api-client-react";
+import { useGetDashboardSummary, useGetRecentActivity, useGetReferralStats, useGetMe } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, Users, Coins, Bell, Wallet, Send, Download, QrCode, Landmark, Receipt, ArrowLeftRight, LayoutGrid, User } from "lucide-react";
 import { useCurrency } from "@/contexts/currency-context";
-import { format, subWeeks, startOfWeek, endOfWeek } from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useGetMe } from "@workspace/api-client-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 type Beneficiary = { id: number; name: string; iban?: string | null };
+type WeeklyPoint = { label: string; sent: number; received: number };
 
-function useRecentBeneficiaries() {
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (!token) return;
-    fetch("/api/beneficiaries?limit=3", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => {
-        if (Array.isArray(data)) setBeneficiaries(data.slice(0, 3));
-      })
-      .catch(() => {});
-  }, []);
-  return beneficiaries;
+function useWeeklyChart() {
+  return useQuery<WeeklyPoint[]>({
+    queryKey: ["dashboard", "weekly-chart"],
+    queryFn: async () => {
+      const token = localStorage.getItem("auth_token");
+      const res = await fetch("/api/dashboard/weekly-chart", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  });
 }
 
-function buildWeeklyChart(transfers: any[]) {
-  const weeks = [0, 1, 2, 3].reverse().map((i) => {
-    const weekStart = startOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 });
-    const label = `Semaine ${4 - i}`;
-    const items = (transfers || []).filter((t) => {
-      const d = new Date(t.createdAt);
-      return d >= weekStart && d <= weekEnd;
-    });
-    const sent = items.reduce((s, t) => s + t.amount, 0);
-    const received = items.filter((t) => t.status === "completed").reduce((s, t) => s + t.amount * 0.3, 0);
-    return { label, sent: Math.round(sent), received: Math.round(received) };
+function useRecentBeneficiaries() {
+  return useQuery<Beneficiary[]>({
+    queryKey: ["beneficiaries", "recent"],
+    queryFn: async () => {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return [];
+      const res = await fetch("/api/beneficiaries?limit=3", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data.slice(0, 3) : [];
+    },
+    staleTime: 2 * 60_000,
+    gcTime: 10 * 60_000,
   });
-  return weeks;
 }
 
 export default function Dashboard() {
   const { data: summary, isLoading: isLoadingSummary } = useGetDashboardSummary();
   const { data: activities, isLoading: isLoadingActivity } = useGetRecentActivity();
   const { data: referralStats } = useGetReferralStats();
-  const { data: transfersData } = useListTransfers({ page: 1, limit: 100 });
+  const { data: chartData = [] } = useWeeklyChart();
   const { data: user } = useGetMe();
-  const { formatAmount, currency } = useCurrency();
+  const { data: recentBeneficiaries = [] } = useRecentBeneficiaries();
+  const { formatAmount } = useCurrency();
   const [period, setPeriod] = useState("30");
   const [activityPage, setActivityPage] = useState(0);
   const ACTIVITY_PAGE_SIZE = 5;
-
-  const chartData = buildWeeklyChart(transfersData?.transfers || []);
-  const recentBeneficiaries = useRecentBeneficiaries();
 
   const ACTIVITY_TYPE_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
     transfer_sent:         { label: "Virement envoyé", className: "bg-red-100 text-red-700 border-red-200",       dot: "bg-red-500" },
@@ -80,7 +82,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-[#6DC142] flex items-center justify-center text-white font-bold text-sm">
-            {user?.fullName?.charAt(0)?.toUpperCase()}
+            {user?.fullName?.charAt(0)?.toUpperCase() ?? "?"}
           </div>
           <span className="text-sm font-medium text-gray-700">
             Bonjour, {user?.fullName?.split(" ")[0]}
@@ -163,7 +165,6 @@ export default function Dashboard() {
               </Link>
             ))}
             <button
-              key="plus"
               onClick={() => window.dispatchEvent(new CustomEvent("openMobileMenu"))}
               className="flex flex-col items-center gap-2 group cursor-pointer"
             >
