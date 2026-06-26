@@ -1,4 +1,4 @@
-export type BlockType = "retrait" | "virement";
+export type BlockType = "retrait" | "virement" | "operation";
 
 export interface BlockStatus {
   blocked: boolean;

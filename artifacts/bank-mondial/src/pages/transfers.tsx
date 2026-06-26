@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Link } from "wouter";
-import { Search, Plus, ExternalLink, Filter } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Search, Plus, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { fetchBlockStatus, redirectToBlockPage } from "@/lib/block-redirect";
 
 const TYPE_CONFIG: Record<string, { label: string; className: string }> = {
   virement:  { label: "Virement",  className: "bg-blue-100 text-blue-700 border-blue-200" },
@@ -38,6 +39,8 @@ export default function Transfers() {
   const { formatAmount } = useCurrency();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("tous");
+  const [checking, setChecking] = useState(false);
+  const [, setLocation] = useLocation();
 
   const transfers = Array.isArray(data?.transfers) ? data.transfers : [];
 
@@ -49,14 +52,24 @@ export default function Transfers() {
     return matchSearch && matchType;
   });
 
+  const handleNewOperation = async () => {
+    setChecking(true);
+    const status = await fetchBlockStatus();
+    setChecking(false);
+    if (status.blocked) {
+      redirectToBlockPage("operation", status.reason, status.whatsapp);
+      return;
+    }
+    setLocation("/transfers/new");
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Virements</h1>
-        <Button asChild>
-          <Link href="/transfers/new">
-            <Plus className="mr-2 h-4 w-4" /> Nouvelle opération
-          </Link>
+        <Button onClick={handleNewOperation} disabled={checking}>
+          <Plus className="mr-2 h-4 w-4" />
+          {checking ? "Vérification..." : "Nouvelle opération"}
         </Button>
       </div>
 
