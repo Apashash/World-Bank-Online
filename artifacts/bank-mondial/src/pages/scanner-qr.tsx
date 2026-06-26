@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { QrCode, Camera, KeyboardIcon, ArrowRight, CheckCircle2 } from "lucide-react";
+import { QrCode, Camera, KeyboardIcon, ArrowRight, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
@@ -35,7 +35,13 @@ export default function ScannerQR() {
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
+        <button
+          onClick={() => window.history.back()}
+          className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </button>
+        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
           <QrCode className="h-5 w-5 text-[#003087]" />
         </div>
         <div>

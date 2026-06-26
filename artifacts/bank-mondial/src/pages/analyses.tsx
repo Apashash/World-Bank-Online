@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { BarChart2, TrendingDown, Tag } from "lucide-react";
+import { BarChart2, TrendingDown, Tag, ArrowLeft } from "lucide-react";
 import { useCurrency } from "@/contexts/currency-context";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -103,7 +103,13 @@ export default function Analyses() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
+        <button
+          onClick={() => window.history.back()}
+          className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </button>
+        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
           <BarChart2 className="h-5 w-5 text-[#003087]" />
         </div>
         <div>

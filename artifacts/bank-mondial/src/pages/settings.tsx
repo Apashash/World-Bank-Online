@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { User, Mail, Phone, Globe, Lock, CreditCard, Copy, Eye, EyeOff, Moon, Sun, ShieldOff, ShieldCheck, Bell, AlertTriangle } from "lucide-react";
+import { User, Mail, Phone, Globe, Lock, CreditCard, Copy, Eye, EyeOff, Moon, Sun, ShieldOff, ShieldCheck, Bell, AlertTriangle, ArrowLeft } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -170,9 +170,17 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Paramètres</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gérez votre profil et la sécurité de votre compte.</p>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => window.history.back()}
+          className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Paramètres</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gérez votre profil et la sécurité de votre compte.</p>
+        </div>
       </div>
 
       {/* ── Profile card ── */}

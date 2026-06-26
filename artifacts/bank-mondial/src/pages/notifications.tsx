@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Bell, CheckCheck, ArrowUpRight, ArrowDownLeft, CircleCheck,
   UserPlus, ShieldCheck, LogIn, Users, Wallet, Landmark,
-  Receipt, RefreshCw, ChevronRight,
+  Receipt, RefreshCw, ChevronRight, ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, formatDistanceToNow } from "date-fns";
@@ -120,6 +120,12 @@ export default function Notifications() {
     <div className="space-y-5 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-2 min-w-0">
+        <button
+          onClick={() => window.history.back()}
+          className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </button>
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#003087]/10">
             <Bell className="h-5 w-5 text-[#003087]" />

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, ShieldAlert, Clock, Upload, X, FileImage, FileScan, Camera } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Clock, Upload, X, FileImage, FileScan, Camera, ArrowLeft } from "lucide-react";
 import { useRef, useState, useCallback } from "react";
 
 const kycSchema = z.object({
@@ -236,9 +236,17 @@ export default function Kyc() {
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Vérification d'identité (KYC)</h1>
-        <p className="text-sm text-muted-foreground mt-1">Conformément à la réglementation bancaire, nous devons vérifier votre identité.</p>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => window.history.back()}
+          className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Vérification d'identité (KYC)</h1>
+          <p className="text-sm text-muted-foreground mt-1">Conformément à la réglementation bancaire, nous devons vérifier votre identité.</p>
+        </div>
       </div>
 
       {kyc && kyc.status === "verified" && (

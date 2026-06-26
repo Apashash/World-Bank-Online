@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, MessageCircle, Headphones } from "lucide-react";
+import { Send, MessageCircle, Headphones, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -71,7 +71,13 @@ export default function Support() {
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b mb-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#003087]/10">
+        <button
+          onClick={() => window.history.back()}
+          className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </button>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#003087]/10 shrink-0">
           <Headphones className="h-5 w-5 text-[#003087]" />
         </div>
         <div>

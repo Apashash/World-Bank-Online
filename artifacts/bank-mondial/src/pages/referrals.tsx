@@ -1,6 +1,6 @@
 import { useGetReferralStats, useListReferrals, useGetMe, useListTransfers } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Gift, Copy, Link2, Award, ShieldCheck, Send, Star } from "lucide-react";
+import { Users, Gift, Copy, Link2, Award, ShieldCheck, Send, Star, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -107,7 +107,15 @@ export default function Referrals() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Système de parrainage</h1>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => window.history.back()}
+          className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </button>
+        <h1 className="text-2xl font-bold tracking-tight">Système de parrainage</h1>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Left: Code + Link */}

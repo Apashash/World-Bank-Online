@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Link } from "wouter";
-import { Plus, User, Pencil, Trash2 } from "lucide-react";
+import { Plus, User, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -83,7 +83,15 @@ export default function SubAccounts() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Sous-comptes</h1>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.history.back()}
+            className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 text-gray-600" />
+          </button>
+          <h1 className="text-2xl font-bold tracking-tight">Sous-comptes</h1>
+        </div>
         <Button asChild className="bg-[#003087] hover:bg-[#002060]">
           <Link href="/sub-accounts/new">
             <Plus className="mr-2 h-4 w-4" /> Créer un sous-compte

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { HandCoins, Plus, Copy, Check, Clock, XCircle, Banknote, Mail } from "lucide-react";
+import { HandCoins, Plus, Copy, Check, Clock, XCircle, Banknote, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -93,7 +93,13 @@ export default function FundRequests() {
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#003087]/10">
+          <button
+            onClick={() => window.history.back()}
+            className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 text-gray-600" />
+          </button>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#003087]/10 shrink-0">
             <HandCoins className="h-5 w-5 text-[#003087]" />
           </div>
           <div>
