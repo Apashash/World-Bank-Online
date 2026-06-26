@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,26 +30,6 @@ export default function Retrait() {
   const [withdrawCode] = useState(() => Math.random().toString(36).substring(2, 8).toUpperCase());
 
   const balance = summary?.balance ?? 0;
-
-  // Vérification du blocage dès l'ouverture de la page
-  useEffect(() => {
-    (async () => {
-      try {
-        const token = localStorage.getItem("auth_token");
-        const res = await fetch("/api/wallet/block-status", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.blocked) {
-            redirectToBlockPage("retrait", data.reason || "", data.whatsapp || "");
-          }
-        }
-      } catch {
-        // silently ignore
-      }
-    })();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -292,22 +292,6 @@ export default function TransferNew() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  // Vérification du blocage dès l'ouverture de la page
-  useEffect(() => {
-    (async () => {
-      try {
-        const token = localStorage.getItem("auth_token");
-        const res = await fetch("/api/wallet/block-status", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.blocked) redirectToBlockPage("virement", data.reason || "", data.whatsapp || "");
-        }
-      } catch { }
-    })();
-  }, []);
-
   const queryClient = useQueryClient();
   const createTransfer = useCreateTransfer();
   const [generated, setGenerated] = useState<GeneratedTransfer | null>(null);
