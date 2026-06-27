@@ -270,6 +270,15 @@ const BANKS_WORLDWIDE: Bank[] = [
 
 const REGIONS = ["Paiement", "Europe", "Afrique", "Amériques", "Asie"];
 
+const CUSTOM_PREFIX = "__custom__:";
+const isCustom = (id: string) => id.startsWith(CUSTOM_PREFIX);
+const customLabel = (id: string) => id.slice(CUSTOM_PREFIX.length);
+const customId = (label: string) => CUSTOM_PREFIX + label.trim();
+const makeCustomBank = (label: string): Bank => ({
+  id: customId(label), label, country: "", region: "Autre",
+  color: "#64748b", abbr: label.slice(0, 2).toUpperCase(),
+});
+
 const TRANSACTION_TYPES = [
   { value: "virement", label: "↗ Virement" },
   { value: "dépôt", label: "⬇ Dépôt" },
@@ -345,16 +354,22 @@ function BankSingleSelector({
   const [open, setOpen] = useState(false);
   const [activeRegion, setActiveRegion] = useState<string | null>(null);
 
-  const selectedBank = BANKS_WORLDWIDE.find((b) => b.id === selected) ?? null;
+  const selectedBank = isCustom(selected)
+    ? makeCustomBank(customLabel(selected))
+    : (BANKS_WORLDWIDE.find((b) => b.id === selected) ?? null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return BANKS_WORLDWIDE.filter((b) => {
-      const matchesSearch = !q || b.label.toLowerCase().includes(q) || b.country.toLowerCase().includes(q);
+      const matchesSearch = !q || b.label.toLowerCase().includes(q);
       const matchesRegion = !activeRegion || b.region === activeRegion;
       return matchesSearch && matchesRegion;
     });
   }, [search, activeRegion]);
+
+  const trimmedSearch = search.trim();
+  const showCustomOption = trimmedSearch.length >= 2 &&
+    !BANKS_WORLDWIDE.some((b) => b.label.toLowerCase() === trimmedSearch.toLowerCase());
 
   if (!open) {
     return (
@@ -368,6 +383,7 @@ function BankSingleSelector({
             <BankAbbr bank={selectedBank} />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-[#7c3aed] truncate">{selectedBank.label}</p>
+              {isCustom(selected) && <p className="text-[10px] text-slate-400">Banque personnalisée</p>}
             </div>
             <button
               type="button"
@@ -382,7 +398,7 @@ function BankSingleSelector({
             <div className="h-8 w-8 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center shrink-0">
               <Search className="h-3.5 w-3.5 text-slate-400" />
             </div>
-            <span className="text-sm text-slate-400">Cliquez pour choisir une banque…</span>
+            <span className="text-sm text-slate-400">Choisir ou saisir une banque…</span>
           </>
         )}
       </button>
@@ -398,7 +414,7 @@ function BankSingleSelector({
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher une banque ou moyen de paiement…"
+          placeholder="Rechercher ou saisir une banque…"
           className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]/50 transition-all"
         />
         {search && (
@@ -425,8 +441,23 @@ function BankSingleSelector({
         ))}
       </div>
       <div className="max-h-52 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100 bg-white">
-        {filtered.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-400">Aucun résultat</div>
+        {showCustomOption && (
+          <button
+            type="button"
+            onClick={() => { onSelect(customId(trimmedSearch)); setOpen(false); setSearch(""); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#7c3aed]/5 transition-all border-b border-slate-100"
+          >
+            <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-[10px] font-bold text-slate-500">
+              {trimmedSearch.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[#7c3aed] truncate">Utiliser « {trimmedSearch} »</p>
+              <p className="text-[11px] text-slate-400">Banque personnalisée</p>
+            </div>
+          </button>
+        )}
+        {filtered.length === 0 && !showCustomOption ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-400">Aucun résultat — saisissez un nom pour l'ajouter</div>
         ) : (
           filtered.map((bank) => {
             const isSelected = bank.id === selected;
@@ -473,13 +504,20 @@ function BankSelector({
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return BANKS_WORLDWIDE.filter((b) => {
-      const matchesSearch = !q || b.label.toLowerCase().includes(q) || b.country.toLowerCase().includes(q);
+      const matchesSearch = !q || b.label.toLowerCase().includes(q);
       const matchesRegion = !activeRegion || b.region === activeRegion;
       return matchesSearch && matchesRegion;
     });
   }, [search, activeRegion]);
 
-  const selectedBanks = BANKS_WORLDWIDE.filter((b) => selected.includes(b.id));
+  const selectedBanks: Bank[] = selected.map((id) =>
+    isCustom(id) ? makeCustomBank(customLabel(id)) : (BANKS_WORLDWIDE.find((b) => b.id === id) ?? makeCustomBank(id))
+  );
+
+  const trimmedSearch = search.trim();
+  const showCustomOption = trimmedSearch.length >= 2 &&
+    !BANKS_WORLDWIDE.some((b) => b.label.toLowerCase() === trimmedSearch.toLowerCase()) &&
+    !selected.includes(customId(trimmedSearch));
 
   return (
     <div className="space-y-3">
@@ -490,7 +528,7 @@ function BankSelector({
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher une banque ou moyen de paiement…"
+          placeholder="Rechercher ou saisir un moyen de paiement…"
           className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#003087]/30 focus:border-[#003087]/50 transition-all"
         />
         {search && (
@@ -521,8 +559,23 @@ function BankSelector({
 
       {/* Bank list */}
       <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100 bg-white">
-        {filtered.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-400">Aucun résultat</div>
+        {showCustomOption && (
+          <button
+            type="button"
+            onClick={() => { onToggle(customId(trimmedSearch)); setSearch(""); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#003087]/5 transition-all border-b border-slate-100"
+          >
+            <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-[10px] font-bold text-slate-500">
+              {trimmedSearch.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[#003087] truncate">Ajouter « {trimmedSearch} »</p>
+              <p className="text-[11px] text-slate-400">Moyen de paiement personnalisé</p>
+            </div>
+          </button>
+        )}
+        {filtered.length === 0 && !showCustomOption ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-400">Aucun résultat — saisissez un nom pour l'ajouter</div>
         ) : (
           filtered.map((bank) => {
             const isSelected = selected.includes(bank.id);
@@ -594,7 +647,6 @@ export default function AdminTransferNew() {
     amountEur: "", displayCurrency: "EUR",
     // Payment methods
     paymentMethods: [] as string[],
-    customPaymentMethod: "",
     // Block & WhatsApp
     blockReason: "", whatsappNumber: "",
     // Optional
@@ -624,12 +676,10 @@ export default function AdminTransferNew() {
     try {
       const receiverName = `${form.receiverFirstName} ${form.receiverLastName}`.trim();
 
-      // Build payment method labels (bank names + optional custom)
-      const selectedBankLabels = form.paymentMethods
-        .map((id) => BANKS_WORLDWIDE.find((b) => b.id === id)?.label ?? id);
-      if (form.customPaymentMethod.trim()) {
-        selectedBankLabels.push(form.customPaymentMethod.trim());
-      }
+      // Build payment method labels (bank names + custom entries)
+      const selectedBankLabels = form.paymentMethods.map((id) =>
+        isCustom(id) ? customLabel(id) : (BANKS_WORLDWIDE.find((b) => b.id === id)?.label ?? id)
+      );
 
       const r = await authFetch("/api/admin/transfers/create", {
         method: "POST",
@@ -652,7 +702,9 @@ export default function AdminTransferNew() {
           receiverAccountNumber: form.receiverAccountNumber || undefined,
           receiverBankId: form.receiverBankId || undefined,
           receiverBankLabel: form.receiverBankId
-            ? (BANKS_WORLDWIDE.find((b) => b.id === form.receiverBankId)?.label ?? undefined)
+            ? (isCustom(form.receiverBankId)
+                ? customLabel(form.receiverBankId)
+                : (BANKS_WORLDWIDE.find((b) => b.id === form.receiverBankId)?.label ?? undefined))
             : undefined,
           displayCurrency: form.displayCurrency,
           paymentMethods: form.paymentMethods,
@@ -683,7 +735,7 @@ export default function AdminTransferNew() {
     receiverFirstName: "", receiverLastName: "", receiverEmail: "",
     receiverCountry: "", receiverCity: "", receiverAccountNumber: "", receiverBankId: "",
     amountEur: "", displayCurrency: "EUR",
-    paymentMethods: [], customPaymentMethod: "",
+    paymentMethods: [],
     blockReason: "", whatsappNumber: "", message: "",
   });
 
@@ -942,14 +994,6 @@ export default function AdminTransferNew() {
       <SectionCard icon={Building2} title="Moyens de paiement activés" color="#f59e0b">
         <div className="space-y-4">
           <BankSelector selected={form.paymentMethods} onToggle={toggleMethod} />
-          <Field label="Nom personnalisé (optionnel)">
-            <Input
-              placeholder="Ex: Virement interbancaire, Hawala, Neobank…"
-              value={form.customPaymentMethod}
-              onChange={(e) => set("customPaymentMethod", e.target.value)}
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Ajoutez un mode de paiement non listé ci-dessus.</p>
-          </Field>
         </div>
       </SectionCard>
 
