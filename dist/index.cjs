@@ -75205,6 +75205,31 @@ router9.get("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
     limit: l
   });
 });
+router9.delete("/admin/transfers/:id", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"]);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "ID invalide" });
+    return;
+  }
+  const [transfer] = await db.select().from(transfersTable).where(eq(transfersTable.id, id)).limit(1);
+  if (!transfer) {
+    res.status(404).json({ error: "Virement introuvable" });
+    return;
+  }
+  await db.delete(transfersTable).where(eq(transfersTable.id, id));
+  res.json({ ok: true });
+});
+router9.delete("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
+  const { status } = req.query;
+  const validStatuses = ["pending", "completed", "cancelled", "expired"];
+  if (status && !validStatuses.includes(status)) {
+    res.status(400).json({ error: "Statut invalide" });
+    return;
+  }
+  const where = status ? eq(transfersTable.status, status) : void 0;
+  await db.delete(transfersTable).where(where);
+  res.json({ ok: true });
+});
 router9.post("/admin/transfers/:id/unlock", requireAuth, requireAdmin, async (req, res) => {
   const id = parseInt(req.params["id"]);
   if (isNaN(id)) {
