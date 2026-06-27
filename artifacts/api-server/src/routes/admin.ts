@@ -338,6 +338,11 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
     res.status(400).json({ error: "Champs requis manquants" }); return;
   }
 
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    res.status(400).json({ error: "Montant invalide" }); return;
+  }
+
   function safeStr(val: unknown): string | null {
     return typeof val === "string" && val.trim().length > 0 ? val.trim() : null;
   }
@@ -346,7 +351,6 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
   const token = Array.from({ length: 12 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join("");
   const reference = "BMDW" + Array.from({ length: 12 }, () => _refChars[Math.floor(Math.random() * _refChars.length)]).join("");
 
-  // New fields
   const senderFirstName = safeStr(req.body.senderFirstName);
   const senderLastName  = safeStr(req.body.senderLastName);
   const senderCountry   = safeStr(req.body.senderCountry);
@@ -374,51 +378,56 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
     paymentMethodLabels = JSON.stringify(req.body.paymentMethodLabels.filter((m: unknown) => typeof m === "string"));
   }
 
-  const [transfer] = await db.insert(transfersTable).values({
-    userId: userId ? Number(userId) : null,
-    token,
-    beneficiaryName,
-    amount: Number(amount).toFixed(2),
-    currency: "EUR",
-    message: message ?? null,
-    transactionType,
-    status: "pending",
-    reference,
-    senderFirstName, senderLastName, senderCountry, senderCity,
-    receiverFirstName, receiverLastName, receiverEmail, receiverCountry, receiverCity,
-    receiverAccountNumber,
-    receiverBankId,
-    receiverBankLabel,
-    displayCurrency,
-    paymentMethods,
-    paymentMethodLabels,
-    blockReason,
-    whatsappNumber,
-  }).returning();
-
-  if (userId) {
-    await db.insert(activityTable).values({
-      userId: Number(userId),
-      type: "transfer_sent",
-      description: `Virement admin vers ${beneficiaryName} : ${amount} EUR`,
-      amount: Number(amount).toFixed(2),
+  try {
+    const [transfer] = await db.insert(transfersTable).values({
+      userId: userId ? Number(userId) : null,
+      token,
+      beneficiaryName,
+      amount: numAmount.toFixed(2),
       currency: "EUR",
-      referenceId: transfer.id,
-    });
-  }
+      message: message ?? null,
+      transactionType,
+      status: "pending",
+      reference,
+      senderFirstName, senderLastName, senderCountry, senderCity,
+      receiverFirstName, receiverLastName, receiverEmail, receiverCountry, receiverCity,
+      receiverAccountNumber,
+      receiverBankId,
+      receiverBankLabel,
+      displayCurrency,
+      paymentMethods,
+      paymentMethodLabels,
+      blockReason,
+      whatsappNumber,
+    }).returning();
 
-  res.json({
-    id: transfer.id,
-    token: transfer.token,
-    beneficiaryName: transfer.beneficiaryName,
-    amount: Number(transfer.amount),
-    currency: transfer.currency,
-    displayCurrency: transfer.displayCurrency,
-    status: transfer.status,
-    reference: transfer.reference,
-    createdAt: transfer.createdAt.toISOString(),
-    linkUrl: `/t/${transfer.token}`,
-  });
+    if (userId) {
+      await db.insert(activityTable).values({
+        userId: Number(userId),
+        type: "transfer_sent",
+        description: `Virement admin vers ${beneficiaryName} : ${numAmount} EUR`,
+        amount: numAmount.toFixed(2),
+        currency: "EUR",
+        referenceId: transfer.id,
+      });
+    }
+
+    res.json({
+      id: transfer.id,
+      token: transfer.token,
+      beneficiaryName: transfer.beneficiaryName,
+      amount: Number(transfer.amount),
+      currency: transfer.currency,
+      displayCurrency: transfer.displayCurrency,
+      status: transfer.status,
+      reference: transfer.reference,
+      createdAt: transfer.createdAt.toISOString(),
+      linkUrl: `/t/${transfer.token}`,
+    });
+  } catch (err: any) {
+    console.error("[admin/transfers/create]", err);
+    res.status(500).json({ error: err?.message ?? "Erreur serveur lors de la création du virement" });
+  }
 });
 
 // POST /admin/users/:id/credit
@@ -478,59 +487,6 @@ router.get("/admin/users/:id/transfers", requireAuth, requireAdmin, async (req, 
     createdAt: t.createdAt.toISOString(),
     confirmedAt: t.confirmedAt?.toISOString() ?? null,
   })));
-});
-
-// POST /admin/transfers/create
-router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, res) => {
-  const { userId, beneficiaryName, amount, currency, message } = req.body;
-  if (!userId || !beneficiaryName || !amount || !currency) {
-    res.status(400).json({ error: "Champs requis manquants" }); return;
-  }
-  const numUserId = Number(userId);
-  const numAmount = Number(amount);
-  if (isNaN(numUserId) || isNaN(numAmount) || numAmount <= 0) {
-    res.status(400).json({ error: "Valeurs invalides" }); return;
-  }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, numUserId)).limit(1);
-  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
-
-  const token = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
-  const _refChars2 = "abcdefghijklmnopqrstuvwxyz0123456789";
-  const reference = "BMDW" + Array.from({ length: 25 }, () => _refChars2[Math.floor(Math.random() * _refChars2.length)]).join("");
-
-  const [transfer] = await db.insert(transfersTable).values({
-    userId: numUserId,
-    token,
-    beneficiaryName,
-    amount: numAmount.toString(),
-    currency,
-    message: message ?? null,
-    status: "completed",
-    reference,
-    confirmedAt: new Date(),
-  }).returning();
-
-  const newBalance = Math.max(0, Number(user.balance) - numAmount).toFixed(2);
-  await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, numUserId));
-
-  await db.insert(activityTable).values({
-    userId: numUserId,
-    type: "transfer_sent",
-    description: `Virement admin vers ${beneficiaryName} : ${numAmount} ${currency}`,
-    amount: numAmount.toString(),
-    currency,
-    referenceId: transfer.id,
-  });
-
-  res.status(201).json({
-    id: transfer.id,
-    beneficiaryName: transfer.beneficiaryName,
-    amount: Number(transfer.amount),
-    currency: transfer.currency,
-    status: transfer.status,
-    reference: transfer.reference,
-    createdAt: transfer.createdAt.toISOString(),
-  });
 });
 
 // POST /admin/users/create — admin crée un compte utilisateur

@@ -910,7 +910,7 @@ export default function AdminTransferNew() {
       <SectionCard icon={Wallet} title="Montant et devise d'affichage" color="#059669">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Montant en EUR (€)" required>
-            <Input type="number" step="0.01" min="0" placeholder="0.00"
+            <Input type="text" inputMode="decimal" placeholder="0.00"
               value={form.amountEur} onChange={(e) => set("amountEur", e.target.value)} />
           </Field>
           <Field label="Devise d'affichage">
@@ -976,6 +976,7 @@ export default function AdminTransferNew() {
 
       {/* Submit */}
       <button
+        type="button"
         onClick={handleCreate}
         disabled={!isValid || creating}
         className="w-full h-13 py-3.5 rounded-xl text-white font-bold text-base shadow-lg transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2"
