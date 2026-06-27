@@ -866,7 +866,7 @@ export default function AdminTransferNew() {
           </Field>
           <div className="col-span-2">
             <Field label="Email">
-              <Input type="email" placeholder="email@exemple.com" value={form.receiverEmail} onChange={(e) => set("receiverEmail", e.target.value)} />
+              <Input type="text" inputMode="email" placeholder="email@exemple.com" value={form.receiverEmail} onChange={(e) => set("receiverEmail", e.target.value)} />
             </Field>
           </div>
           <Field label="Pays">
