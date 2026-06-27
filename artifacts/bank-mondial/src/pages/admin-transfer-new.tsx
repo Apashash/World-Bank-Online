@@ -279,12 +279,6 @@ const makeCustomBank = (label: string): Bank => ({
   color: "#64748b", abbr: label.slice(0, 2).toUpperCase(),
 });
 
-const TRANSACTION_TYPES = [
-  { value: "virement", label: "↗ Virement" },
-  { value: "dépôt", label: "⬇ Dépôt" },
-  { value: "retrait", label: "⬆ Retrait" },
-  { value: "facture", label: "📄 Facture" },
-];
 
 const COUNTRIES = [
   "Afghanistan","Afrique du Sud","Algérie","Allemagne","Angola","Arabie Saoudite","Argentine","Australie",
@@ -876,17 +870,6 @@ export default function AdminTransferNew() {
               </div>
             </div>
           )}
-          <Field label="Type d'opération">
-            <div className="grid grid-cols-4 gap-2">
-              {TRANSACTION_TYPES.map((t) => (
-                <label key={t.value}
-                  className={`flex items-center justify-center gap-1.5 cursor-pointer text-xs px-2 py-2 rounded-lg border transition-all ${form.transactionType === t.value ? "border-[#003087] bg-[#003087]/5 text-[#003087] font-semibold" : "border-slate-200 text-slate-600"}`}>
-                  <input type="radio" className="hidden" value={t.value} checked={form.transactionType === t.value} onChange={() => set("transactionType", t.value)} />
-                  {t.label}
-                </label>
-              ))}
-            </div>
-          </Field>
         </div>
       </SectionCard>
 
