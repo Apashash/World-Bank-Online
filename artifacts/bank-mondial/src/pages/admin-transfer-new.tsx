@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
-import { useAdminListUsers } from "@workspace/api-client-react";
+
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -295,7 +295,6 @@ const COUNTRIES = [
   "Thaïlande","Togo","Tunisie","Turquie","Ukraine","Uruguay","Venezuela","Vietnam","Yémen","Zambie","Zimbabwe",
 ];
 
-type AdminUser = { id: number; fullName: string; email: string; currency: string; balance: number; clientId: string };
 type GeneratedResult = { id: number; token: string; reference: string; beneficiaryName: string; amount: number; displayCurrency: string };
 
 function SectionCard({ icon: Icon, title, color, children }: {
@@ -621,14 +620,10 @@ function BankSelector({
 export default function AdminTransferNew() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { data: usersData } = useAdminListUsers({ page: 1, limit: 500 });
-  const users: AdminUser[] = Array.isArray(usersData?.users) ? (usersData.users as AdminUser[]) : [];
-
   const [creating, setCreating] = useState(false);
   const [generated, setGenerated] = useState<GeneratedResult | null>(null);
 
   const [form, setForm] = useState({
-    userId: "",
     transactionType: "virement",
     // Sender
     senderFirstName: "", senderLastName: "", senderCountry: "", senderCity: "",
@@ -649,7 +644,6 @@ export default function AdminTransferNew() {
 
   const set = (key: string, value: string | string[]) => setForm((f) => ({ ...f, [key]: value }));
 
-  const selectedUser = users.find((u) => String(u.id) === form.userId);
   const convertedAmount = form.amountEur && form.displayCurrency !== "EUR"
     ? convertFromEur(Number(form.amountEur), form.displayCurrency)
     : null;
@@ -660,7 +654,7 @@ export default function AdminTransferNew() {
       : [...form.paymentMethods, id]);
   };
 
-  const isValid = form.userId && form.receiverFirstName && form.receiverLastName &&
+  const isValid = form.receiverFirstName && form.receiverLastName &&
     form.amountEur && Number(form.amountEur) > 0 &&
     form.paymentMethods.length > 0 && form.blockReason && form.whatsappNumber;
 
@@ -678,7 +672,6 @@ export default function AdminTransferNew() {
       const r = await authFetch("/api/admin/transfers/create", {
         method: "POST",
         body: JSON.stringify({
-          userId: Number(form.userId),
           beneficiaryName: receiverName,
           amount: Number(form.amountEur),
           currency: "EUR",
@@ -724,7 +717,7 @@ export default function AdminTransferNew() {
   };
 
   const resetForm = () => setForm({
-    userId: "", transactionType: "virement",
+    transactionType: "virement",
     senderFirstName: "", senderLastName: "", senderCountry: "", senderCity: "",
     receiverFirstName: "", receiverLastName: "", receiverEmail: "",
     receiverCountry: "", receiverCity: "", receiverAccountNumber: "", receiverBankId: "",
@@ -838,40 +831,6 @@ export default function AdminTransferNew() {
           <p className="text-sm text-slate-400">Créez un lien de virement complet pour un client</p>
         </div>
       </div>
-
-      {/* Compte émetteur */}
-      <SectionCard icon={User} title="Compte émetteur" color="#003087">
-        <div className="space-y-3">
-          <Field label="Sélectionner un utilisateur" required>
-            <Select value={form.userId} onValueChange={(v) => set("userId", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choisir un compte..." />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {users.map((u) => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{u.fullName}</span>
-                      <span className="text-xs text-slate-400">{u.balance?.toFixed(2)} {u.currency} · {u.clientId}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          {selectedUser && (
-            <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-              <div className="h-8 w-8 rounded-full bg-[#003087] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {selectedUser.fullName?.charAt(0)?.toUpperCase() ?? "?"}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-800 truncate">{selectedUser.fullName}</p>
-                <p className="text-xs text-slate-400">{selectedUser.email} · Solde : <span className="font-semibold text-slate-600">{selectedUser.balance?.toFixed(2)} {selectedUser.currency}</span></p>
-              </div>
-            </div>
-          )}
-        </div>
-      </SectionCard>
 
       {/* Expéditeur */}
       <SectionCard icon={User} title="Informations de l'expéditeur" color="#0ea5e9">
