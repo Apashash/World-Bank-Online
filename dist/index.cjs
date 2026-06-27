@@ -74091,8 +74091,15 @@ var transfersTable = pgTable("transfers", {
   receiverCity: text("receiver_city"),
   // Display currency (amount stored in EUR, displayed in this currency)
   displayCurrency: text("display_currency").notNull().default("EUR"),
-  // Payment methods (JSON array: ["card","paypal","mobile_money"])
+  // Receiver bank account number / RIB / IBAN
+  receiverAccountNumber: text("receiver_account_number"),
+  // Receiver bank (single bank selected by admin for the account number)
+  receiverBankId: text("receiver_bank_id"),
+  receiverBankLabel: text("receiver_bank_label"),
+  // Payment methods (JSON array of IDs: ["carte_bancaire","paypal",…])
   paymentMethods: text("payment_methods"),
+  // Payment method labels (JSON array of display names: ["BNP Paribas","PayPal",…])
+  paymentMethodLabels: text("payment_method_labels"),
   // Withdrawal block reason (configured by admin at creation)
   blockReason: text("block_reason"),
   // WhatsApp number for admin contact
@@ -74588,9 +74595,14 @@ function formatTransfer(t) {
     receiverEmail: t.receiverEmail ?? null,
     receiverCountry: t.receiverCountry ?? null,
     receiverCity: t.receiverCity ?? null,
+    // Receiver account
+    receiverAccountNumber: t.receiverAccountNumber ?? null,
+    receiverBankId: t.receiverBankId ?? null,
+    receiverBankLabel: t.receiverBankLabel ?? null,
     // Display currency and payment config
     displayCurrency: t.displayCurrency ?? "EUR",
     paymentMethods: t.paymentMethods ?? null,
+    paymentMethodLabels: t.paymentMethodLabels ?? null,
     blockReason: t.blockReason ?? null,
     whatsappNumber: t.whatsappNumber ?? null,
     adminUnlocked: t.adminUnlocked ?? false,
@@ -75442,9 +75454,16 @@ router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, r
   const whatsappNumber = safeStr(req.body.whatsappNumber);
   const validTypes = ["virement", "d\xE9p\xF4t", "retrait", "facture"];
   const transactionType = typeof req.body.transactionType === "string" && validTypes.includes(req.body.transactionType) ? req.body.transactionType : "virement";
+  const receiverAccountNumber = safeStr(req.body.receiverAccountNumber);
+  const receiverBankId = safeStr(req.body.receiverBankId);
+  const receiverBankLabel = safeStr(req.body.receiverBankLabel);
   let paymentMethods = null;
   if (Array.isArray(req.body.paymentMethods) && req.body.paymentMethods.length > 0) {
     paymentMethods = JSON.stringify(req.body.paymentMethods.filter((m) => typeof m === "string"));
+  }
+  let paymentMethodLabels = null;
+  if (Array.isArray(req.body.paymentMethodLabels) && req.body.paymentMethodLabels.length > 0) {
+    paymentMethodLabels = JSON.stringify(req.body.paymentMethodLabels.filter((m) => typeof m === "string"));
   }
   const [transfer] = await db.insert(transfersTable).values({
     userId: Number(userId),
@@ -75465,8 +75484,12 @@ router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, r
     receiverEmail,
     receiverCountry,
     receiverCity,
+    receiverAccountNumber,
+    receiverBankId,
+    receiverBankLabel,
     displayCurrency,
     paymentMethods,
+    paymentMethodLabels,
     blockReason,
     whatsappNumber
   }).returning();
