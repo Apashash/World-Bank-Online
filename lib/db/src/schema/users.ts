@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, numeric, pgEnum, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, pgEnum, boolean, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -24,7 +24,11 @@ export const usersTable = pgTable("users", {
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   balanceAlertThreshold: numeric("balance_alert_threshold", { precision: 15, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("users_status_idx").on(table.status),
+  index("users_created_at_idx").on(table.createdAt),
+  index("users_role_idx").on(table.role),
+]);
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;

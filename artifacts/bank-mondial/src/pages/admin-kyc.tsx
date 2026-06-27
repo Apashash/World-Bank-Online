@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminKyc() {
-  const { data: kycs, isLoading } = useAdminListKyc();
+  const { data: kycResponse, isLoading } = useAdminListKyc();
+  const kycs = Array.isArray(kycResponse) ? kycResponse : (kycResponse as any)?.kycs ?? [];
   const reviewKyc = useAdminReviewKyc();
   const { toast } = useToast();
   const queryClient = useQueryClient();

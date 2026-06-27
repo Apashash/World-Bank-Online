@@ -42,10 +42,35 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
+  optimizeDeps: {
+    include: [
+      "react", "react-dom", "wouter",
+      "@tanstack/react-query",
+      "framer-motion",
+      "recharts",
+      "lucide-react",
+      "sonner",
+      "date-fns",
+      "zod",
+      "clsx", "tailwind-merge",
+      "class-variance-authority",
+    ],
+  },
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-charts": ["recharts"],
+          "vendor-motion": ["framer-motion"],
+          "vendor-ui": ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select", "@radix-ui/react-tabs"],
+        },
+      },
+    },
   },
   server: {
     port,

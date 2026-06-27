@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -17,7 +17,10 @@ export const kycTable = pgTable("kyc", {
   rejectionReason: text("rejection_reason"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
-});
+}, (table) => [
+  index("kyc_status_idx").on(table.status),
+  index("kyc_submitted_at_idx").on(table.submittedAt),
+]);
 
 export const insertKycSchema = createInsertSchema(kycTable).omit({ id: true, submittedAt: true });
 export type InsertKyc = z.infer<typeof insertKycSchema>;
