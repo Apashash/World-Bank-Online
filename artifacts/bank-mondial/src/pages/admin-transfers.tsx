@@ -148,28 +148,30 @@ export default function AdminTransfers() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900">Virements</h1>
           <p className="text-sm text-slate-400 mt-0.5">
             {allTransfers.length} virement{allTransfers.length !== 1 ? "s" : ""} au total
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
-            <RefreshCw className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={openDeleteAll}
-            disabled={filtered.length === 0 || deletingAll}
-            className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Tout supprimer
-          </Button>
-          <Button size="sm" asChild className="gap-1.5 text-white" style={{ background: "#003087" }}>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openDeleteAll}
+              disabled={filtered.length === 0 || deletingAll}
+              className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Tout supprimer
+            </Button>
+          </div>
+          <Button size="sm" asChild className="gap-1.5 text-white w-full justify-center" style={{ background: "#003087" }}>
             <Link href="/admin/transfers/new">
               <Plus className="h-4 w-4" />
               Nouveau virement
