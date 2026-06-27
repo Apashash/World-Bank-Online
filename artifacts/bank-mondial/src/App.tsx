@@ -183,6 +183,7 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
     </Suspense>
+    </ChunkErrorBoundary>
   );
 }
 
