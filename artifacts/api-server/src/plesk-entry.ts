@@ -27,9 +27,21 @@ if (!hasDb) {
 
 const publicDir = path.join(__dirname, "public");
 
-app.use(express.static(publicDir));
+// Assets avec hash dans le nom → cache long terme (1 an)
+app.use("/assets", express.static(path.join(publicDir, "assets"), {
+  maxAge: "1y",
+  immutable: true,
+}));
 
+// Tout le reste des fichiers statiques (images, favicon…) sans cache
+app.use(express.static(publicDir, { maxAge: 0 }));
+
+// SPA fallback : toujours renvoyer index.html sans cache
+// pour que le navigateur récupère toujours la dernière version
 app.get(/(.*)/, (_req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   res.sendFile("index.html", { root: publicDir });
 });
 

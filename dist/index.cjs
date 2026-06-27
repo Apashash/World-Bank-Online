@@ -76488,8 +76488,15 @@ if (!hasDb) {
   );
 }
 var publicDir = import_path3.default.join(__dirname, "public");
-app_default.use(import_express21.default.static(publicDir));
+app_default.use("/assets", import_express21.default.static(import_path3.default.join(publicDir, "assets"), {
+  maxAge: "1y",
+  immutable: true
+}));
+app_default.use(import_express21.default.static(publicDir, { maxAge: 0 }));
 app_default.get(/(.*)/, (_req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   res.sendFile("index.html", { root: publicDir });
 });
 var rawPort = process.env["PORT"] ?? "3000";
