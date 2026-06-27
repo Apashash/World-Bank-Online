@@ -30579,8 +30579,8 @@ var require_gte = __commonJS({
   "../../node_modules/.pnpm/semver@7.8.4/node_modules/semver/functions/gte.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var gte3 = (a, b, loose) => compare2(a, b, loose) >= 0;
-    module2.exports = gte3;
+    var gte2 = (a, b, loose) => compare2(a, b, loose) >= 0;
+    module2.exports = gte2;
   }
 });
 
@@ -30601,7 +30601,7 @@ var require_cmp = __commonJS({
     var eq2 = require_eq();
     var neq = require_neq();
     var gt2 = require_gt();
-    var gte3 = require_gte();
+    var gte2 = require_gte();
     var lt2 = require_lt();
     var lte2 = require_lte();
     var cmp = (a, op, b, loose) => {
@@ -30631,7 +30631,7 @@ var require_cmp = __commonJS({
         case ">":
           return gt2(a, b, loose);
         case ">=":
-          return gte3(a, b, loose);
+          return gte2(a, b, loose);
         case "<":
           return lt2(a, b, loose);
         case "<=":
@@ -31438,7 +31438,7 @@ var require_outside = __commonJS({
     var gt2 = require_gt();
     var lt2 = require_lt();
     var lte2 = require_lte();
-    var gte3 = require_gte();
+    var gte2 = require_gte();
     var outside = (version3, range, hilo, options) => {
       version3 = new SemVer(version3, options);
       range = new Range(range, options);
@@ -31453,7 +31453,7 @@ var require_outside = __commonJS({
           break;
         case "<":
           gtfn = lt2;
-          ltefn = gte3;
+          ltefn = gte2;
           ltfn = gt2;
           comp = "<";
           ecomp = "<=";
@@ -31768,7 +31768,7 @@ var require_semver2 = __commonJS({
     var lt2 = require_lt();
     var eq2 = require_eq();
     var neq = require_neq();
-    var gte3 = require_gte();
+    var gte2 = require_gte();
     var lte2 = require_lte();
     var cmp = require_cmp();
     var coerce2 = require_coerce();
@@ -31807,7 +31807,7 @@ var require_semver2 = __commonJS({
       lt: lt2,
       eq: eq2,
       neq,
-      gte: gte3,
+      gte: gte2,
       lte: lte2,
       cmp,
       coerce: coerce2,
@@ -74056,7 +74056,11 @@ var usersTable = pgTable("users", {
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   balanceAlertThreshold: numeric("balance_alert_threshold", { precision: 15, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
-});
+}, (table) => [
+  index("users_status_idx").on(table.status),
+  index("users_created_at_idx").on(table.createdAt),
+  index("users_role_idx").on(table.role)
+]);
 var insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
 
 // ../../lib/db/src/schema/transfers.ts
@@ -74160,7 +74164,10 @@ var kycTable = pgTable("kyc", {
   rejectionReason: text("rejection_reason"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true })
-});
+}, (table) => [
+  index("kyc_status_idx").on(table.status),
+  index("kyc_submitted_at_idx").on(table.submittedAt)
+]);
 var insertKycSchema = createInsertSchema(kycTable).omit({ id: true, submittedAt: true });
 
 // ../../lib/db/src/schema/activity.ts
@@ -75217,8 +75224,16 @@ router9.post("/admin/transfers/:id/unlock", requireAuth, requireAdmin, async (re
   });
 });
 router9.get("/admin/kyc", requireAuth, requireAdmin, async (req, res) => {
-  const kycs = await db.select().from(kycTable);
-  res.json(kycs.map(formatKyc));
+  const { page = "1", limit = "20", status } = req.query;
+  const p = Math.max(1, parseInt(page));
+  const l = Math.min(100, Math.max(1, parseInt(limit)));
+  const where = status ? eq(kycTable.status, status) : void 0;
+  const [kycs, [{ total }]] = await Promise.all([
+    db.select().from(kycTable).where(where).orderBy(desc(kycTable.submittedAt)).limit(l).offset((p - 1) * l),
+    db.select({ total: count() }).from(kycTable).where(where)
+  ]);
+  res.setHeader("Cache-Control", "private, max-age=10");
+  res.json({ kycs: kycs.map(formatKyc), total, page: p, limit: l });
 });
 router9.patch("/admin/kyc/:id/review", requireAuth, requireAdmin, async (req, res) => {
   const id = parseInt(req.params["id"]);
@@ -75240,60 +75255,81 @@ router9.patch("/admin/kyc/:id/review", requireAuth, requireAdmin, async (req, re
   await db.update(usersTable).set({ kycStatus: parsed.data.status }).where(eq(usersTable.id, kycs[0].userId));
   res.json(formatKyc(updated));
 });
+var _cache = /* @__PURE__ */ new Map();
+function getCached(key) {
+  const entry = _cache.get(key);
+  if (!entry || Date.now() > entry.expiresAt) return null;
+  return entry.data;
+}
+function setCached(key, data, ttlMs) {
+  _cache.set(key, { data, expiresAt: Date.now() + ttlMs });
+}
 router9.get("/admin/charts", requireAuth, requireAdmin, async (req, res) => {
   const days = Math.min(Number(req.query["days"] ?? 14), 90);
+  const cacheKey = `admin_charts_${days}`;
+  const cached2 = getCached(cacheKey);
+  if (cached2) {
+    res.setHeader("Cache-Control", "private, max-age=60");
+    res.json(cached2);
+    return;
+  }
   const since = /* @__PURE__ */ new Date();
   since.setDate(since.getDate() - days + 1);
   since.setHours(0, 0, 0, 0);
-  const allTransfers = await db.select().from(transfersTable);
-  const allUsers = await db.select().from(usersTable);
+  const [transferRows, userRows, statusRows, currencyRows] = await Promise.all([
+    db.select({
+      date: sql`date_trunc('day', ${transfersTable.createdAt} AT TIME ZONE 'UTC')::date::text`,
+      transfers: sql`count(*)::int`,
+      volume: sql`coalesce(sum(${transfersTable.amount}::numeric), 0)::float`,
+      confirmedTransfers: sql`count(*) filter (where ${transfersTable.status} = 'completed')::int`
+    }).from(transfersTable).where(gte(transfersTable.createdAt, since)).groupBy(sql`date_trunc('day', ${transfersTable.createdAt} AT TIME ZONE 'UTC')`).orderBy(sql`date_trunc('day', ${transfersTable.createdAt} AT TIME ZONE 'UTC')`),
+    db.select({
+      date: sql`date_trunc('day', ${usersTable.createdAt} AT TIME ZONE 'UTC')::date::text`,
+      newUsers: sql`count(*)::int`
+    }).from(usersTable).where(gte(usersTable.createdAt, since)).groupBy(sql`date_trunc('day', ${usersTable.createdAt} AT TIME ZONE 'UTC')`),
+    db.select({
+      status: transfersTable.status,
+      count: sql`count(*)::int`
+    }).from(transfersTable).groupBy(transfersTable.status),
+    db.select({
+      currency: transfersTable.currency,
+      volume: sql`coalesce(sum(${transfersTable.amount}::numeric), 0)::float`
+    }).from(transfersTable).groupBy(transfersTable.currency)
+  ]);
+  const tByDay = new Map(transferRows.map((r) => [r.date.slice(0, 10), r]));
+  const uByDay = new Map(userRows.map((r) => [r.date.slice(0, 10), r.newUsers]));
   const dayKeys = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(since);
     d.setDate(d.getDate() + i);
     dayKeys.push(d.toISOString().slice(0, 10));
   }
-  const transfersByDay = {};
-  const usersByDay = {};
-  dayKeys.forEach((k) => {
-    transfersByDay[k] = { count: 0, amount: 0, confirmed: 0 };
-    usersByDay[k] = 0;
-  });
-  for (const t of allTransfers) {
-    const k = t.createdAt.toISOString().slice(0, 10);
-    if (transfersByDay[k]) {
-      transfersByDay[k].count++;
-      transfersByDay[k].amount += Number(t.amount);
-      if (t.status === "completed") transfersByDay[k].confirmed++;
-    }
-  }
-  for (const u of allUsers) {
-    const k = u.createdAt.toISOString().slice(0, 10);
-    if (usersByDay[k] !== void 0) usersByDay[k]++;
-  }
-  const statusMap = {};
-  for (const t of allTransfers) {
-    statusMap[t.status] = (statusMap[t.status] ?? 0) + 1;
-  }
-  const currencyVol = {};
-  for (const t of allTransfers) {
-    currencyVol[t.currency] = (currencyVol[t.currency] ?? 0) + Number(t.amount);
-  }
-  res.json({
-    days: dayKeys.map((date6) => ({
-      date: date6,
-      label: date6.slice(5),
-      // MM-DD
-      transfers: transfersByDay[date6].count,
-      volume: Math.round(transfersByDay[date6].amount * 100) / 100,
-      confirmedTransfers: transfersByDay[date6].confirmed,
-      newUsers: usersByDay[date6]
-    })),
-    statusBreakdown: Object.entries(statusMap).map(([status, count3]) => ({ status, count: count3 })),
-    currencyVolume: Object.entries(currencyVol).map(([currency, volume]) => ({ currency, volume: Math.round(volume * 100) / 100 }))
-  });
+  const result = {
+    days: dayKeys.map((date6) => {
+      const t = tByDay.get(date6);
+      return {
+        date: date6,
+        label: date6.slice(5),
+        transfers: t?.transfers ?? 0,
+        volume: Math.round((t?.volume ?? 0) * 100) / 100,
+        confirmedTransfers: t?.confirmedTransfers ?? 0,
+        newUsers: uByDay.get(date6) ?? 0
+      };
+    }),
+    statusBreakdown: statusRows.map((r) => ({ status: r.status, count: r.count })),
+    currencyVolume: currencyRows.map((r) => ({ currency: r.currency, volume: Math.round(r.volume * 100) / 100 }))
+  };
+  setCached(cacheKey, result, 6e4);
+  res.setHeader("Cache-Control", "private, max-age=60");
+  res.json(result);
 });
 router9.get("/admin/stats", requireAuth, requireAdmin, async (req, res) => {
+  const cached2 = getCached("admin_stats");
+  if (cached2) {
+    res.setHeader("Cache-Control", "private, max-age=30");
+    res.json(cached2);
+    return;
+  }
   const [userStats, transferStats, [{ pendingKyc }], [{ totalSubAccounts }], [{ totalReferrals }]] = await Promise.all([
     db.select({
       total: sql`count(*)::int`,
@@ -75308,7 +75344,7 @@ router9.get("/admin/stats", requireAuth, requireAdmin, async (req, res) => {
     db.select({ totalSubAccounts: sql`count(*)::int` }).from(subAccountsTable),
     db.select({ totalReferrals: sql`count(*)::int` }).from(referralsTable)
   ]);
-  res.json({
+  const result = {
     totalUsers: userStats[0].total,
     activeUsers: userStats[0].active,
     blockedUsers: userStats[0].blocked,
@@ -75317,7 +75353,10 @@ router9.get("/admin/stats", requireAuth, requireAdmin, async (req, res) => {
     pendingKyc,
     totalSubAccounts,
     totalReferrals
-  });
+  };
+  setCached("admin_stats", result, 3e4);
+  res.setHeader("Cache-Control", "private, max-age=30");
+  res.json(result);
 });
 router9.post("/admin/users/:id/credit", requireAuth, requireAdmin, async (req, res) => {
   const id = parseInt(req.params["id"]);
@@ -75520,67 +75559,6 @@ router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, r
     console.error("[admin/transfers/create]", err);
     res.status(500).json({ error: err?.message ?? "Erreur serveur lors de la cr\xE9ation du virement" });
   }
-});
-router9.post("/admin/users/:id/credit", requireAuth, requireAdmin, async (req, res) => {
-  const id = parseInt(req.params["id"]);
-  const { amount, reason } = req.body;
-  if (typeof amount !== "number" || amount <= 0 || typeof reason !== "string" || !reason.trim()) {
-    res.status(400).json({ error: "Montant ou motif invalide" });
-    return;
-  }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
-  if (!user) {
-    res.status(404).json({ error: "Utilisateur introuvable" });
-    return;
-  }
-  const newBalance = (Number(user.balance) + amount).toFixed(2);
-  const [updated] = await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, id)).returning();
-  await db.insert(activityTable).values({
-    userId: id,
-    type: "deposit",
-    description: `Cr\xE9dit admin : +${amount} ${user.currency} \u2014 ${reason}`,
-    amount: amount.toString(),
-    currency: user.currency
-  });
-  res.json(formatUser(updated));
-});
-router9.post("/admin/users/:id/debit", requireAuth, requireAdmin, async (req, res) => {
-  const id = parseInt(req.params["id"]);
-  const { amount, reason } = req.body;
-  if (typeof amount !== "number" || amount <= 0 || typeof reason !== "string" || !reason.trim()) {
-    res.status(400).json({ error: "Montant ou motif invalide" });
-    return;
-  }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
-  if (!user) {
-    res.status(404).json({ error: "Utilisateur introuvable" });
-    return;
-  }
-  const newBalance = Math.max(0, Number(user.balance) - amount).toFixed(2);
-  const [updated] = await db.update(usersTable).set({ balance: newBalance }).where(eq(usersTable.id, id)).returning();
-  await db.insert(activityTable).values({
-    userId: id,
-    type: "withdrawal",
-    description: `D\xE9bit admin : -${amount} ${user.currency} \u2014 ${reason}`,
-    amount: amount.toString(),
-    currency: user.currency
-  });
-  res.json(formatUser(updated));
-});
-router9.get("/admin/users/:id/transfers", requireAuth, requireAdmin, async (req, res) => {
-  const id = parseInt(req.params["id"]);
-  const transfers = await db.select().from(transfersTable).where(eq(transfersTable.userId, id));
-  res.json(transfers.map((t) => ({
-    id: t.id,
-    beneficiaryName: t.beneficiaryName,
-    amount: Number(t.amount),
-    currency: t.currency,
-    status: t.status,
-    reference: t.reference,
-    message: t.message ?? null,
-    createdAt: t.createdAt.toISOString(),
-    confirmedAt: t.confirmedAt?.toISOString() ?? null
-  })));
 });
 router9.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) => {
   const { fullName, email: email3, phone, country, password, initialBalance, currency } = req.body;
@@ -76493,7 +76471,11 @@ app_default.use("/assets", import_express21.default.static(import_path3.default.
   immutable: true
 }));
 app_default.use(import_express21.default.static(publicDir, { maxAge: 0 }));
-app_default.get(/(.*)/, (_req, res) => {
+app_default.get(/(.*)/, (req, res) => {
+  if (/\.(js|mjs|css|wasm|json|map)$/.test(req.path)) {
+    res.status(404).end();
+    return;
+  }
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
