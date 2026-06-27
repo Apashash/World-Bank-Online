@@ -99,6 +99,28 @@ router.get("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
   });
 });
 
+// DELETE /admin/transfers/:id — supprimer un virement
+router.delete("/admin/transfers/:id", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params["id"] as string);
+  if (isNaN(id)) { res.status(400).json({ error: "ID invalide" }); return; }
+  const [transfer] = await db.select().from(transfersTable).where(eq(transfersTable.id, id)).limit(1);
+  if (!transfer) { res.status(404).json({ error: "Virement introuvable" }); return; }
+  await db.delete(transfersTable).where(eq(transfersTable.id, id));
+  res.json({ ok: true });
+});
+
+// DELETE /admin/transfers — supprimer tous les virements (ou ceux d'un statut donné)
+router.delete("/admin/transfers", requireAuth, requireAdmin, async (req, res) => {
+  const { status } = req.query as Record<string, string>;
+  const validStatuses = ["pending", "completed", "cancelled", "expired"];
+  if (status && !validStatuses.includes(status)) {
+    res.status(400).json({ error: "Statut invalide" }); return;
+  }
+  const where = status ? eq(transfersTable.status, status as any) : undefined;
+  await db.delete(transfersTable).where(where);
+  res.json({ ok: true });
+});
+
 // POST /admin/transfers/:id/unlock — admin confirms withdrawal unblocking
 router.post("/admin/transfers/:id/unlock", requireAuth, requireAdmin, async (req, res) => {
   const id = parseInt(req.params["id"] as string);

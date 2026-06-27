@@ -10,7 +10,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2, ExternalLink, Unlock, Lock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2, ExternalLink, Unlock, Lock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "wouter";
@@ -52,6 +62,9 @@ const STATUS_LABEL: Record<string, string> = {
 export default function AdminTransfers() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [unlocking, setUnlocking] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ type: "one"; id: number; label: string } | { type: "all"; status: string; count: number } | null>(null);
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useAdminListTransfers({ page: 1, limit: 500 });
@@ -80,6 +93,41 @@ export default function AdminTransfers() {
     setUnlocking(null);
   };
 
+  const handleDeleteOne = async (id: number) => {
+    setDeletingId(id);
+    try {
+      const r = await authFetch(`/api/admin/transfers/${id}`, { method: "DELETE" });
+      if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur"); }
+      toast({ title: "Virement supprimé." });
+      refetch();
+    } catch (e: any) {
+      toast({ title: e.message, variant: "destructive" });
+    }
+    setDeletingId(null);
+    setConfirmDelete(null);
+  };
+
+  const handleDeleteAll = async (status: string) => {
+    setDeletingAll(true);
+    try {
+      const url = status === "all" ? "/api/admin/transfers" : `/api/admin/transfers?status=${status}`;
+      const r = await authFetch(url, { method: "DELETE" });
+      if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur"); }
+      toast({ title: "Virements supprimés." });
+      refetch();
+    } catch (e: any) {
+      toast({ title: e.message, variant: "destructive" });
+    }
+    setDeletingAll(false);
+    setConfirmDelete(null);
+  };
+
+  const openDeleteAll = () => {
+    const status = statusFilter;
+    const count = status === "all" ? allTransfers.length : filtered.length;
+    setConfirmDelete({ type: "all", status, count });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -97,6 +145,16 @@ export default function AdminTransfers() {
             className="gap-1.5"
           >
             <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openDeleteAll}
+            disabled={filtered.length === 0 || deletingAll}
+            className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Tout supprimer
           </Button>
           <Button
             size="sm"
@@ -182,7 +240,7 @@ export default function AdminTransfers() {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
-        <Table className="min-w-[700px]">
+        <Table className="min-w-[750px]">
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead className="text-xs font-semibold text-slate-500">Date</TableHead>
@@ -193,18 +251,19 @@ export default function AdminTransfers() {
               <TableHead className="text-xs font-semibold text-slate-500 text-right">Montant</TableHead>
               <TableHead className="text-xs font-semibold text-slate-500 text-center">Verrou</TableHead>
               <TableHead className="text-xs font-semibold text-slate-500 text-center">Lien</TableHead>
+              <TableHead className="text-xs font-semibold text-slate-500 text-center">Suppr.</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-16">
+                <TableCell colSpan={9} className="text-center py-16">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto text-slate-300" />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-16 text-slate-400 text-sm">
+                <TableCell colSpan={9} className="text-center py-16 text-slate-400 text-sm">
                   Aucun virement dans cette catégorie
                 </TableCell>
               </TableRow>
@@ -272,12 +331,71 @@ export default function AdminTransfers() {
                       </a>
                     )}
                   </TableCell>
+                  <TableCell className="text-center">
+                    <button
+                      onClick={() => setConfirmDelete({ type: "one", id: t.id, label: t.beneficiaryName })}
+                      disabled={deletingId === t.id}
+                      title="Supprimer ce virement"
+                      className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+                    >
+                      {deletingId === t.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      {/* Confirmation dialog */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">
+              {confirmDelete?.type === "one" ? "Supprimer ce virement ?" : "Supprimer tous les virements ?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete?.type === "one" ? (
+                <>
+                  Le virement vers <strong>{confirmDelete.label}</strong> sera définitivement supprimé. Cette action est irréversible.
+                </>
+              ) : (
+                <>
+                  {confirmDelete?.count} virement{(confirmDelete?.count ?? 0) > 1 ? "s" : ""}{" "}
+                  {confirmDelete?.status !== "all" ? `avec le statut « ${STATUS_LABEL[confirmDelete?.status ?? ""] ?? confirmDelete?.status} »` : "au total"}{" "}
+                  seront définitivement supprimés. Cette action est irréversible.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null || deletingAll}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={deletingId !== null || deletingAll}
+              onClick={() => {
+                if (!confirmDelete) return;
+                if (confirmDelete.type === "one") {
+                  handleDeleteOne(confirmDelete.id);
+                } else {
+                  handleDeleteAll(confirmDelete.status);
+                }
+              }}
+            >
+              {(deletingId !== null || deletingAll) ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Suppression...</>
+              ) : (
+                <><Trash2 className="h-4 w-4 mr-2" />Supprimer définitivement</>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
