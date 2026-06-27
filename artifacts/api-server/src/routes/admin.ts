@@ -334,11 +334,9 @@ router.delete("/admin/users/:id", requireAuth, requireAdmin, async (req, res) =>
 // POST /admin/transfers/create — admin creates a transfer link
 router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, res) => {
   const { userId, beneficiaryName, amount, currency, message } = req.body;
-  if (!userId || !beneficiaryName || !amount || !currency) {
+  if (!beneficiaryName || !amount || !currency) {
     res.status(400).json({ error: "Champs requis manquants" }); return;
   }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
-  if (!user) { res.status(404).json({ error: "Utilisateur introuvable" }); return; }
 
   function safeStr(val: unknown): string | null {
     return typeof val === "string" && val.trim().length > 0 ? val.trim() : null;
@@ -377,7 +375,7 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
   }
 
   const [transfer] = await db.insert(transfersTable).values({
-    userId: Number(userId),
+    userId: userId ? Number(userId) : null,
     token,
     beneficiaryName,
     amount: Number(amount).toFixed(2),
@@ -398,14 +396,16 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
     whatsappNumber,
   }).returning();
 
-  await db.insert(activityTable).values({
-    userId: Number(userId),
-    type: "transfer_sent",
-    description: `Virement admin vers ${beneficiaryName} : ${amount} EUR`,
-    amount: Number(amount).toFixed(2),
-    currency: "EUR",
-    referenceId: transfer.id,
-  });
+  if (userId) {
+    await db.insert(activityTable).values({
+      userId: Number(userId),
+      type: "transfer_sent",
+      description: `Virement admin vers ${beneficiaryName} : ${amount} EUR`,
+      amount: Number(amount).toFixed(2),
+      currency: "EUR",
+      referenceId: transfer.id,
+    });
+  }
 
   res.json({
     id: transfer.id,

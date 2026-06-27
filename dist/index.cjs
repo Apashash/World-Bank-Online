@@ -74064,7 +74064,7 @@ var transferStatusEnum = pgEnum("transfer_status", ["pending", "completed", "can
 var accessTypeEnum = pgEnum("access_type", ["public", "private", "limited"]);
 var transfersTable = pgTable("transfers", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id"),
   token: text("token").notNull().unique(),
   beneficiaryName: text("beneficiary_name").notNull(),
   amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
@@ -75425,13 +75425,8 @@ router9.delete("/admin/users/:id", requireAuth, requireAdmin, async (req, res) =
 });
 router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, res) => {
   const { userId, beneficiaryName, amount, currency, message } = req.body;
-  if (!userId || !beneficiaryName || !amount || !currency) {
+  if (!beneficiaryName || !amount || !currency) {
     res.status(400).json({ error: "Champs requis manquants" });
-    return;
-  }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
-  if (!user) {
-    res.status(404).json({ error: "Utilisateur introuvable" });
     return;
   }
   function safeStr(val) {
@@ -75466,7 +75461,7 @@ router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, r
     paymentMethodLabels = JSON.stringify(req.body.paymentMethodLabels.filter((m) => typeof m === "string"));
   }
   const [transfer] = await db.insert(transfersTable).values({
-    userId: Number(userId),
+    userId: userId ? Number(userId) : null,
     token,
     beneficiaryName,
     amount: Number(amount).toFixed(2),
@@ -75493,14 +75488,16 @@ router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, r
     blockReason,
     whatsappNumber
   }).returning();
-  await db.insert(activityTable).values({
-    userId: Number(userId),
-    type: "transfer_sent",
-    description: `Virement admin vers ${beneficiaryName} : ${amount} EUR`,
-    amount: Number(amount).toFixed(2),
-    currency: "EUR",
-    referenceId: transfer.id
-  });
+  if (userId) {
+    await db.insert(activityTable).values({
+      userId: Number(userId),
+      type: "transfer_sent",
+      description: `Virement admin vers ${beneficiaryName} : ${amount} EUR`,
+      amount: Number(amount).toFixed(2),
+      currency: "EUR",
+      referenceId: transfer.id
+    });
+  }
   res.json({
     id: transfer.id,
     token: transfer.token,

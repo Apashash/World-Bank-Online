@@ -7,7 +7,7 @@ export const accessTypeEnum = pgEnum("access_type", ["public", "private", "limit
 
 export const transfersTable = pgTable("transfers", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id"),
   token: text("token").notNull().unique(),
   beneficiaryName: text("beneficiary_name").notNull(),
   amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
