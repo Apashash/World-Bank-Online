@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component, type ReactNode, type ErrorInfo } from "react";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +8,56 @@ import CookieConsent from "@/components/CookieConsent";
 import { CurrencyProvider } from "@/contexts/currency-context";
 import { AppLayout } from "@/components/layout";
 import { AdminLayout } from "@/components/admin-layout";
+
+// ErrorBoundary local pour les erreurs de chargement de chunks (lazy imports)
+const isChunkError = (e: Error) =>
+  e.message.includes("Importing a module") ||
+  e.message.includes("Failed to fetch") ||
+  e.message.includes("Loading chunk") ||
+  e.message.includes("dynamically imported");
+
+class ChunkErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    if (isChunkError(error)) {
+      const key = "__chunk_reload__";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        setTimeout(() => window.location.reload(), 800);
+      }
+    }
+  }
+  render() {
+    if (this.state.failed) {
+      return (
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", minHeight: "60vh", gap: 16,
+          fontFamily: "-apple-system, BlinkMacSystemFont, Inter, sans-serif",
+          textAlign: "center", padding: 24,
+        }}>
+          <div style={{ fontSize: 36 }}>🔄</div>
+          <strong style={{ fontSize: 17 }}>Mise à jour disponible</strong>
+          <p style={{ color: "#6b7280", maxWidth: 280, margin: 0 }}>
+            Rechargez la page pour accéder à la dernière version.
+          </p>
+          <button
+            onClick={() => { sessionStorage.removeItem("__chunk_reload__"); window.location.reload(); }}
+            style={{
+              background: "#003087", color: "#fff", border: "none",
+              borderRadius: 10, padding: "12px 28px", fontSize: 15,
+              fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            Recharger la page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Pages chargées immédiatement (critiques, toujours visitées sans auth)
 import Landing from "@/pages/landing";
@@ -84,7 +134,8 @@ function PageLoader() {
 
 function Router() {
   return (
-    <Suspense fallback={<PageLoader />}>
+    <ChunkErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />

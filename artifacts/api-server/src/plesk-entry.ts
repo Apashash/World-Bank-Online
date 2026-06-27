@@ -36,9 +36,14 @@ app.use("/assets", express.static(path.join(publicDir, "assets"), {
 // Tout le reste des fichiers statiques (images, favicon…) sans cache
 app.use(express.static(publicDir, { maxAge: 0 }));
 
-// SPA fallback : toujours renvoyer index.html sans cache
-// pour que le navigateur récupère toujours la dernière version
-app.get(/(.*)/, (_req, res) => {
+// SPA fallback : renvoyer index.html sans cache SAUF pour les assets (js/css/…)
+// Si un chunk JS est manquant, renvoyer 404 propre au lieu de HTML
+// (sinon le navigateur parse index.html comme JS → spinner infini)
+app.get(/(.*)/, (req, res) => {
+  if (/\.(js|mjs|css|wasm|json|map)$/.test(req.path)) {
+    res.status(404).end();
+    return;
+  }
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
