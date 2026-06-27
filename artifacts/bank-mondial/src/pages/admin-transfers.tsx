@@ -20,10 +20,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2, ExternalLink, Unlock, Lock, Trash2 } from "lucide-react";
+import {
+  Plus, Loader2, RefreshCw, TrendingUp, Clock, CheckCircle2,
+  ExternalLink, Unlock, Lock, Trash2, ChevronLeft, ChevronRight,
+} from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "wouter";
+
+const PAGE_SIZE = 20;
 
 function authFetch(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem("auth_token");
@@ -61,10 +66,13 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function AdminTransfers() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
   const [unlocking, setUnlocking] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deletingAll, setDeletingAll] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<{ type: "one"; id: number; label: string } | { type: "all"; status: string; count: number } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<
+    { type: "one"; id: number; label: string } | { type: "all"; status: string; count: number } | null
+  >(null);
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useAdminListTransfers({ page: 1, limit: 500 });
@@ -75,9 +83,18 @@ export default function AdminTransfers() {
       ? allTransfers
       : allTransfers.filter((t) => t.status === statusFilter);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   const totalVolume = allTransfers.reduce((s, t) => s + t.amount, 0);
   const pendingCount = allTransfers.filter((t) => t.status === "pending").length;
   const completedCount = allTransfers.filter((t) => t.status === "completed").length;
+
+  const changeFilter = (val: string) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
 
   const handleUnlock = async (id: number) => {
     setUnlocking(id);
@@ -114,6 +131,7 @@ export default function AdminTransfers() {
       const r = await authFetch(url, { method: "DELETE" });
       if (!r.ok) { const j = await r.json(); throw new Error(j.error ?? "Erreur"); }
       toast({ title: "Virements supprimés." });
+      setPage(1);
       refetch();
     } catch (e: any) {
       toast({ title: e.message, variant: "destructive" });
@@ -123,13 +141,13 @@ export default function AdminTransfers() {
   };
 
   const openDeleteAll = () => {
-    const status = statusFilter;
-    const count = status === "all" ? allTransfers.length : filtered.length;
-    setConfirmDelete({ type: "all", status, count });
+    const count = statusFilter === "all" ? allTransfers.length : filtered.length;
+    setConfirmDelete({ type: "all", status: statusFilter, count });
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Virements</h1>
@@ -138,12 +156,7 @@ export default function AdminTransfers() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="gap-1.5"
-          >
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
           <Button
@@ -156,12 +169,7 @@ export default function AdminTransfers() {
             <Trash2 className="h-3.5 w-3.5" />
             Tout supprimer
           </Button>
-          <Button
-            size="sm"
-            asChild
-            className="gap-1.5 text-white"
-            style={{ background: "#003087" }}
-          >
+          <Button size="sm" asChild className="gap-1.5 text-white" style={{ background: "#003087" }}>
             <Link href="/admin/transfers/new">
               <Plus className="h-4 w-4" />
               Nouveau virement
@@ -170,37 +178,20 @@ export default function AdminTransfers() {
         </div>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
           {
             label: "Volume EUR",
-            value: totalVolume >= 1000
-              ? `${(totalVolume / 1000).toFixed(1)}k`
-              : totalVolume.toFixed(0),
+            value: totalVolume >= 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume.toFixed(0),
             icon: TrendingUp,
             color: "#003087",
           },
-          {
-            label: "En attente",
-            value: pendingCount,
-            icon: Clock,
-            color: "#f59e0b",
-          },
-          {
-            label: "Complétés",
-            value: completedCount,
-            icon: CheckCircle2,
-            color: "#10b981",
-          },
+          { label: "En attente", value: pendingCount, icon: Clock, color: "#f59e0b" },
+          { label: "Complétés", value: completedCount, icon: CheckCircle2, color: "#10b981" },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm"
-          >
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg mb-2"
-              style={{ background: `${s.color}15` }}
-            >
+          <div key={s.label} className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg mb-2" style={{ background: `${s.color}15` }}>
               <s.icon className="h-3.5 w-3.5" style={{ color: s.color }} />
             </div>
             <p className="text-lg font-bold text-slate-900 leading-tight truncate">{s.value}</p>
@@ -209,6 +200,7 @@ export default function AdminTransfers() {
         ))}
       </div>
 
+      {/* Status filter tabs */}
       <div className="flex gap-1.5 flex-wrap">
         {STATUS_TABS.map((tab) => {
           const count =
@@ -218,27 +210,22 @@ export default function AdminTransfers() {
           return (
             <button
               key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
+              onClick={() => changeFilter(tab.value)}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border"
               style={
                 statusFilter === tab.value
                   ? { background: "#003087", color: "#fff", borderColor: "#003087" }
-                  : {
-                      background: "#fff",
-                      color: "#64748b",
-                      borderColor: "#e2e8f0",
-                    }
+                  : { background: "#fff", color: "#64748b", borderColor: "#e2e8f0" }
               }
             >
               {tab.label}
-              {tab.value !== "all" && (
-                <span className="ml-1.5 opacity-60">({count})</span>
-              )}
+              {tab.value !== "all" && <span className="ml-1.5 opacity-60">({count})</span>}
             </button>
           );
         })}
       </div>
 
+      {/* Table */}
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
         <Table className="min-w-[750px]">
           <TableHeader>
@@ -261,14 +248,14 @@ export default function AdminTransfers() {
                   <Loader2 className="h-5 w-5 animate-spin mx-auto text-slate-300" />
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : paginated.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-16 text-slate-400 text-sm">
                   Aucun virement dans cette catégorie
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((t: any) => (
+              paginated.map((t: any) => (
                 <TableRow key={t.id} className="hover:bg-slate-50 transition-colors">
                   <TableCell className="text-xs text-slate-500">
                     {format(new Date(t.createdAt), "dd/MM/yy HH:mm", { locale: fr })}
@@ -276,16 +263,10 @@ export default function AdminTransfers() {
                   <TableCell className="text-sm text-slate-500">
                     <span className="font-mono text-xs">#{t.userId}</span>
                   </TableCell>
-                  <TableCell className="font-medium text-slate-900">
-                    {t.beneficiaryName}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-slate-400">
-                    {t.reference}
-                  </TableCell>
+                  <TableCell className="font-medium text-slate-900">{t.beneficiaryName}</TableCell>
+                  <TableCell className="font-mono text-xs text-slate-400">{t.reference}</TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_STYLE[t.status] ?? "bg-slate-100 text-slate-500"}`}
-                    >
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_STYLE[t.status] ?? "bg-slate-100 text-slate-500"}`}>
                       {STATUS_LABEL[t.status] ?? t.status}
                     </span>
                   </TableCell>
@@ -303,14 +284,9 @@ export default function AdminTransfers() {
                         <button
                           onClick={() => handleUnlock(t.id)}
                           disabled={unlocking === t.id}
-                          title="Confirmer le déblocage du retrait"
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
                         >
-                          {unlocking === t.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Lock className="h-3 w-3" />
-                          )}
+                          {unlocking === t.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
                           Débloquer
                         </button>
                       )
@@ -325,7 +301,6 @@ export default function AdminTransfers() {
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-slate-400 hover:text-[#003087] hover:bg-blue-50 transition-colors"
-                        title="Ouvrir le lien de virement"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
@@ -338,11 +313,9 @@ export default function AdminTransfers() {
                       title="Supprimer ce virement"
                       className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
                     >
-                      {deletingId === t.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                      )}
+                      {deletingId === t.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <Trash2 className="h-3.5 w-3.5" />}
                     </button>
                   </TableCell>
                 </TableRow>
@@ -351,6 +324,56 @@ export default function AdminTransfers() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-slate-400">
+            Page {safePage} sur {totalPages} — {filtered.length} virement{filtered.length !== 1 ? "s" : ""}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+              .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("…");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === "…" ? (
+                  <span key={`ellipsis-${i}`} className="px-1 text-slate-300 text-xs">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p as number)}
+                    className="h-7 min-w-[28px] px-1.5 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors"
+                    style={
+                      safePage === p
+                        ? { background: "#003087", color: "#fff" }
+                        : { background: "#fff", color: "#64748b", border: "1px solid #e2e8f0" }
+                    }
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation dialog */}
       <AlertDialog open={!!confirmDelete} onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}>
@@ -361,13 +384,13 @@ export default function AdminTransfers() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDelete?.type === "one" ? (
-                <>
-                  Le virement vers <strong>{confirmDelete.label}</strong> sera définitivement supprimé. Cette action est irréversible.
-                </>
+                <>Le virement vers <strong>{confirmDelete.label}</strong> sera définitivement supprimé. Cette action est irréversible.</>
               ) : (
                 <>
                   {confirmDelete?.count} virement{(confirmDelete?.count ?? 0) > 1 ? "s" : ""}{" "}
-                  {confirmDelete?.status !== "all" ? `avec le statut « ${STATUS_LABEL[confirmDelete?.status ?? ""] ?? confirmDelete?.status} »` : "au total"}{" "}
+                  {confirmDelete?.status !== "all"
+                    ? `avec le statut « ${STATUS_LABEL[confirmDelete?.status ?? ""] ?? confirmDelete?.status} »`
+                    : "au total"}{" "}
                   seront définitivement supprimés. Cette action est irréversible.
                 </>
               )}
@@ -380,11 +403,8 @@ export default function AdminTransfers() {
               disabled={deletingId !== null || deletingAll}
               onClick={() => {
                 if (!confirmDelete) return;
-                if (confirmDelete.type === "one") {
-                  handleDeleteOne(confirmDelete.id);
-                } else {
-                  handleDeleteAll(confirmDelete.status);
-                }
+                if (confirmDelete.type === "one") handleDeleteOne(confirmDelete.id);
+                else handleDeleteAll(confirmDelete.status);
               }}
             >
               {(deletingId !== null || deletingAll) ? (
