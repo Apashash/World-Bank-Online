@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Banque Mondiale — Votre banque en ligne</title>
+    <meta name="description" content="Banque Mondiale — Gérez vos finances, effectuez des virements instantanés et suivez vos transactions en toute sécurité." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="Banque Mondiale" />
+    <meta property="og:description" content="Gérez vos finances, effectuez des virements instantanés et suivez vos transactions en toute sécurité." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://banquemondiale.cfd/" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Banque Mondiale" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Banque Mondiale" />
+    <meta name="twitter:description" content="Gérez vos finances, effectuez des virements instantanés et suivez vos transactions en toute sécurité." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      #root:empty::after {
+        content: '';
+        display: block;
+      }
+      #app-loading {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+        font-size: 15px;
+        color: #6b7280;
+      }
+      #app-error {
+        display: none;
+        position: fixed;
+        inset: 0;
+        padding: 24px;
+        background: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+        font-size: 13px;
+        color: #111;
+        overflow: auto;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-CdPQ3qol.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-query-CfsYTeVf.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-charts-CvRhSpep.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-chGLynMX.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BGZgUMDm.css">
+  </head>
+  <body>
+    <div id="app-loading">Chargement…</div>
+    <div id="app-error"></div>
+    <div id="root"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        var el = document.getElementById('app-error');
+        var loading = document.getElementById('app-loading');
+        if (el) {
+          el.style.display = 'block';
+          el.innerHTML = '<strong>Erreur de chargement</strong><br><pre style="white-space:pre-wrap;margin-top:12px;font-size:12px;background:#f3f4f6;padding:12px;border-radius:6px">' + (e.message || '') + '\n' + (e.filename || '') + ':' + (e.lineno || '') + '\n' + (e.error && e.error.stack ? e.error.stack : '') + '</pre>';
+        }
+        if (loading) loading.style.display = 'none';
+      });
+    </script>
+  </body>
+</html>
