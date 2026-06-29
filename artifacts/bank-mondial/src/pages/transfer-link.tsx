@@ -196,14 +196,21 @@ export default function TransferLink() {
     if (!token) return;
     setConfirming(true);
     try {
-      const r = await fetch(`/api/transfers/link/${token}/confirm`, { method: "POST" });
-      if (!r.ok) throw new Error("Error");
-      const data = await r.json();
-      setTransfer(data);
+      await fetch(`/api/transfers/link/${token}/confirm`, { method: "POST" });
     } catch {
-    } finally {
-      setConfirming(false);
+      // ignore network errors — still reload below
     }
+    // Always re-fetch the latest state from server to guarantee UI sync
+    try {
+      const r = await fetch(`/api/transfers/link/${token}`);
+      if (r.ok) {
+        const data = await r.json();
+        setTransfer(data);
+      }
+    } catch {
+      // ignore
+    }
+    setConfirming(false);
   };
 
   const handleWithdrawalAttempt = async () => {
