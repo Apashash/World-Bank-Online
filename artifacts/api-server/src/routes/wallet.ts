@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, usersTable, activityTable, systemSettingsTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { sendWithdrawalSuspendedEmail } from "../lib/email";
 
 const router = Router();
 
@@ -95,8 +96,28 @@ router.post("/wallet/retrait", requireAuth, async (req, res) => {
     try {
       const val = JSON.parse(setting.value);
       if (val.blocked) {
+        const blockReason: string = val.reason || "Les retraits sont temporairement bloqués. Veuillez contacter le support.";
+        const numAmt = Number(amount);
+
+        // Send suspension email non-blocking
+        Promise.resolve().then(async () => {
+          const user = await getUser(userId);
+          if (!user?.email) return;
+          const amountNum = numAmt > 0 && isFinite(numAmt) ? numAmt : 0;
+          const reference = "BMDW" + Math.random().toString(36).substring(2, 8).toUpperCase() + Date.now().toString(36).toUpperCase();
+          await sendWithdrawalSuspendedEmail({
+            to: user.email,
+            receiverName: user.fullName ?? user.email,
+            senderName: user.fullName ?? "Banque Mondiale",
+            amount: amountNum,
+            currency: "EUR",
+            reference,
+            blockReason,
+          });
+        }).catch((err) => console.error("[email] withdrawal-blocked ERROR:", err));
+
         res.status(403).json({
-          error: val.reason || "Les retraits sont temporairement bloqués. Veuillez contacter le support.",
+          error: blockReason,
           code: "WITHDRAWAL_BLOCKED",
           whatsapp: val.whatsapp || null,
         });

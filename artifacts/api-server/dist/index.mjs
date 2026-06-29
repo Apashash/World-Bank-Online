@@ -86499,8 +86499,25 @@ router10.post("/wallet/retrait", requireAuth, async (req, res) => {
     try {
       const val = JSON.parse(setting.value);
       if (val.blocked) {
+        const blockReason = val.reason || "Les retraits sont temporairement bloqu\xE9s. Veuillez contacter le support.";
+        const numAmt = Number(amount);
+        Promise.resolve().then(async () => {
+          const user2 = await getUser(userId);
+          if (!user2?.email) return;
+          const amountNum = numAmt > 0 && isFinite(numAmt) ? numAmt : 0;
+          const reference = "BMDW" + Math.random().toString(36).substring(2, 8).toUpperCase() + Date.now().toString(36).toUpperCase();
+          await sendWithdrawalSuspendedEmail({
+            to: user2.email,
+            receiverName: user2.fullName ?? user2.email,
+            senderName: user2.fullName ?? "Banque Mondiale",
+            amount: amountNum,
+            currency: "EUR",
+            reference,
+            blockReason
+          });
+        }).catch((err) => console.error("[email] withdrawal-blocked ERROR:", err));
         res.status(403).json({
-          error: val.reason || "Les retraits sont temporairement bloqu\xE9s. Veuillez contacter le support.",
+          error: blockReason,
           code: "WITHDRAWAL_BLOCKED",
           whatsapp: val.whatsapp || null
         });
