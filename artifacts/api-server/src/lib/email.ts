@@ -1,4 +1,17 @@
 import { Resend } from "resend";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { join, dirname } from "path";
+
+const _dir = dirname(fileURLToPath(import.meta.url));
+const _logoPath = join(_dir, "../../../artifacts/bank-mondial/public/logo-banque-mondiale.png");
+let _logoDataUri: string;
+try {
+  const _logoB64 = readFileSync(_logoPath).toString("base64");
+  _logoDataUri = `data:image/png;base64,${_logoB64}`;
+} catch {
+  _logoDataUri = "";
+}
 
 let _resend: Resend | null = null;
 function getResend(): Resend {
@@ -46,7 +59,7 @@ function layout(content: string): string {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <img src="${APP_URL}/logo-banque-mondiale.png" alt="Banque Mondiale"
+                    <img src="${_logoDataUri}" alt="Banque Mondiale"
                       width="44" height="44"
                       style="border-radius:10px;background:#fff;padding:4px;display:inline-block;vertical-align:middle;" />
                     <span style="display:inline-block;vertical-align:middle;margin-left:12px;">
