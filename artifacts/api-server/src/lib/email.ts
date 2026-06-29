@@ -1,6 +1,15 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not set — email sending is disabled");
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 /** Escape user-controlled strings before embedding them in HTML email bodies. */
 function esc(value: string | null | undefined): string {
@@ -141,7 +150,7 @@ export async function sendWelcomeEmail(opts: {
     </p>
   `;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: "Bienvenue à la Banque Mondiale — Votre compte est actif",
@@ -205,7 +214,7 @@ export async function sendTransferNotificationEmail(opts: {
     </p>
   `;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `Virement de ${currLabel} reçu — Confirmation requise`,
@@ -258,7 +267,7 @@ export async function sendTransferConfirmedEmail(opts: {
     </p>
   `;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `Confirmation de réception — ${currLabel}`,
@@ -320,7 +329,7 @@ export async function sendWithdrawalSuspendedEmail(opts: {
     </p>
   `;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `Retrait suspendu — ${currLabel} · Réf. ${opts.reference}`,
