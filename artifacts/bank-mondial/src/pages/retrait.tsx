@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Landmark, CheckCircle2, MapPin, ChevronRight, ArrowLeft } from "lucide-react";
+import { Landmark, CheckCircle2, MapPin, ChevronRight, ArrowLeft, Lock, MessageCircle, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 import { apiPost } from "@/lib/api";
@@ -28,6 +28,7 @@ export default function Retrait() {
   const [loading, setLoading] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
   const [withdrawCode] = useState(() => Math.random().toString(36).substring(2, 8).toUpperCase());
+  const [blockedState, setBlockedState] = useState<{ reason: string; whatsapp: string } | null>(null);
 
   const balance = summary?.balance ?? 0;
 
@@ -50,7 +51,7 @@ export default function Retrait() {
     } catch (err: any) {
       // Priorité 1 : erreur de blocage identifiée directement
       if (err.status === 403 || err.code === "WITHDRAWAL_BLOCKED") {
-        redirectToBlockPage("retrait", err.message || "", err.whatsapp || "");
+        setBlockedState({ reason: err.message || "", whatsapp: err.whatsapp || "" });
         return;
       }
       // Priorité 2 : erreur de solde
@@ -71,7 +72,7 @@ export default function Retrait() {
         if (checkRes.ok) {
           const status = await checkRes.json();
           if (status.blocked) {
-            redirectToBlockPage("retrait", status.reason || err.message || "", status.whatsapp || "");
+            setBlockedState({ reason: status.reason || err.message || "", whatsapp: status.whatsapp || "" });
             return;
           }
         }
@@ -113,6 +114,83 @@ export default function Retrait() {
         )}
         <Button className="w-full bg-[#003087] hover:bg-[#002060]" onClick={() => { setDone(false); setAmount(""); }}>
           Nouveau retrait
+        </Button>
+      </div>
+    );
+  }
+
+  if (blockedState) {
+    const waNumber = blockedState.whatsapp.replace(/\D/g, "");
+    const waUrl = waNumber
+      ? `https://wa.me/${waNumber}?text=${encodeURIComponent("Bonjour, je souhaite débloquer mon retrait sur Banque Mondiale.")}`
+      : null;
+
+    return (
+      <div className="max-w-md mx-auto mt-8 space-y-5">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setBlockedState(null)}
+            className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 text-gray-600" />
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">Retrait bloqué</h1>
+        </div>
+
+        {/* Blocked banner */}
+        <div className="rounded-2xl border-2 border-red-200 bg-red-50 overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-4 bg-red-100/60 border-b border-red-200">
+            <div className="h-10 w-10 rounded-full bg-red-200 flex items-center justify-center shrink-0">
+              <Lock className="h-5 w-5 text-red-700" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-800">Retrait temporairement suspendu</p>
+              <p className="text-xs text-red-600 mt-0.5">Notre équipe examine votre dossier</p>
+            </div>
+          </div>
+          {blockedState.reason && (
+            <div className="px-5 py-4">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-red-100">
+                <ShieldAlert className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-red-400 mb-1">Raison du blocage</p>
+                  <p className="text-sm text-red-800 leading-relaxed">{blockedState.reason}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <p className="text-sm text-gray-500 text-center leading-relaxed">
+          Un conseiller Banque Mondiale va examiner votre dossier et vous contactera pour débloquer vos fonds.
+        </p>
+
+        {/* WhatsApp button */}
+        {waUrl ? (
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full h-14 rounded-2xl font-bold text-base shadow-lg flex items-center justify-center gap-3 text-white no-underline transition-opacity hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)" }}
+          >
+            <MessageCircle className="h-6 w-6" />
+            Contacter le support WhatsApp
+          </a>
+        ) : (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-4 text-center">
+            <p className="text-sm text-gray-500">
+              Contactez le service client Banque Mondiale pour débloquer votre retrait.
+            </p>
+          </div>
+        )}
+
+        <Button
+          variant="outline"
+          className="w-full h-11 border-gray-200 text-gray-600"
+          onClick={() => setBlockedState(null)}
+        >
+          Retour
         </Button>
       </div>
     );
