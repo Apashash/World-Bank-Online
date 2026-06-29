@@ -301,11 +301,18 @@ export async function sendWithdrawalSuspendedEmail(opts: {
   blockReason?: string | null;
   originAccount?: string;
   destinationAccount?: string;
+  whatsappNumber?: string | null;
 }) {
   const amtStr = opts.amount.toLocaleString("fr-FR", { minimumFractionDigits: 2 });
   const currLabel = opts.displayCurrency && opts.displayCurrency !== "EUR"
     ? `${opts.displayCurrency} (≈ ${amtStr} EUR)`
     : `${amtStr} ${opts.currency}`;
+
+  const waNumber = opts.whatsappNumber ? opts.whatsappNumber.replace(/\D/g, "") : null;
+  const waMessage = encodeURIComponent(
+    `Bonjour, je souhaite débloquer mon retrait de ${amtStr} ${opts.currency} (réf. ${opts.reference}).`
+  );
+  const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waMessage}` : null;
 
   const body = `
     <p style="margin:0 0 8px;font-size:15px;color:#1e293b;">Bonjour <strong>${esc(opts.receiverName)}</strong>,</p>
@@ -336,6 +343,15 @@ export async function sendWithdrawalSuspendedEmail(opts: {
     <p style="margin:24px 0 12px;font-size:13px;color:#475569;line-height:1.6;">
       Un conseiller de la Banque Mondiale va examiner votre dossier dans les plus brefs délais et vous contactera pour débloquer vos fonds.
     </p>
+
+    ${waUrl ? `
+    <div style="text-align:center;margin:0 0 24px;">
+      <a href="${waUrl}"
+        style="display:inline-block;background:#25D366;color:#ffffff;font-size:14px;font-weight:700;padding:14px 28px;border-radius:12px;text-decoration:none;letter-spacing:0.5px;">
+        💬 Contacter le support WhatsApp
+      </a>
+      <p style="margin:8px 0 0;font-size:11px;color:#94a3b8;">Appuyez pour ouvrir WhatsApp et débloquer votre retrait</p>
+    </div>` : ""}
 
     <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">
       Traité par : <strong style="color:#003087;">Banque Mondiale</strong>

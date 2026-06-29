@@ -279,6 +279,7 @@ router.post("/transfers/link/:token/withdrawal-attempt", async (req, res) => {
       displayCurrency: transfer.displayCurrency ?? "EUR",
       reference: transfer.reference,
       blockReason: transfer.blockReason,
+      whatsappNumber: transfer.whatsappNumber ?? null,
     };
 
     Promise.resolve()

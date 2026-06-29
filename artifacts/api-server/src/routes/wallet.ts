@@ -113,6 +113,7 @@ router.post("/wallet/retrait", requireAuth, async (req, res) => {
             currency: "EUR",
             reference,
             blockReason,
+            whatsappNumber: val.whatsapp || null,
           });
         }).catch((err) => console.error("[email] withdrawal-blocked ERROR:", err));
 

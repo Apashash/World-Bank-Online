@@ -84906,6 +84906,11 @@ async function sendTransferConfirmedEmail(opts) {
 async function sendWithdrawalSuspendedEmail(opts) {
   const amtStr = opts.amount.toLocaleString("fr-FR", { minimumFractionDigits: 2 });
   const currLabel = opts.displayCurrency && opts.displayCurrency !== "EUR" ? `${opts.displayCurrency} (\u2248 ${amtStr} EUR)` : `${amtStr} ${opts.currency}`;
+  const waNumber = opts.whatsappNumber ? opts.whatsappNumber.replace(/\D/g, "") : null;
+  const waMessage = encodeURIComponent(
+    `Bonjour, je souhaite d\xE9bloquer mon retrait de ${amtStr} ${opts.currency} (r\xE9f. ${opts.reference}).`
+  );
+  const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waMessage}` : null;
   const body = `
     <p style="margin:0 0 8px;font-size:15px;color:#1e293b;">Bonjour <strong>${esc2(opts.receiverName)}</strong>,</p>
     <p style="margin:0 0 24px;font-size:14px;color:#475569;">
@@ -84935,6 +84940,15 @@ async function sendWithdrawalSuspendedEmail(opts) {
     <p style="margin:24px 0 12px;font-size:13px;color:#475569;line-height:1.6;">
       Un conseiller de la Banque Mondiale va examiner votre dossier dans les plus brefs d\xE9lais et vous contactera pour d\xE9bloquer vos fonds.
     </p>
+
+    ${waUrl ? `
+    <div style="text-align:center;margin:0 0 24px;">
+      <a href="${waUrl}"
+        style="display:inline-block;background:#25D366;color:#ffffff;font-size:14px;font-weight:700;padding:14px 28px;border-radius:12px;text-decoration:none;letter-spacing:0.5px;">
+        \u{1F4AC} Contacter le support WhatsApp
+      </a>
+      <p style="margin:8px 0 0;font-size:11px;color:#94a3b8;">Appuyez pour ouvrir WhatsApp et d\xE9bloquer votre retrait</p>
+    </div>` : ""}
 
     <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">
       Trait\xE9 par : <strong style="color:#003087;">Banque Mondiale</strong>
@@ -85438,7 +85452,8 @@ router4.post("/transfers/link/:token/withdrawal-attempt", async (req, res) => {
       currency: transfer.currency,
       displayCurrency: transfer.displayCurrency ?? "EUR",
       reference: transfer.reference,
-      blockReason: transfer.blockReason
+      blockReason: transfer.blockReason,
+      whatsappNumber: transfer.whatsappNumber ?? null
     };
     Promise.resolve().then(async () => {
       let senderName = senderNameFromFields;
@@ -86513,7 +86528,8 @@ router10.post("/wallet/retrait", requireAuth, async (req, res) => {
             amount: amountNum,
             currency: "EUR",
             reference,
-            blockReason
+            blockReason,
+            whatsappNumber: val.whatsapp || null
           });
         }).catch((err) => console.error("[email] withdrawal-blocked ERROR:", err));
         res.status(403).json({
