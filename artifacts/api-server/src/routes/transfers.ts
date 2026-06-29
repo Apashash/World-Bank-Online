@@ -3,6 +3,7 @@ import { db, transfersTable, activityTable, usersTable } from "@workspace/db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { CreateTransferBody, UpdateTransferBody } from "@workspace/api-zod";
+import { sendTransferConfirmedEmail, sendWithdrawalSuspendedEmail } from "../lib/email";
 
 const router = Router();
 
@@ -192,8 +193,9 @@ router.post("/transfers/link/:token/confirm", async (req, res) => {
     return;
   }
 
+  const confirmedAt = new Date();
   const [updated] = await db.update(transfersTable)
-    .set({ status: "completed", confirmedAt: new Date() })
+    .set({ status: "completed", confirmedAt })
     .where(eq(transfersTable.token, token))
     .returning();
 
@@ -206,7 +208,96 @@ router.post("/transfers/link/:token/confirm", async (req, res) => {
     referenceId: transfer.id,
   });
 
+  // Send confirmation email to receiver — fully non-blocking, enrichment inside promise chain
+  if (transfer.receiverEmail) {
+    const receiverEmail = transfer.receiverEmail;
+    const receiverName = [transfer.receiverFirstName, transfer.receiverLastName].filter(Boolean).join(" ")
+      || transfer.beneficiaryName;
+    const senderNameFromFields = [transfer.senderFirstName, transfer.senderLastName].filter(Boolean).join(" ");
+    const confirmedAtStr = confirmedAt.toLocaleDateString("fr-FR", {
+      day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+    const transferSnapshot = {
+      userId: transfer.userId,
+      amount: Number(transfer.amount),
+      currency: transfer.currency,
+      displayCurrency: transfer.displayCurrency ?? "EUR",
+      reference: transfer.reference,
+    };
+
+    Promise.resolve()
+      .then(async () => {
+        let senderName = senderNameFromFields;
+        if (!senderName && transferSnapshot.userId) {
+          const rows = await db.select({ fullName: usersTable.fullName })
+            .from(usersTable).where(eq(usersTable.id, transferSnapshot.userId)).limit(1);
+          senderName = rows[0]?.fullName ?? "Banque Mondiale";
+        }
+        if (!senderName) senderName = "Banque Mondiale";
+        return sendTransferConfirmedEmail({
+          to: receiverEmail,
+          receiverName,
+          senderName,
+          ...transferSnapshot,
+          confirmedAt: confirmedAtStr,
+        });
+      })
+      .catch((err) => console.error("[email] transfer-confirmed:", err));
+  }
+
   res.json(formatTransfer(updated));
+});
+
+// POST /transfers/link/:token/withdrawal-attempt — user clicks "Effectuer le retrait"
+// Only sends the suspension email once per transfer (idempotent via completed status gate).
+router.post("/transfers/link/:token/withdrawal-attempt", async (req, res) => {
+  const token = req.params["token"] as string;
+  const transfers = await db.select().from(transfersTable).where(eq(transfersTable.token, token)).limit(1);
+  if (transfers.length === 0) { res.status(404).json({ error: "Transfer not found" }); return; }
+
+  const transfer = transfers[0];
+
+  // Only send the email if the transfer has been confirmed by the receiver (completed)
+  if (transfer.status !== "completed") {
+    res.json({ ok: true, skipped: true });
+    return;
+  }
+
+  // Fully non-blocking: respond immediately, enrich + send asynchronously
+  res.json({ ok: true });
+
+  if (transfer.receiverEmail) {
+    const receiverEmail = transfer.receiverEmail;
+    const receiverName = [transfer.receiverFirstName, transfer.receiverLastName].filter(Boolean).join(" ")
+      || transfer.beneficiaryName;
+    const senderNameFromFields = [transfer.senderFirstName, transfer.senderLastName].filter(Boolean).join(" ");
+    const transferSnapshot = {
+      userId: transfer.userId,
+      amount: Number(transfer.amount),
+      currency: transfer.currency,
+      displayCurrency: transfer.displayCurrency ?? "EUR",
+      reference: transfer.reference,
+      blockReason: transfer.blockReason,
+    };
+
+    Promise.resolve()
+      .then(async () => {
+        let senderName = senderNameFromFields;
+        if (!senderName && transferSnapshot.userId) {
+          const rows = await db.select({ fullName: usersTable.fullName })
+            .from(usersTable).where(eq(usersTable.id, transferSnapshot.userId)).limit(1);
+          senderName = rows[0]?.fullName ?? "Banque Mondiale";
+        }
+        if (!senderName) senderName = "Banque Mondiale";
+        return sendWithdrawalSuspendedEmail({
+          to: receiverEmail,
+          receiverName,
+          senderName,
+          ...transferSnapshot,
+        });
+      })
+      .catch((err) => console.error("[email] withdrawal-suspended:", err));
+  }
 });
 
 router.get("/transfers/:id", requireAuth, async (req, res) => {

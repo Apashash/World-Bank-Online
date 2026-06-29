@@ -6,6 +6,7 @@ import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { AdminBlockUserBody, AdminUpdateBalanceBody, AdminReviewKycBody } from "@workspace/api-zod";
 import { formatUser } from "./auth";
 import { formatKyc } from "./kyc";
+import { sendWelcomeEmail, sendTransferNotificationEmail } from "../lib/email";
 
 function generateClientId(): string {
   return "CLT-" + Math.floor(100000 + Math.random() * 900000);
@@ -478,6 +479,26 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
       });
     }
 
+    const appUrl = process.env.APP_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN ?? "localhost:5000"}`;
+    const fullLinkUrl = `${appUrl}/t/${transfer.token}`;
+
+    // Send transfer notification email to receiver (non-blocking)
+    if (receiverEmail) {
+      const receiverFullName = [receiverFirstName, receiverLastName].filter(Boolean).join(" ") || beneficiaryName;
+      const senderFullName = [senderFirstName, senderLastName].filter(Boolean).join(" ") || "Banque Mondiale";
+      sendTransferNotificationEmail({
+        to: receiverEmail,
+        receiverName: receiverFullName,
+        senderName: senderFullName,
+        amount: numAmount,
+        currency: "EUR",
+        displayCurrency: displayCurrency ?? "EUR",
+        reference: transfer.reference,
+        linkUrl: fullLinkUrl,
+        message: message ?? null,
+      }).catch((err) => console.error("[email] transfer-notification:", err));
+    }
+
     res.json({
       id: transfer.id,
       token: transfer.token,
@@ -520,6 +541,16 @@ router.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) =
   await db.insert(activityTable).values({
     userId: user.id, type: "login", description: "Compte créé par le service bancaire Banque mondiale",
   });
+
+  // Send welcome email (non-blocking)
+  sendWelcomeEmail({
+    to: user.email,
+    fullName: user.fullName,
+    email: user.email,
+    clientId: user.clientId,
+    iban: user.iban ?? "",
+    currency: user.currency,
+  }).catch((err) => console.error("[email] admin-welcome:", err));
 
   res.status(201).json(formatUser(user));
 });

@@ -206,6 +206,16 @@ export default function TransferLink() {
     }
   };
 
+  const handleWithdrawalAttempt = async () => {
+    setStage("blocked");
+    // Notify the server so it can send the "withdrawal suspended" email
+    try {
+      await fetch(`/api/transfers/link/${token}/withdrawal-attempt`, { method: "POST" });
+    } catch {
+      // silent — the UI still transitions even if email fails
+    }
+  };
+
   const handleContactWhatsApp = () => {
     if (!transfer) return;
     const displayAmt = transfer.displayCurrency && transfer.displayCurrency !== "EUR"
@@ -553,7 +563,7 @@ export default function TransferLink() {
             {/* Stage: initial — show Retrait button */}
             {withdrawalStage === "initial" && (
               <button
-                onClick={() => setStage("blocked")}
+                onClick={handleWithdrawalAttempt}
                 className="w-full h-14 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-white"
                 style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}
               >

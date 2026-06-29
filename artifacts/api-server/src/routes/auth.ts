@@ -4,6 +4,7 @@ import { db, usersTable, referralsTable, activityTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { signToken, requireAuth } from "../middlewares/auth";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
+import { sendWelcomeEmail } from "../lib/email";
 
 const router = Router();
 
@@ -98,6 +99,16 @@ router.post("/auth/register", async (req, res) => {
     type: "login",
     description: "Compte créé avec succès",
   });
+
+  // Send welcome email (non-blocking)
+  sendWelcomeEmail({
+    to: user.email,
+    fullName: user.fullName,
+    email: user.email,
+    clientId: user.clientId,
+    iban: user.iban ?? "",
+    currency: user.currency,
+  }).catch((err) => console.error("[email] welcome:", err));
 
   const token = signToken({ userId: user.id, role: user.role });
   res.status(201).json({ user: formatUser(user), token });
