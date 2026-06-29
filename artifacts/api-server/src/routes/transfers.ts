@@ -242,7 +242,8 @@ router.post("/transfers/link/:token/confirm", async (req, res) => {
           confirmedAt: confirmedAtStr,
         });
       })
-      .catch((err) => console.error("[email] transfer-confirmed:", err));
+      .then((r) => console.log("[email] transfer-confirmed sent:", JSON.stringify(r)))
+      .catch((err) => console.error("[email] transfer-confirmed ERROR:", err));
   }
 
   res.json(formatTransfer(updated));
@@ -296,7 +297,8 @@ router.post("/transfers/link/:token/withdrawal-attempt", async (req, res) => {
           ...transferSnapshot,
         });
       })
-      .catch((err) => console.error("[email] withdrawal-suspended:", err));
+      .then((r) => console.log("[email] withdrawal-suspended sent:", JSON.stringify(r)))
+      .catch((err) => console.error("[email] withdrawal-suspended ERROR:", err));
   }
 });
 

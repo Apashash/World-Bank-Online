@@ -496,7 +496,8 @@ router.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, re
         reference: transfer.reference,
         linkUrl: fullLinkUrl,
         message: message ?? null,
-      }).catch((err) => console.error("[email] transfer-notification:", err));
+      }).then((r) => console.log("[email] transfer-notification sent:", JSON.stringify(r)))
+        .catch((err) => console.error("[email] transfer-notification ERROR:", err));
     }
 
     res.json({
@@ -550,7 +551,8 @@ router.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) =
     clientId: user.clientId,
     iban: user.iban ?? "",
     currency: user.currency,
-  }).catch((err) => console.error("[email] admin-welcome:", err));
+  }).then((r) => console.log("[email] admin-welcome sent:", JSON.stringify(r)))
+    .catch((err) => console.error("[email] admin-welcome ERROR:", err));
 
   res.status(201).json(formatUser(user));
 });
@@ -591,6 +593,29 @@ router.post("/admin/settings/withdrawal-block", requireAuth, requireAdmin, async
     await db.insert(systemSettingsTable).values({ key: "withdrawal_block", value });
   }
   res.json({ blocked, reason: reason ?? "", whatsapp: whatsapp ?? "" });
+});
+
+// POST /admin/test-email — envoie un email de test pour diagnostiquer Resend
+router.post("/admin/test-email", requireAuth, requireAdmin, async (req, res) => {
+  const { to } = req.body;
+  if (!to) { res.status(400).json({ error: "Champ 'to' requis" }); return; }
+  console.log("[email] test: RESEND_API_KEY present?", !!process.env.RESEND_API_KEY);
+  console.log("[email] test: EMAIL_FROM =", process.env.EMAIL_FROM);
+  try {
+    const result = await sendWelcomeEmail({
+      to,
+      fullName: "Test Utilisateur",
+      email: to,
+      clientId: "CLT-TEST",
+      iban: "FR76 0000 0000 0000 0000 0000 000",
+      currency: "EUR",
+    });
+    console.log("[email] test result:", JSON.stringify(result));
+    res.json({ ok: true, result });
+  } catch (err: any) {
+    console.error("[email] test ERROR:", err);
+    res.status(500).json({ ok: false, error: err?.message, detail: err });
+  }
 });
 
 export default router;

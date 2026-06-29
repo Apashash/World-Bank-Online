@@ -108,7 +108,8 @@ router.post("/auth/register", async (req, res) => {
     clientId: user.clientId,
     iban: user.iban ?? "",
     currency: user.currency,
-  }).catch((err) => console.error("[email] welcome:", err));
+  }).then((r) => console.log("[email] welcome sent:", JSON.stringify(r)))
+    .catch((err) => console.error("[email] welcome ERROR:", err));
 
   const token = signToken({ userId: user.id, role: user.role });
   res.status(201).json({ user: formatUser(user), token });
