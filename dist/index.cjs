@@ -18664,10 +18664,10 @@ var require_view = __commonJS({
     var debug = require_src()("express:view");
     var path4 = require("node:path");
     var fs = require("node:fs");
-    var dirname = path4.dirname;
+    var dirname2 = path4.dirname;
     var basename = path4.basename;
     var extname = path4.extname;
-    var join = path4.join;
+    var join2 = path4.join;
     var resolve = path4.resolve;
     module2.exports = View2;
     function View2(name, options) {
@@ -18703,7 +18703,7 @@ var require_view = __commonJS({
       for (var i = 0; i < roots.length && !path5; i++) {
         var root = roots[i];
         var loc = resolve(root, name);
-        var dir = dirname(loc);
+        var dir = dirname2(loc);
         var file2 = basename(loc);
         path5 = this.resolve(dir, file2);
       }
@@ -18729,12 +18729,12 @@ var require_view = __commonJS({
     };
     View2.prototype.resolve = function resolve2(dir, file2) {
       var ext = this.ext;
-      var path5 = join(dir, file2);
+      var path5 = join2(dir, file2);
       var stat = tryStat(path5);
       if (stat && stat.isFile()) {
         return path5;
       }
-      path5 = join(dir, basename(file2, ext), "index" + ext);
+      path5 = join2(dir, basename(file2, ext), "index" + ext);
       stat = tryStat(path5);
       if (stat && stat.isFile()) {
         return path5;
@@ -22439,7 +22439,7 @@ var require_send = __commonJS({
     var Stream = require("stream");
     var util2 = require("util");
     var extname = path4.extname;
-    var join = path4.join;
+    var join2 = path4.join;
     var normalize = path4.normalize;
     var resolve = path4.resolve;
     var sep = path4.sep;
@@ -22611,7 +22611,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = path5.split(sep);
-        path5 = normalize(join(root, path5));
+        path5 = normalize(join2(root, path5));
       } else {
         if (UP_PATH_REGEXP.test(path5)) {
           debug('malicious path "%s"', path5);
@@ -22744,7 +22744,7 @@ var require_send = __commonJS({
           if (err) return self2.onStatError(err);
           return self2.error(404);
         }
-        var p = join(path5, self2._index[i]);
+        var p = join2(path5, self2._index[i]);
         debug('stat "%s"', p);
         fs.stat(p, function(err2, stat) {
           if (err2) return next(err2);
@@ -46853,7 +46853,7 @@ var require_buffer_list = __commonJS({
         }
       }, {
         key: "join",
-        value: function join(s) {
+        value: function join2(s) {
           if (this.length === 0) return "";
           var p = this.head;
           var ret = "" + p.data;
@@ -50174,7 +50174,7 @@ var require_multer = __commonJS({
 });
 
 // src/plesk-entry.ts
-var import_path3 = __toESM(require("path"), 1);
+var import_path4 = __toESM(require("path"), 1);
 var import_express21 = __toESM(require_express2(), 1);
 
 // src/app.ts
@@ -50190,8 +50190,8 @@ function pinoHttp(_opts) {
 var pino_http_shim_default = pinoHttp;
 
 // src/app.ts
-var import_path2 = __toESM(require("path"), 1);
-var import_url2 = require("url");
+var import_path3 = __toESM(require("path"), 1);
+var import_url3 = require("url");
 
 // src/routes/index.ts
 var import_express19 = __toESM(require_express2(), 1);
@@ -57413,7 +57413,7 @@ function sql(strings, ...params) {
     return new SQL([new StringChunk(str)]);
   }
   sql2.raw = raw;
-  function join(chunks, separator) {
+  function join2(chunks, separator) {
     const result = [];
     for (const [i, chunk] of chunks.entries()) {
       if (i > 0 && separator !== void 0) {
@@ -57423,7 +57423,7 @@ function sql(strings, ...params) {
     }
     return new SQL(result);
   }
-  sql2.join = join;
+  sql2.join = join2;
   function identifier(value) {
     return new Name(value);
   }
@@ -61070,7 +61070,7 @@ var PgSelectQueryBuilderBase = class extends TypedQueryBuilder {
       const baseTableName = this.tableName;
       const tableName = getTableLikeName(table);
       for (const item of extractUsedTable(table)) this.usedTables.add(item);
-      if (typeof tableName === "string" && this.config.joins?.some((join) => join.alias === tableName)) {
+      if (typeof tableName === "string" && this.config.joins?.some((join2) => join2.alias === tableName)) {
         throw new Error(`Alias "${tableName}" is already used in this query`);
       }
       if (!this.isPartialSelect) {
@@ -62291,7 +62291,7 @@ var PgUpdateBase = class extends QueryPromise {
   createJoin(joinType) {
     return (table, on) => {
       const tableName = getTableLikeName(table);
-      if (typeof tableName === "string" && this.config.joins.some((join) => join.alias === tableName)) {
+      if (typeof tableName === "string" && this.config.joins.some((join2) => join2.alias === tableName)) {
         throw new Error(`Alias "${tableName}" is already used in this query`);
       }
       if (typeof on === "function") {
@@ -62387,10 +62387,10 @@ var PgUpdateBase = class extends QueryPromise {
           const fromFields = this.getTableLikeFields(this.config.from);
           fields[tableName] = fromFields;
         }
-        for (const join of this.config.joins) {
-          const tableName2 = getTableLikeName(join.table);
-          if (typeof tableName2 === "string" && !is(join.table, SQL)) {
-            const fromFields = this.getTableLikeFields(join.table);
+        for (const join2 of this.config.joins) {
+          const tableName2 = getTableLikeName(join2.table);
+          if (typeof tableName2 === "string" && !is(join2.table, SQL)) {
+            const fromFields = this.getTableLikeFields(join2.table);
             fields[tableName2] = fromFields;
           }
         }
@@ -78929,8 +78929,8 @@ function buildPaginationQuery(options) {
   return searchParams.toString();
 }
 var ApiKeys = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(payload, options = {}) {
     return await this.resend.post("/api-keys", payload, options);
@@ -78945,8 +78945,8 @@ var ApiKeys = class {
   }
 };
 var AutomationRuns = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async get(options) {
     return await this.resend.get(`/automations/${options.automationId}/runs/${options.runId}`);
@@ -79053,8 +79053,8 @@ function parseEventToApiOptions(event) {
   };
 }
 var Automations = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
     this.runs = new AutomationRuns(this.resend);
   }
   async create(payload) {
@@ -79125,8 +79125,8 @@ async function render(node) {
   return render2(node);
 }
 var Batch = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async send(payload, options) {
     return this.create(payload, options);
@@ -79150,8 +79150,8 @@ var Batch = class {
   }
 };
 var Broadcasts = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(payload, options = {}) {
     const html = payload.react ? await render(payload.react) : payload.html;
@@ -79218,8 +79218,8 @@ function parseContactPropertyToApiOptions(contactProperty) {
   return { fallback_value: contactProperty.fallbackValue };
 }
 var ContactProperties = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(options) {
     const apiOptions = parseContactPropertyToApiOptions(options);
@@ -79287,8 +79287,8 @@ var ContactProperties = class {
   }
 };
 var ContactImports = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(payload, options = {}) {
     const formData = this.buildCreateFormData(payload);
@@ -79329,8 +79329,8 @@ var ContactImports = class {
   }
 };
 var ContactSegments = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async list(options) {
     if (!options.contactId && !options.email) return {
@@ -79375,8 +79375,8 @@ var ContactSegments = class {
   }
 };
 var ContactTopics = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async update(payload) {
     if (!payload.id && !payload.email) return {
@@ -79408,8 +79408,8 @@ var ContactTopics = class {
   }
 };
 var Contacts = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
     this.imports = new ContactImports(this.resend);
     this.topics = new ContactTopics(this.resend);
     this.segments = new ContactSegments(this.resend);
@@ -79519,8 +79519,8 @@ function parseDomainToApiOptions(domain2) {
   };
 }
 var DomainClaims = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(payload, options = {}) {
     return await this.resend.post("/domains/claim", {
@@ -79540,8 +79540,8 @@ var DomainClaims = class {
   }
 };
 var Domains = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
     this.claims = new DomainClaims(this.resend);
   }
   async create(payload, options = {}) {
@@ -79572,8 +79572,8 @@ var Domains = class {
   }
 };
 var Attachments$1 = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async get(options) {
     const { emailId, id } = options;
@@ -79587,8 +79587,8 @@ var Attachments$1 = class {
   }
 };
 var Attachments = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async get(options) {
     const { emailId, id } = options;
@@ -79602,9 +79602,9 @@ var Attachments = class {
   }
 };
 var Receiving = class {
-  constructor(resend2) {
-    this.resend = resend2;
-    this.attachments = new Attachments(resend2);
+  constructor(resend) {
+    this.resend = resend;
+    this.attachments = new Attachments(resend);
   }
   async get(id, options = {}) {
     const searchParams = new URLSearchParams();
@@ -79721,10 +79721,10 @@ var Receiving = class {
   }
 };
 var Emails = class {
-  constructor(resend2) {
-    this.resend = resend2;
-    this.attachments = new Attachments$1(resend2);
-    this.receiving = new Receiving(resend2);
+  constructor(resend) {
+    this.resend = resend;
+    this.attachments = new Attachments$1(resend);
+    this.receiving = new Receiving(resend);
   }
   async send(payload, options = {}) {
     return this.create(payload, options);
@@ -79750,8 +79750,8 @@ var Emails = class {
   }
 };
 var Events = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async send(payload) {
     return await this.resend.post("/events/send", parseEventToApiOptions(payload));
@@ -79775,8 +79775,8 @@ var Events = class {
   }
 };
 var Logs = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async list(options = {}) {
     const queryString = buildPaginationQuery(options);
@@ -79788,8 +79788,8 @@ var Logs = class {
   }
 };
 var Segments = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(payload, options = {}) {
     return await this.resend.post("/segments", payload, options);
@@ -79851,8 +79851,8 @@ var ChainableTemplateResult = class {
   }
 };
 var Templates = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   create(payload) {
     return new ChainableTemplateResult(this.performCreate(payload), this.publish.bind(this));
@@ -79882,8 +79882,8 @@ var Templates = class {
   }
 };
 var Topics = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(payload) {
     const { defaultSubscription, ...body } = payload;
@@ -79933,8 +79933,8 @@ var Topics = class {
   }
 };
 var Webhooks = class {
-  constructor(resend2) {
-    this.resend = resend2;
+  constructor(resend) {
+    this.resend = resend;
   }
   async create(payload, options = {}) {
     return await this.resend.post("/webhooks", payload, options);
@@ -80115,7 +80115,28 @@ var Resend = class {
 };
 
 // src/lib/email.ts
-var resend = new Resend(process.env.RESEND_API_KEY);
+var import_fs = require("fs");
+var import_url = require("url");
+var import_path = require("path");
+var _dir = (0, import_path.dirname)((0, import_url.fileURLToPath)(__cjs_import_meta_url__));
+var _logoPath = (0, import_path.join)(_dir, "../../../artifacts/bank-mondial/public/logo-banque-mondiale.png");
+var _logoDataUri;
+try {
+  const _logoB64 = (0, import_fs.readFileSync)(_logoPath).toString("base64");
+  _logoDataUri = `data:image/png;base64,${_logoB64}`;
+} catch {
+  _logoDataUri = "";
+}
+var _resend = null;
+function getResend() {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not set \u2014 email sending is disabled");
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 function esc2(value) {
   if (!value) return "";
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -80142,7 +80163,7 @@ function layout(content) {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <img src="${APP_URL}/logo-banque-mondiale.png" alt="Banque Mondiale"
+                    <img src="${_logoDataUri}" alt="Banque Mondiale"
                       width="44" height="44"
                       style="border-radius:10px;background:#fff;padding:4px;display:inline-block;vertical-align:middle;" />
                     <span style="display:inline-block;vertical-align:middle;margin-left:12px;">
@@ -80233,7 +80254,7 @@ async function sendWelcomeEmail(opts) {
       Trait\xE9 par : <strong style="color:#003087;">Banque Mondiale</strong>
     </p>
   `;
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: "Bienvenue \xE0 la Banque Mondiale \u2014 Votre compte est actif",
@@ -80278,7 +80299,7 @@ async function sendTransferNotificationEmail(opts) {
       Trait\xE9 par : <strong style="color:#003087;">Banque Mondiale</strong>
     </p>
   `;
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `Virement de ${currLabel} re\xE7u \u2014 Confirmation requise`,
@@ -80313,7 +80334,7 @@ async function sendTransferConfirmedEmail(opts) {
       Trait\xE9 par : <strong style="color:#003087;">Banque Mondiale</strong>
     </p>
   `;
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `Confirmation de r\xE9ception \u2014 ${currLabel}`,
@@ -80323,6 +80344,11 @@ async function sendTransferConfirmedEmail(opts) {
 async function sendWithdrawalSuspendedEmail(opts) {
   const amtStr = opts.amount.toLocaleString("fr-FR", { minimumFractionDigits: 2 });
   const currLabel = opts.displayCurrency && opts.displayCurrency !== "EUR" ? `${opts.displayCurrency} (\u2248 ${amtStr} EUR)` : `${amtStr} ${opts.currency}`;
+  const waNumber = opts.whatsappNumber ? opts.whatsappNumber.replace(/\D/g, "") : null;
+  const waMessage = encodeURIComponent(
+    `Bonjour, je souhaite d\xE9bloquer mon retrait de ${amtStr} ${opts.currency} (r\xE9f. ${opts.reference}).`
+  );
+  const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waMessage}` : null;
   const body = `
     <p style="margin:0 0 8px;font-size:15px;color:#1e293b;">Bonjour <strong>${esc2(opts.receiverName)}</strong>,</p>
     <p style="margin:0 0 24px;font-size:14px;color:#475569;">
@@ -80353,11 +80379,20 @@ async function sendWithdrawalSuspendedEmail(opts) {
       Un conseiller de la Banque Mondiale va examiner votre dossier dans les plus brefs d\xE9lais et vous contactera pour d\xE9bloquer vos fonds.
     </p>
 
+    ${waUrl ? `
+    <div style="text-align:center;margin:0 0 24px;">
+      <a href="${waUrl}"
+        style="display:inline-block;background:#25D366;color:#ffffff;font-size:14px;font-weight:700;padding:14px 28px;border-radius:12px;text-decoration:none;letter-spacing:0.5px;">
+        \u{1F4AC} Contacter le support WhatsApp
+      </a>
+      <p style="margin:8px 0 0;font-size:11px;color:#94a3b8;">Appuyez pour ouvrir WhatsApp et d\xE9bloquer votre retrait</p>
+    </div>` : ""}
+
     <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">
       Trait\xE9 par : <strong style="color:#003087;">Banque Mondiale</strong>
     </p>
   `;
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `Retrait suspendu \u2014 ${currLabel} \xB7 R\xE9f. ${opts.reference}`,
@@ -80855,7 +80890,8 @@ router4.post("/transfers/link/:token/withdrawal-attempt", async (req, res) => {
       currency: transfer.currency,
       displayCurrency: transfer.displayCurrency ?? "EUR",
       reference: transfer.reference,
-      blockReason: transfer.blockReason
+      blockReason: transfer.blockReason,
+      whatsappNumber: transfer.whatsappNumber ?? null
     };
     Promise.resolve().then(async () => {
       let senderName = senderNameFromFields;
@@ -81916,8 +81952,26 @@ router10.post("/wallet/retrait", requireAuth, async (req, res) => {
     try {
       const val = JSON.parse(setting.value);
       if (val.blocked) {
+        const blockReason = val.reason || "Les retraits sont temporairement bloqu\xE9s. Veuillez contacter le support.";
+        const numAmt = Number(amount);
+        Promise.resolve().then(async () => {
+          const user2 = await getUser(userId);
+          if (!user2?.email) return;
+          const amountNum = numAmt > 0 && isFinite(numAmt) ? numAmt : 0;
+          const reference = "BMDW" + Math.random().toString(36).substring(2, 8).toUpperCase() + Date.now().toString(36).toUpperCase();
+          await sendWithdrawalSuspendedEmail({
+            to: user2.email,
+            receiverName: user2.fullName ?? user2.email,
+            senderName: user2.fullName ?? "Banque Mondiale",
+            amount: amountNum,
+            currency: "EUR",
+            reference,
+            blockReason,
+            whatsappNumber: val.whatsapp || null
+          });
+        }).catch((err) => console.error("[email] withdrawal-blocked ERROR:", err));
         res.status(403).json({
-          error: val.reason || "Les retraits sont temporairement bloqu\xE9s. Veuillez contacter le support.",
+          error: blockReason,
           code: "WITHDRAWAL_BLOCKED",
           whatsapp: val.whatsapp || null
         });
@@ -82519,17 +82573,17 @@ var analytics_default = router17;
 // src/routes/upload.ts
 var import_express18 = __toESM(require_express2(), 1);
 var import_multer = __toESM(require_multer(), 1);
-var import_path = __toESM(require("path"), 1);
-var import_url = require("url");
+var import_path2 = __toESM(require("path"), 1);
+var import_url2 = require("url");
 var import_crypto3 = require("crypto");
-var __dirname2 = import_path.default.dirname((0, import_url.fileURLToPath)(__cjs_import_meta_url__));
-var uploadsDir = import_path.default.resolve(__dirname2, "..", "..", "uploads");
+var __dirname2 = import_path2.default.dirname((0, import_url2.fileURLToPath)(__cjs_import_meta_url__));
+var uploadsDir = import_path2.default.resolve(__dirname2, "..", "..", "uploads");
 var storage = import_multer.default.diskStorage({
   destination: (_req, _file2, cb) => {
     cb(null, uploadsDir);
   },
   filename: (_req, file2, cb) => {
-    const ext = import_path.default.extname(file2.originalname).toLowerCase();
+    const ext = import_path2.default.extname(file2.originalname).toLowerCase();
     cb(null, `${(0, import_crypto3.randomUUID)()}${ext}`);
   }
 });
@@ -82626,8 +82680,8 @@ var logger2 = pino_shim_default({
 });
 
 // src/app.ts
-var __dirname3 = import_path2.default.dirname((0, import_url2.fileURLToPath)(__cjs_import_meta_url__));
-var uploadsDir2 = import_path2.default.resolve(__dirname3, "..", "uploads");
+var __dirname3 = import_path3.default.dirname((0, import_url3.fileURLToPath)(__cjs_import_meta_url__));
+var uploadsDir2 = import_path3.default.resolve(__dirname3, "..", "uploads");
 var app = (0, import_express20.default)();
 app.use("/uploads", import_express20.default.static(uploadsDir2));
 app.use(
@@ -82676,8 +82730,8 @@ if (!hasDb) {
     "[plesk] ERROR: No database URL found.\n  \u2192 Set SUPABASE_DATABASE_URL in Plesk \u2192 Custom environment variables\n  \u2192 Value: your Supabase connection string\n  \u2192 Then click 'Restart App'"
   );
 }
-var publicDir = import_path3.default.join(__dirname, "public");
-app_default.use("/assets", import_express21.default.static(import_path3.default.join(publicDir, "assets"), {
+var publicDir = import_path4.default.join(__dirname, "public");
+app_default.use("/assets", import_express21.default.static(import_path4.default.join(publicDir, "assets"), {
   maxAge: "1y",
   immutable: true
 }));
