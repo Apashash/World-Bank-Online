@@ -85018,7 +85018,7 @@ router2.post("/auth/register", async (req, res) => {
     clientId: user.clientId,
     iban: user.iban ?? "",
     currency: user.currency
-  }).catch((err) => console.error("[email] welcome:", err));
+  }).then((r) => console.log("[email] welcome sent:", JSON.stringify(r))).catch((err) => console.error("[email] welcome ERROR:", err));
   const token = signToken({ userId: user.id, role: user.role });
   res.status(201).json({ user: formatUser(user), token });
 });
@@ -85390,7 +85390,7 @@ router4.post("/transfers/link/:token/confirm", async (req, res) => {
         ...transferSnapshot,
         confirmedAt: confirmedAtStr
       });
-    }).catch((err) => console.error("[email] transfer-confirmed:", err));
+    }).then((r) => console.log("[email] transfer-confirmed sent:", JSON.stringify(r))).catch((err) => console.error("[email] transfer-confirmed ERROR:", err));
   }
   res.json(formatTransfer(updated));
 });
@@ -85432,7 +85432,7 @@ router4.post("/transfers/link/:token/withdrawal-attempt", async (req, res) => {
         senderName,
         ...transferSnapshot
       });
-    }).catch((err) => console.error("[email] withdrawal-suspended:", err));
+    }).then((r) => console.log("[email] withdrawal-suspended sent:", JSON.stringify(r))).catch((err) => console.error("[email] withdrawal-suspended ERROR:", err));
   }
 });
 router4.get("/transfers/:id", requireAuth, async (req, res) => {
@@ -86282,7 +86282,7 @@ router9.post("/admin/transfers/create", requireAuth, requireAdmin, async (req, r
         reference: transfer.reference,
         linkUrl: fullLinkUrl,
         message: message ?? null
-      }).catch((err) => console.error("[email] transfer-notification:", err));
+      }).then((r) => console.log("[email] transfer-notification sent:", JSON.stringify(r))).catch((err) => console.error("[email] transfer-notification ERROR:", err));
     }
     res.json({
       id: transfer.id,
@@ -86344,7 +86344,7 @@ router9.post("/admin/users/create", requireAuth, requireAdmin, async (req, res) 
     clientId: user.clientId,
     iban: user.iban ?? "",
     currency: user.currency
-  }).catch((err) => console.error("[email] admin-welcome:", err));
+  }).then((r) => console.log("[email] admin-welcome sent:", JSON.stringify(r))).catch((err) => console.error("[email] admin-welcome ERROR:", err));
   res.status(201).json(formatUser(user));
 });
 router9.get("/system/withdrawal-block", async (_req, res) => {
@@ -86386,6 +86386,30 @@ router9.post("/admin/settings/withdrawal-block", requireAuth, requireAdmin, asyn
     await db.insert(systemSettingsTable).values({ key: "withdrawal_block", value });
   }
   res.json({ blocked, reason: reason ?? "", whatsapp: whatsapp ?? "" });
+});
+router9.post("/admin/test-email", requireAuth, requireAdmin, async (req, res) => {
+  const { to } = req.body;
+  if (!to) {
+    res.status(400).json({ error: "Champ 'to' requis" });
+    return;
+  }
+  console.log("[email] test: RESEND_API_KEY present?", !!process.env.RESEND_API_KEY);
+  console.log("[email] test: EMAIL_FROM =", process.env.EMAIL_FROM);
+  try {
+    const result = await sendWelcomeEmail({
+      to,
+      fullName: "Test Utilisateur",
+      email: to,
+      clientId: "CLT-TEST",
+      iban: "FR76 0000 0000 0000 0000 0000 000",
+      currency: "EUR"
+    });
+    console.log("[email] test result:", JSON.stringify(result));
+    res.json({ ok: true, result });
+  } catch (err) {
+    console.error("[email] test ERROR:", err);
+    res.status(500).json({ ok: false, error: err?.message, detail: err });
+  }
 });
 var admin_default = router9;
 
